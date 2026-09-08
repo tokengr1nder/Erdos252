@@ -25,16 +25,12 @@ theorem isolatedShift5_exists_fresh_prime {ι : Type*} [Fintype ι]
     intro i
     have hi : r i ≤ Finset.univ.sup r := Finset.le_sup (Finset.mem_univ i)
     omega
-  have hcop : Q.Coprime L :=
-    (hp.coprime_iff_not_dvd.mpr (fun hd => (not_le.mpr hQL) (Nat.le_of_dvd hQ hd))).symm
-  exact ⟨L, hp, hQL, hrL, hcop⟩
+  exact ⟨L, hp, hQL, hrL, (Nat.coprime_of_lt_prime hQ.ne' hQL hp).symm⟩
 
 /-- A zero base residue misses every positive shift smaller than the modulus. -/
 theorem isolatedShift5_not_dvd_add {L B r : ℕ}
     (hB : L ∣ B) (hr : 0 < r) (hrL : r < L) : ¬ L ∣ B + r := by
-  intro hsum
-  have hd : L ∣ r := (Nat.dvd_add_iff_right hB).mpr hsum
-  exact (not_le.mpr hrL) (Nat.le_of_dvd hr hd)
+  exact fun hsum => Nat.not_dvd_of_pos_of_lt hr hrL ((Nat.dvd_add_iff_right hB).mpr hsum)
 
 /-- Two shifts smaller than the modulus hit the same base precisely when equal. -/
 theorem isolatedShift5_dvd_add_iff {L B r s : ℕ}

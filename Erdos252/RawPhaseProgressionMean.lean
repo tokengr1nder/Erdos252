@@ -144,14 +144,10 @@ theorem rawPhaseProgressionMeanTerm_eq_card (k Q A d : ℕ) :
 theorem rawPhaseProgressionMeanTerm_bounds {k : ℕ} (hk : 2 ≤ k) (Q A d : ℕ) :
     0 ≤ rawPhaseProgressionMeanTerm k Q A d ∧
       rawPhaseProgressionMeanTerm k Q A d ≤ 1 / (d : ℝ) ^ k := by
-  have hn : 0 ≤ rawPhaseProgressionMeanTerm k Q A d := by
-    unfold rawPhaseProgressionMeanTerm
-    exact div_nonneg (Finset.sum_nonneg
-      (fun j _ => (rawPhaseDivisorTerm_bounds k d _).1)) (by positivity)
-  refine ⟨hn, ?_⟩
-  have hh := le_of_tendsto (rawPhaseDivisorTerm_cesaro hk Q A d).norm
-    (Eventually.of_forall (rawPhaseDivisorTerm_cesaro_bound k Q A d))
-  simpa only [Real.norm_eq_abs, abs_of_nonneg hn] using hh
+  have _ := hk
+  exact ⟨div_nonneg (Finset.sum_nonneg
+    (fun j _ => (rawPhaseDivisorTerm_bounds k d _).1)) (Nat.cast_nonneg d),
+    (Real.le_norm_self _).trans (rawPhaseDivisorTerm_cesaro_bound k Q A d d)⟩
 
 theorem summable_rawPhaseProgressionMeanTerm {k : ℕ} (hk : 2 ≤ k) (Q A : ℕ) :
     Summable (rawPhaseProgressionMeanTerm k Q A) := by

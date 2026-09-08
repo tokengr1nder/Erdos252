@@ -35,10 +35,8 @@ theorem rawPhaseProgressionMean_multiples (k : ℕ) {Q ell : ℕ}
       if ell ∣ d then rawPhaseProgressionMeanTerm k Q A d else 0) ⊆
       Set.range (fun d : ℕ => ell * d) := by
     intro d hd
-    by_cases hh : ell ∣ d
-    · obtain ⟨j, hj⟩ := hh
-      exact ⟨j, hj.symm⟩
-    · exact False.elim (hd (by simp [hh]))
+    obtain ⟨j, rfl⟩ : ell ∣ d := Classical.byContradiction (fun h => hd (by simp [h]))
+    exact ⟨j, rfl⟩
   rw [← hinj.tsum_eq hs]
   simp only [dvd_mul_right, ↓reduceIte]
   simp_rw [rawPhaseProgressionMeanTerm_mul k hc]
@@ -128,13 +126,9 @@ theorem rawPhaseProgressionMean_refine {k Q A B ell : ℕ}
     rawPhaseProgressionMean k (Q * ell) B =
       rawPhaseProgressionMean k Q A *
         (1 - 1 / (ell : ℝ) ^ (k + 1) + if ell ∣ B then 1 / (ell : ℝ) ^ k else 0) := by
+  rw [rawPhaseProgressionMean_refine_aux hk hp hc, rawPhaseProgressionMean_congr k hAB]
   have he : (ell : ℝ) ≠ 0 := by exact_mod_cast hp.ne_zero
-  by_cases hB : ell ∣ B
-  · rw [rawPhaseProgressionMean_refine_hit hk hp hc hAB hB, if_pos hB, pow_succ]
-    field_simp
-    ring
-  · rw [rawPhaseProgressionMean_refine_no_hit hk hp hc hAB hB, if_neg hB]
-    ring
+  split_ifs <;> simp only [pow_succ] <;> field_simp <;> ring
 
 #print axioms rawPhaseProgressionMeanTerm_mul
 #print axioms rawPhaseProgressionMean_multiples

@@ -31,12 +31,10 @@ theorem affineCongruence_count_le_quotient {Q A d : ℕ}
     · exact Nat.div_le_div_right (by gcongr; exact (Finset.mem_range.mp hmem.1).le)
   have hinj : (S : Set ℕ).InjOn (fun n : ℕ => (Q * n + A) / d) := by
     intro n hn j hj heq
-    dsimp only at heq
-    have hn' := Nat.div_mul_cancel (Finset.mem_filter.mp hn).2
-    have hj' := Nat.div_mul_cancel (Finset.mem_filter.mp hj).2
-    rw [heq] at hn'
-    have hmul : Q * n = Q * j := by omega
-    exact Nat.eq_of_mul_eq_mul_left hQ hmul
+    apply Nat.eq_of_mul_eq_mul_left hQ
+    simpa only [Nat.div_mul_cancel (Finset.mem_filter.mp hn).2,
+      Nat.div_mul_cancel (Finset.mem_filter.mp hj).2, Nat.add_left_inj] using
+      congrArg (· * d) heq
   have hh := Finset.card_le_card_of_injOn _ hmap hinj
   simpa only [Nat.card_Icc, Nat.add_sub_cancel] using hh
 
@@ -62,12 +60,9 @@ theorem rawPhaseDivisorTerm_cesaro_bound_pos {k Q A : ℕ}
   have hdR : (0 : ℝ) < d := by exact_mod_cast Nat.pos_of_ne_zero hd
   let C := ((Finset.range N).filter (fun n => d ∣ Q * n + A)).card
   have hcard := affineCongruence_count_le_quotient hQ hA (Nat.pos_of_ne_zero hd) N
-  have hmul : C * d ≤ (Q + A) * N := by
-    have h1 := Nat.mul_le_mul_right d hcard
-    have h2 := Nat.div_mul_le_self (Q * N + A) d
-    have h3 : A ≤ A * N := by nlinarith [Nat.pos_of_ne_zero hN]
-    dsimp [C]
-    nlinarith
+  have hmul : C * d ≤ (Q + A) * N := calc
+    _ ≤ Q * N + A := (Nat.mul_le_mul_right d hcard).trans (Nat.div_mul_le_self _ _)
+    _ ≤ _ := by nlinarith [Nat.pos_of_ne_zero hN]
   have hmulR : (C : ℝ) * d ≤ ((Q + A : ℕ) : ℝ) * N := by exact_mod_cast hmul
   have heq : (∑ n ∈ Finset.range N, rawPhaseDivisorTerm k d (Q * n + A)) /
       (N : ℝ) = (C : ℝ) / ((d : ℝ) ^ k * N) := by
@@ -142,12 +137,7 @@ theorem rawPhaseProgressionMean_refine_pos {k Q A B ell : ℕ}
     (summable_rawPhaseProgressionMeanTerm_pos hk hQ B) hp hc,
     rawPhaseProgressionMean_congr k hAB]
   have he : (ell : ℝ) ≠ 0 := by exact_mod_cast hp.ne_zero
-  by_cases hB : ell ∣ B
-  · simp only [hB, ↓reduceIte, pow_succ]
-    field_simp
-    ring
-  · simp only [hB, ↓reduceIte]
-    ring
+  split_ifs <;> simp only [pow_succ] <;> field_simp <;> ring
 
 /-- Actual phase averages on a fresh-prime subprogression. -/
 theorem rawPhase_cesaro_refined_progression_pos {k Q : ℕ}
