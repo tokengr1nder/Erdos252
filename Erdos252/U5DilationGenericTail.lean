@@ -77,18 +77,12 @@ theorem eventually_genericScaledFullTail5_integral (k : ℕ)
 private theorem generic_factorial_ratio5 (n j : ℕ) (hn : 0 < n) :
     ((n - 1).factorial : ℝ) / ((n + j).factorial : ℝ) =
       1 / (n.ascFactorial (j + 1) : ℝ) := by
-  have hfac : (n - 1).factorial * n.ascFactorial (j + 1) = (n + j).factorial := by
-    simpa only [← Nat.add_assoc, Nat.add_sub_cancel] using
-      Nat.factorial_mul_ascFactorial' n (j + 1) hn
-  have hfacR : ((n - 1).factorial : ℝ) * (n.ascFactorial (j + 1) : ℝ) =
-      ((n + j).factorial : ℝ) := by exact_mod_cast hfac
-  have ha : (n.ascFactorial (j + 1) : ℝ) ≠ 0 := by
-    have hnEq : n - 1 + 1 = n := by omega
-    have hb := Nat.ascFactorial_pos (n - 1) (j + 1)
-    rw [hnEq] at hb
-    exact_mod_cast hb.ne'
+  obtain ⟨m, rfl⟩ := Nat.exists_eq_succ_of_ne_zero hn.ne'
+  have ha : ((m + 1).ascFactorial (j + 1) : ℝ) ≠ 0 := by positivity
   field_simp
-  exact hfacR
+  norm_cast
+  simpa only [Nat.succ_eq_add_one, Nat.add_sub_cancel, Nat.add_assoc, Nat.add_comm 1] using
+    Nat.factorial_mul_ascFactorial m (j + 1)
 
 private theorem generic_scaled_summand_eq_block5 (k n j : ℕ) (hn : 0 < n) :
     ((n - 1).factorial : ℝ) *
@@ -96,10 +90,7 @@ private theorem generic_scaled_summand_eq_block5 (k n j : ℕ) (hn : 0 < n) :
       genericBlockTerm5 k n j := by
   rw [Nat.add_comm j n]
   unfold genericBlockTerm5
-  calc
-    _ = (ArithmeticFunction.sigma k (n + j) : ℝ) *
-        (((n - 1).factorial : ℝ) / ((n + j).factorial : ℝ)) := by ring
-    _ = _ := by rw [generic_factorial_ratio5 n j hn]; ring
+  rw [mul_div_left_comm, generic_factorial_ratio5 n j hn, mul_one_div]
 
 theorem genericScaledFullTail5_eq_tsum_block (k n : ℕ) (hn : 0 < n) :
     genericScaledFullTail5 k n = ∑' j : ℕ, genericBlockTerm5 k n j := by
@@ -145,9 +136,8 @@ theorem genericBlockTerm5_expansion (k n j L : ℕ) :
       (ArithmeticFunction.sigma k (n + (j + 1)) : ℝ) *
         genericDilationError5 (j + 1) L ((n + (j + 1) : ℕ) : ℝ) := by
   unfold genericBlockTerm5 genericDilationError5
-  rw [genericDilationReciprocal5_centered]
-  rw [Nat.add_right_comm n 1 j]
-  ring
+  rw [genericDilationReciprocal5_centered, Nat.add_right_comm n 1 j]
+  ring_nf
 
 /-- Exact decomposition of the generic actual expansion error into the
 omitted infinite tail and the finite denominator remainders. -/
@@ -181,11 +171,7 @@ theorem genericDilationTailError5_nonneg (k n : ℕ) (hn : k + 1 ≤ n) :
 
 theorem genericDilation_sum_range_succ_eq_Icc (L : ℕ) (f : ℕ → ℝ) :
     (∑ j ∈ Finset.range L, f (j + 1)) = ∑ h ∈ Finset.Icc 1 L, f h := by
-  have hset : Finset.Icc 1 L = Finset.Ico 1 (L + 1) := by
-    ext h
-    simp only [Finset.mem_Icc, Finset.mem_Ico]
-    omega
-  rw [hset, Finset.sum_Ico_eq_sum_range]
+  rw [← Finset.Ico_add_one_right_eq_Icc, Finset.sum_Ico_eq_sum_range]
   simp only [Nat.add_sub_cancel, Nat.add_comm 1]
 
 theorem genericDilationPolynomial5_eq_Icc (h L : ℕ) (x : ℝ) :

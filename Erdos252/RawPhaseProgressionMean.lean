@@ -107,27 +107,28 @@ theorem rawPhase_uniform_truncation {k : ℕ} (hk : 2 ≤ k) :
     (Real.summable_one_div_nat_pow.mpr (by omega : 1 < k)) hbound
   exact hu.congr_right (fun n hn => (rawPhase_eq_tsum_divisorTerm k hn).symm)
 
-theorem rawPhaseDivisorTerm_cesaro {k : ℕ} (hk : 2 ≤ k) (Q A d : ℕ) :
+theorem rawPhaseDivisorTerm_cesaro_pos {k : ℕ} (hk : 0 < k) (Q A d : ℕ) :
     Tendsto (fun N : ℕ =>
       (∑ n ∈ Finset.range N, rawPhaseDivisorTerm k d (Q * n + A)) / (N : ℝ)) atTop
       (𝓝 (rawPhaseProgressionMeanTerm k Q A d)) := by
   by_cases hd : d = 0
   · subst d
-    simp [rawPhaseDivisorTerm, rawPhaseProgressionMeanTerm, zero_pow (by omega : k ≠ 0)]
+    simp [rawPhaseDivisorTerm, rawPhaseProgressionMeanTerm, zero_pow hk.ne']
   · apply periodic_nonneg_cesaro5 (Nat.pos_of_ne_zero hd)
     · intro n
       unfold rawPhaseDivisorTerm
       dsimp only
       have heq : Q * (n + d) + A = Q * n + A + Q * d := by ring
       rw [heq]
-      by_cases h : d ∣ Q * n + A
-      · have h' : d ∣ Q * n + A + Q * d := dvd_add h (dvd_mul_left d Q)
-        simp only [h, h', ↓reduceIte]
-      · have h' : ¬ d ∣ Q * n + A + Q * d :=
-          fun hh => h ((Nat.dvd_add_iff_left (dvd_mul_left d Q)).mpr hh)
-        simp only [h, h', ↓reduceIte]
+      simp only [← Nat.dvd_add_iff_left (dvd_mul_left d Q)]
     · intro n
       exact (rawPhaseDivisorTerm_bounds k d (Q * n + A)).1
+
+theorem rawPhaseDivisorTerm_cesaro {k : ℕ} (hk : 2 ≤ k) (Q A d : ℕ) :
+    Tendsto (fun N : ℕ =>
+      (∑ n ∈ Finset.range N, rawPhaseDivisorTerm k d (Q * n + A)) / (N : ℝ)) atTop
+      (𝓝 (rawPhaseProgressionMeanTerm k Q A d)) := by
+  exact rawPhaseDivisorTerm_cesaro_pos (by omega) Q A d
 
 theorem rawPhaseDivisorTerm_cesaro_bound (k Q A d N : ℕ) :
     ‖(∑ n ∈ Finset.range N, rawPhaseDivisorTerm k d (Q * n + A)) / (N : ℝ)‖ ≤
@@ -228,6 +229,7 @@ theorem rawPhase_cesaro_progression_gcd {k : ℕ} (hk : 2 ≤ k) (Q : ℕ) {A : 
 #print axioms rawPhase_eq_tsum_divisorTerm
 #print axioms rawPhase_truncation_bounds
 #print axioms rawPhase_uniform_truncation
+#print axioms rawPhaseDivisorTerm_cesaro_pos
 #print axioms rawPhaseDivisorTerm_cesaro
 #print axioms rawPhaseDivisorTerm_cesaro_bound
 #print axioms rawPhaseProgressionMeanTerm_eq_card

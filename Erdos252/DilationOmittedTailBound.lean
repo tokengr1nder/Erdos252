@@ -98,34 +98,27 @@ theorem genericDilationOmittedTerm5_le (k n r : ℕ) :
         (by positivity)
     _ = _ := by ring
 
-theorem summable_dilation_geometric_reciprocal (C : ℝ) (n : ℕ) (hn : 0 < n) :
-    Summable (fun r : ℕ => C / ((n : ℝ) + 1) ^ (r + 1)) := by
+private theorem hasSum_dilation_geometric_reciprocal
+    (C : ℝ) (n : ℕ) (hn : 0 < n) :
+    HasSum (fun r : ℕ => C / ((n : ℝ) + 1) ^ (r + 1)) (C / (n : ℝ)) := by
   have hnR : (0 : ℝ) < n := by exact_mod_cast hn
-  have hq0 : (0 : ℝ) ≤ 1 / ((n : ℝ) + 1) := by positivity
-  have hq1 : (1 : ℝ) / ((n : ℝ) + 1) < 1 :=
+  have hq : (1 : ℝ) / ((n : ℝ) + 1) < 1 :=
     (div_lt_one (by positivity)).mpr (by linarith)
-  have hs := (summable_geometric_of_lt_one hq0 hq1).mul_left (C / ((n : ℝ) + 1))
-  apply hs.congr
-  intro r
-  simp only [pow_succ, div_eq_mul_inv, mul_inv_rev]
-  ring
+  convert! HasSum.mul_left (C / ((n : ℝ) + 1))
+    (hasSum_geometric_of_lt_one (by positivity) hq) using 1
+  · funext r
+    simp only [pow_succ, div_eq_mul_inv, mul_inv_rev]
+    ring
+  · field_simp [hnR.ne']
+    ring
+
+theorem summable_dilation_geometric_reciprocal (C : ℝ) (n : ℕ) (hn : 0 < n) :
+    Summable (fun r : ℕ => C / ((n : ℝ) + 1) ^ (r + 1)) :=
+  (hasSum_dilation_geometric_reciprocal C n hn).summable
 
 theorem tsum_dilation_geometric_reciprocal (C : ℝ) (n : ℕ) (hn : 0 < n) :
-    (∑' r : ℕ, C / ((n : ℝ) + 1) ^ (r + 1)) = C / (n : ℝ) := by
-  have hnR : (0 : ℝ) < n := by exact_mod_cast hn
-  have hq0 : (0 : ℝ) ≤ 1 / ((n : ℝ) + 1) := by positivity
-  have hq1 : (1 : ℝ) / ((n : ℝ) + 1) < 1 :=
-    (div_lt_one (by positivity)).mpr (by linarith)
-  calc
-    _ = ∑' r : ℕ, (C / ((n : ℝ) + 1)) * (1 / ((n : ℝ) + 1)) ^ r := by
-      apply tsum_congr
-      intro r
-      simp only [pow_succ, div_eq_mul_inv, mul_inv_rev]
-      ring
-    _ = _ := by
-      rw [tsum_mul_left, tsum_geometric_of_lt_one hq0 hq1]
-      field_simp [hnR.ne']
-      ring
+    (∑' r : ℕ, C / ((n : ℝ) + 1) ^ (r + 1)) = C / (n : ℝ) :=
+  (hasSum_dilation_geometric_reciprocal C n hn).tsum_eq
 
 theorem genericDilationOmittedTail5_le (k n : ℕ) (hn : 0 < n) :
     genericDilationOmittedTail5 k n (k + 1) ≤

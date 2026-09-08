@@ -28,13 +28,11 @@ theorem dilationDifferenceWeight_moment {order ell : ℕ} (hell : ell < order)
       dilationDifferenceWeight order i * (z + d * (i : ℕ)) ^ ell) = 0 := by
   let P : Polynomial ℚ := (Polynomial.C z + Polynomial.C d * Polynomial.X) ^ ell
   have hlinear : (Polynomial.C z + Polynomial.C d * Polynomial.X).natDegree ≤ 1 := by
-    apply Polynomial.natDegree_add_le_of_degree_le
-    · simp
-    · exact (Polynomial.natDegree_C_mul_le d Polynomial.X).trans (by simp)
+    simpa only [Polynomial.natDegree_C_add, Polynomial.natDegree_X] using
+      Polynomial.natDegree_C_mul_le d Polynomial.X
   have hdeg : P.natDegree < order := by
-    have hh := Polynomial.natDegree_pow_le_of_le ell hlinear
-    have hle : P.natDegree ≤ ell := by simpa only [Nat.mul_one] using hh
-    exact hle.trans_lt hell
+    exact lt_of_le_of_lt (by simpa only [Nat.mul_one] using
+      Polynomial.natDegree_pow_le_of_le ell hlinear) hell
   have hh := congrFun (Polynomial.fwdDiff_iter_eq_zero_of_degree_lt hdeg) (0 : ℚ)
   rw [fwdDiff_iter_eq_sum_shift] at hh
   simpa [P, dilationDifferenceWeight, zsmul_eq_mul, nsmul_eq_mul,
@@ -67,15 +65,7 @@ theorem dilationDifference_comm (order₁ order₂ : ℕ) (j d h e : ℚ)
   unfold dilationDifference
   simp_rw [Finset.mul_sum]
   rw [Finset.sum_comm]
-  apply Finset.sum_congr rfl
-  intro i _
-  apply Finset.sum_congr rfl
-  intro k _
-  have hp : p + d * (k : ℕ) + e * (i : ℕ) = p + e * (i : ℕ) + d * (k : ℕ) := by ring
-  have ht : t + j * d * (k : ℕ) + h * e * (i : ℕ) =
-      t + h * e * (i : ℕ) + j * d * (k : ℕ) := by ring
-  rw [hp, ht]
-  ring
+  simp only [add_right_comm, mul_left_comm]
 
 theorem dilationDifference_zero (order : ℕ) (j d p t : ℚ) :
     dilationDifference order j d (fun _ _ => 0) p t = 0 := by

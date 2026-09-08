@@ -78,15 +78,8 @@ theorem tendsto_dilationGridWeightedError_mul (k A : ℕ)
         (tendsto_dilationGrid_vertex_error_mul k A hA e).const_mul
           ((dilationGridWeightInt k e : ℝ) *
             (ArithmeticFunction.sigma k (dilationGridMultiplier k e) : ℝ)))
-  apply hh.congr'
-  apply Eventually.of_forall
-  intro t
-  dsimp only
-  unfold dilationGridWeightedError
-  rw [Finset.mul_sum]
-  apply Finset.sum_congr rfl
-  intro e _
-  ring
+  simpa only [dilationGridWeightedError, Finset.mul_sum,
+    mul_left_comm, mul_assoc] using hh
 
 theorem tendsto_dilationGridWeightedError (k A : ℕ)
     (hA : DilationGridCongruences k A) :

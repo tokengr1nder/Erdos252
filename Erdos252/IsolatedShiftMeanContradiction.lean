@@ -26,16 +26,9 @@ theorem finiteWeightedCesaro5 {ι : Type*} [Fintype ι]
     Tendsto (fun N : ℕ =>
       (∑ n ∈ Finset.range N, ∑ i, c i * f i n) / (N : ℝ)) atTop
       (𝓝 (∑ i, c i * μ i)) := by
-  have hh := tendsto_finsetSum Finset.univ (fun i _ => (hμ i).const_mul (c i))
-  apply hh.congr'
-  apply Eventually.of_forall
-  intro N
-  dsimp only
-  rw [Finset.sum_comm, div_eq_mul_inv, Finset.sum_mul]
-  apply Finset.sum_congr rfl
-  intro i _
-  rw [← Finset.mul_sum]
-  ring
+  simpa only [Finset.sum_comm, div_eq_mul_inv, Finset.sum_mul,
+    ← Finset.mul_sum, mul_assoc] using
+    tendsto_finsetSum Finset.univ (fun i _ => (hμ i).const_mul (c i))
 
 /-- A convergent sequence has the same limit under normalized finite averaging. -/
 theorem sequenceCesaro5_tendsto {f : ℕ → ℝ} {a : ℝ}

@@ -49,28 +49,6 @@ theorem summable_rawPhaseDivisorTerm_of_pos (k : ℕ) {n : ℕ} (hn : 0 < n) :
   have hndvd : ¬ d ∣ n := fun h => hd (Nat.mem_divisors.mpr ⟨h, hn.ne'⟩)
   simp only [rawPhaseDivisorTerm, hndvd, ↓reduceIte]
 
-theorem rawPhaseDivisorTerm_cesaro_pos {k : ℕ} (hk : 0 < k) (Q A d : ℕ) :
-    Tendsto (fun N : ℕ =>
-      (∑ n ∈ Finset.range N, rawPhaseDivisorTerm k d (Q * n + A)) / (N : ℝ)) atTop
-      (𝓝 (rawPhaseProgressionMeanTerm k Q A d)) := by
-  by_cases hd : d = 0
-  · subst d
-    simp [rawPhaseDivisorTerm, rawPhaseProgressionMeanTerm, zero_pow hk.ne']
-  · apply periodic_nonneg_cesaro5 (Nat.pos_of_ne_zero hd)
-    · intro n
-      unfold rawPhaseDivisorTerm
-      dsimp only
-      have heq : Q * (n + d) + A = Q * n + A + Q * d := by ring
-      rw [heq]
-      by_cases h : d ∣ Q * n + A
-      · have h' : d ∣ Q * n + A + Q * d := dvd_add h (dvd_mul_left d Q)
-        simp only [h, h', ↓reduceIte]
-      · have h' : ¬ d ∣ Q * n + A + Q * d :=
-          fun hh => h ((Nat.dvd_add_iff_left (dvd_mul_left d Q)).mpr hh)
-        simp only [h, h', ↓reduceIte]
-    · intro n
-      exact (rawPhaseDivisorTerm_bounds k d (Q * n + A)).1
-
 theorem rawPhaseDivisorTerm_cesaro_bound_pos {k Q A : ℕ}
     (hk : 0 < k) (hQ : 0 < Q) (hA : 0 < A) (d N : ℕ) :
     ‖(∑ n ∈ Finset.range N, rawPhaseDivisorTerm k d (Q * n + A)) / (N : ℝ)‖ ≤
@@ -242,7 +220,6 @@ theorem rawPhase_isolated_shift_not_tendsto_zero {k : ℕ} (hk : 0 < k)
 
 #print axioms affineCongruence_count_le_quotient
 #print axioms summable_rawPhaseDivisorTerm_of_pos
-#print axioms rawPhaseDivisorTerm_cesaro_pos
 #print axioms rawPhaseDivisorTerm_cesaro_bound_pos
 #print axioms rawPhaseProgressionMeanTerm_bounds_pos
 #print axioms summable_rawPhaseProgressionMeanTerm_pos

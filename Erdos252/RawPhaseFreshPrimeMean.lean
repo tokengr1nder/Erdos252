@@ -48,12 +48,8 @@ theorem rawPhaseProgressionMean_multiples (k : ℕ) {Q ell : ℕ}
 theorem rawPhaseProgressionMeanTerm_congr (k : ℕ) {Q A B : ℕ}
     (hAB : Nat.ModEq Q B A) (d : ℕ) :
     rawPhaseProgressionMeanTerm k Q B d = rawPhaseProgressionMeanTerm k Q A d := by
-  rw [rawPhaseProgressionMeanTerm_eq_gcd, rawPhaseProgressionMeanTerm_eq_gcd]
-  have hh := hAB.dvd_iff (Nat.gcd_dvd_right d Q)
-  by_cases h : Nat.gcd d Q ∣ B
-  · simp only [h, hh.mp h, ↓reduceIte]
-  · have h' : ¬ Nat.gcd d Q ∣ A := fun ha => h (hh.mpr ha)
-    simp only [h, h', ↓reduceIte]
+  simp only [rawPhaseProgressionMeanTerm_eq_gcd,
+    hAB.dvd_iff (Nat.gcd_dvd_right d Q)]
 
 theorem rawPhaseProgressionMeanTerm_refine (k : ℕ) {Q ell : ℕ}
     (hp : ell.Prime) (hc : ell.Coprime Q) (B d : ℕ) :

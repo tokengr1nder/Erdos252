@@ -32,11 +32,7 @@ theorem dilationGridMultiplier_rat_eq_cube (k : ℕ) (e : DilationGridVertex k) 
       ∑ i : Fin k, (dilationGridSpacing k : ℚ) * ((k : ℚ) + 2) ^ i.val * (e i).val := by
   unfold dilationGridMultiplier dilationGridIndex
   push_cast
-  rw [Finset.mul_sum]
-  congr 1
-  apply Finset.sum_congr rfl
-  intro i _
-  ring
+  simp only [Finset.mul_sum, mul_comm, mul_left_comm]
 
 theorem dilationGridOffset_rat_eq_cube (k : ℕ) (e : DilationGridVertex k) :
     (dilationGridOffset k e : ℚ) =
@@ -44,10 +40,7 @@ theorem dilationGridOffset_rat_eq_cube (k : ℕ) (e : DilationGridVertex k) :
         ((k : ℚ) + 2) ^ i.val * (e i).val := by
   unfold dilationGridOffset dilationGridWeightedIndex
   push_cast
-  rw [Finset.mul_sum]
-  apply Finset.sum_congr rfl
-  intro i _
-  ring
+  simp only [Finset.mul_sum, mul_comm, mul_left_comm, mul_assoc]
 
 theorem dilationGridShift_rat_eq (k : ℕ) (e : DilationGridVertex k) {h : ℕ}
     (hh : 1 ≤ h) :
@@ -76,10 +69,7 @@ theorem dilationGrid_core_rat_cancel {k h ell : ℕ}
       (∑ a : Fin k, ((a.val : ℚ) + 1) *
         ((dilationGridSpacing k : ℚ) * ((k : ℚ) + 2) ^ a.val) * (e a).val) =
       (dilationGridOffset k e : ℚ) := by
-    rw [dilationGridOffset_rat_eq_cube]
-    apply Finset.sum_congr rfl
-    intro a _
-    ring
+    simpa only [mul_assoc] using (dilationGridOffset_rat_eq_cube k e).symm
   simp_rw [hi, ← dilationGridMultiplier_rat_eq_cube, zero_add,
     hoff, ← dilationGridShift_rat_eq _ _ hh1] at hb
   exact hb

@@ -61,15 +61,11 @@ theorem dilationGridTailIndex_coprime {k : ℕ} (hk : 0 < k) (N : ℕ)
     (hcong : N ≡ dilationGridOffset k e [MOD (dilationGridMultiplier k e) ^ 2])
     {h : ℕ} (hh : h ∈ Finset.Icc 1 (k + 1)) :
     Nat.Coprime (dilationGridMultiplier k e) (dilationGridTailIndex k N e + h) := by
-  obtain ⟨hlo, hhi⟩ := Finset.mem_Icc.mp hh
-  apply Nat.coprime_of_dvd
-  intro l hl hlp hln
-  have hli : l ∣ dilationGridTailIndex k N e :=
-    hlp.trans (dilationGridTailIndex_multiplier_dvd k N e hcong)
-  have hlh : l ∣ h := by simpa using Nat.dvd_sub hln hli
-  have hlarge := dilationGridMultiplier_prime_factor_gt_succ hk e hl hlp
-  have hsmall := Nat.le_of_dvd (show 0 < h by omega) hlh
-  omega
+  rw [Nat.coprime_add_iff_right
+    (dilationGridTailIndex_multiplier_dvd k N e hcong)]
+  exact (dilationGridMultiplier_coprime_spacing k e).coprime_dvd_right
+    (Nat.dvd_factorial (Finset.mem_Icc.mp hh).1
+      ((Finset.mem_Icc.mp hh).2.trans (dilationGridBound_succ_le hk)))
 
 /-- Divisor-sum multiplicativity for the actual common shifted numerator. -/
 theorem dilationGridTailIndex_sigma_mul {k : ℕ} (hk : 0 < k) (N : ℕ)
@@ -142,11 +138,10 @@ theorem dilationGridCongruences_add_modulus_mul (k N0 t : ℕ)
     (hN0 : DilationGridCongruences k N0) :
     DilationGridCongruences k (N0 + dilationGridModulus k * t) := by
   intro e
-  have hd := dilationGridMultiplier_sq_dvd_modulus k e
-  change (N0 + dilationGridModulus k * t) % (dilationGridMultiplier k e) ^ 2 =
-    dilationGridOffset k e % (dilationGridMultiplier k e) ^ 2
-  simpa only [Nat.ModEq, Nat.add_mod, Nat.mul_mod, Nat.mod_eq_zero_of_dvd hd, zero_mul,
-    Nat.zero_mod, Nat.add_zero, Nat.mod_mod] using hN0 e
+  simpa only [Nat.add_zero] using
+    (hN0 e).add
+      ((dvd_mul_of_dvd_left
+        (dilationGridMultiplier_sq_dvd_modulus k e) t).modEq_zero_nat)
 
 theorem dilationGridCongruences_exists (k : ℕ) :
     ∃ N0 : ℕ, DilationGridCongruences k N0 := dilationGrid_exists_crt k
