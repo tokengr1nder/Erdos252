@@ -46,3 +46,4 @@ This is an additional verification step, not a separate kernel implementation.
 The development contains no incomplete proof placeholders.
 [SHA256SUMS](SHA256SUMS) records the publication file hashes; hashes identify files,
 but do not verify the proof.
+Hashes refer to the LF-normalized file contents stored in Git.
