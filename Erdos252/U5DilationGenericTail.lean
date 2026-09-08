@@ -65,14 +65,12 @@ theorem eventually_genericScaledFullTail5_integral (k : ℕ)
     ∃ N : ℕ, ∀ n : ℕ, N ≤ n → ∃ z : ℤ, genericScaledFullTail5 k n = z := by
   obtain ⟨N, hN⟩ := eventually_factorial_mul_eq_int_of_not_irrational hx
   refine ⟨N + 1, fun n hn => ?_⟩
-  have hpred : N ≤ n - 1 := by omega
-  obtain ⟨za, hza⟩ := hN (n - 1) hpred
+  obtain ⟨za, hza⟩ := hN (n - 1) (by omega)
   obtain ⟨zp, hzp⟩ := genericPrefix5_scaled_integral k n
   refine ⟨za - zp, ?_⟩
   unfold genericScaledFullTail5
   rw [mul_sub, hza, hzp]
-  push_cast
-  ring
+  exact (Int.cast_sub za zp).symm
 
 private theorem generic_factorial_ratio5 (n j : ℕ) (hn : 0 < n) :
     ((n - 1).factorial : ℝ) / ((n + j).factorial : ℝ) =
@@ -101,10 +99,8 @@ theorem genericScaledFullTail5_eq_tsum_block (k n : ℕ) (hn : 0 < n) :
 
 theorem summable_genericBlockTerm5 (k n : ℕ) (hn : 0 < n) :
     Summable (genericBlockTerm5 k n) := by
-  have hs : Summable (fun j : ℕ =>
-      (ArithmeticFunction.sigma k (j + n) : ℝ) / ((j + n).factorial : ℝ)) :=
-    (summable_nat_add_iff n).2 (Tail.summable_sigma_div_factorial k)
-  exact (hs.mul_left ((n - 1).factorial : ℝ)).congr
+  exact (((summable_nat_add_iff n).2 (Tail.summable_sigma_div_factorial k)).mul_left
+    ((n - 1).factorial : ℝ)).congr
     (fun j => generic_scaled_summand_eq_block5 k n j hn)
 
 theorem genericBlockTerm5_nonneg (k n j : ℕ) : 0 ≤ genericBlockTerm5 k n j := by
@@ -156,10 +152,8 @@ theorem genericDilationTail5_expansion (k n : ℕ) :
 theorem genericDilationTailError5_nonneg (k n : ℕ) (hn : k + 1 ≤ n) :
     0 ≤ genericDilationTailError5 k n := by
   rw [genericDilationTailError5_eq]
-  apply add_nonneg (genericDilationOmittedTail5_nonneg k n (k + 1))
-  apply Finset.sum_nonneg
-  intro j hj
-  apply mul_nonneg (Nat.cast_nonneg _)
+  refine add_nonneg (genericDilationOmittedTail5_nonneg k n (k + 1))
+    (Finset.sum_nonneg (fun j hj => mul_nonneg (Nat.cast_nonneg _) ?_))
   exact (genericDilationError5_bounds (k + 1) (k + 1) ((n + (j + 1) : ℕ) : ℝ)
     (by exact_mod_cast (show k + 1 ≤ n + (j + 1) by omega)) (j + 1)
     (by omega) (by have := Finset.mem_range.mp hj; omega)).1

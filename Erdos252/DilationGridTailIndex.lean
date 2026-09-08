@@ -38,9 +38,8 @@ theorem dilationGridTailIndex_mul_add_offset (k N : ℕ) (e : DilationGridVertex
     (hN : dilationGridOffset k e ≤ N)
     (hcong : N ≡ dilationGridOffset k e [MOD (dilationGridMultiplier k e) ^ 2]) :
     dilationGridMultiplier k e * dilationGridTailIndex k N e + dilationGridOffset k e = N := by
-  have hsq : (dilationGridMultiplier k e) ^ 2 ∣ N - dilationGridOffset k e := hcong.symm.dvd'
   have hd : dilationGridMultiplier k e ∣ N - dilationGridOffset k e :=
-    (dvd_pow_self _ (by norm_num : (2 : ℕ) ≠ 0)).trans hsq
+    (dvd_pow_self _ (by norm_num : (2 : ℕ) ≠ 0)).trans hcong.symm.dvd'
   unfold dilationGridTailIndex
   rw [Nat.mul_comm, Nat.div_mul_cancel hd, Nat.sub_add_cancel hN]
 
@@ -122,8 +121,6 @@ theorem dilationGridTailThreshold_offset_le (k N K : ℕ)
 
 theorem dilationGridMultiplier_sq_dvd_modulus (k : ℕ) (e : DilationGridVertex k) :
     (dilationGridMultiplier k e) ^ 2 ∣ dilationGridModulus k := by
-  classical
-  unfold dilationGridModulus
   exact Finset.dvd_prod_of_mem
     (fun f : DilationGridVertex k => (dilationGridMultiplier k f) ^ 2) (Finset.mem_univ e)
 

@@ -52,32 +52,26 @@ theorem eventually_dilationGridWeightedTail_integral (k : ℕ)
     ∃ T : ℕ, ∀ N : ℕ, T ≤ N → ∃ z : ℤ, dilationGridWeightedTail k N = z := by
   obtain ⟨K, hK⟩ := eventually_genericScaledFullTail5_integral k hx
   refine ⟨dilationGridTailThreshold k K, fun N hN => ?_⟩
-  apply dilationGridWeightedTail_integral_of_vertices
-  intro e
-  apply hK
-  exact (dilationGridTailIndex_ge k N K hN e).trans (Nat.le_succ _)
+  exact dilationGridWeightedTail_integral_of_vertices k N
+    (fun e => hK _ ((dilationGridTailIndex_ge k N K hN e).trans (Nat.le_succ _)))
 
 theorem eventually_dilationGridWeightedTail_integral_on_progression (k : ℕ)
     (hx : ¬ Irrational (alpha k)) (A : ℕ) :
     ∀ᶠ t : ℕ in atTop, ∃ z : ℤ,
       dilationGridWeightedTail k (A + dilationGridModulus k * t) = z := by
   obtain ⟨T, hT⟩ := eventually_dilationGridWeightedTail_integral k hx
-  filter_upwards [eventually_ge_atTop T] with t ht
-  apply hT
-  have htN : t ≤ A + dilationGridModulus k * t := by
-    have := dilationGridModulus_pos k
-    nlinarith
-  exact ht.trans htN
+  have hlin : Tendsto (fun t : ℕ => A + dilationGridModulus k * t) atTop atTop :=
+    tendsto_atTop_mono (fun _ => Nat.le_add_left _ _)
+      (tendsto_id.const_mul_atTop' (dilationGridModulus_pos k))
+  exact hlin.eventually ((eventually_ge_atTop T).mono hT)
 
 /-- Every actual quotient index tends to infinity on a positive-step progression. -/
 theorem tendsto_dilationGridTailIndex (k Q A : ℕ) (hQ : 0 < Q)
     (e : DilationGridVertex k) :
     Tendsto (fun t : ℕ => dilationGridTailIndex k (A + Q * t) e) atTop atTop := by
-  apply tendsto_atTop.2
-  intro K
-  filter_upwards [eventually_ge_atTop (dilationGridTailThreshold k K)] with t ht
-  have htN : t ≤ A + Q * t := by nlinarith
-  exact dilationGridTailIndex_ge k _ K (ht.trans htN) e
+  exact (Nat.tendsto_div_const_atTop (dilationGridMultiplier_pos k e).ne').comp
+    ((tendsto_sub_atTop_nat (dilationGridOffset k e)).comp
+      (tendsto_atTop_mono (fun _ => Nat.le_add_left _ _) (tendsto_id.const_mul_atTop' hQ)))
 
 /-- Exact rescaling of the generic finite main term at one actual grid vertex. -/
 theorem dilationGridTailMain_rescale {k : ℕ} (hk : 0 < k) (N : ℕ)
@@ -92,10 +86,7 @@ theorem dilationGridTailMain_rescale {k : ℕ} (hk : 0 < k) (N : ℕ)
               ((N + dilationGridShift k e h : ℕ) : ℝ) ^ ell := by
   rw [genericDilationTailMain5_eq_Icc]
   simp_rw [Finset.mul_sum]
-  apply Finset.sum_congr rfl
-  intro h hh
-  apply Finset.sum_congr rfl
-  intro ell hell
+  refine Finset.sum_congr rfl (fun h hh => Finset.sum_congr rfl (fun ell _ => ?_))
   simpa only [mul_assoc, mul_left_comm, mul_div_assoc] using
     congrArg ((Nat.stirlingSecond (ell - 1) (h - 1) : ℝ) * ·)
       (dilationGridTailIndex_term_rescale hk N e hN hcong hh ell)

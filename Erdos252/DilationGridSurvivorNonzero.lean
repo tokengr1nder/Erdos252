@@ -49,12 +49,9 @@ theorem dilationGridSurvivor_not_tendsto_zero {k : ℕ} (hk : 0 < k)
     dilationGridShift_pos k i.1 (Finset.mem_Icc.mp i.2.property).1
   have hunique (i : DilationGridTerm k)
       (hi : dilationGridShift k i.1 i.2 = dilationGridShift k i₀.1 i₀.2) : i = i₀ := by
-    have hzero : dilationGridShift k i₀.1 i₀.2 = (k + 1) * dilationGridBase k :=
-      (dilationGridShift_succ_eq_iff k (dilationGridZero k)).mpr rfl
-    rw [hzero] at hi
-    have hh := (dilationGridShift_eq_succ_base_iff i.2.property).mp hi
-    apply Prod.ext hh.1
-    exact Subtype.ext hh.2
+    obtain ⟨he, hh⟩ := (dilationGridShift_eq_succ_base_iff i.2.property).mp
+      (hi.trans ((dilationGridShift_succ_eq_iff k (dilationGridZero k)).mpr rfl))
+    exact Prod.ext he (Subtype.ext hh)
   have hc : dilationGridCoefficient k i₀.1 i₀.2 ≠ 0 :=
     dilationGridCoefficient_zero_succ_ne_zero k
   have hh := rawPhase_isolated_shift_not_tendsto_zero hk

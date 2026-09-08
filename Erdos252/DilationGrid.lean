@@ -118,13 +118,9 @@ theorem dilationGridMultiplier_injective (k : ℕ) :
 /-- Each multiplier is one modulo the factorial spacing. -/
 theorem dilationGridMultiplier_coprime_spacing (k : ℕ) (e : DilationGridVertex k) :
     Nat.Coprime (dilationGridMultiplier k e) (dilationGridSpacing k) := by
-  have heq : dilationGridMultiplier k e =
-      1 + dilationGridSpacing k * (k * dilationGridBound k + dilationGridIndex k e) := by
-    unfold dilationGridMultiplier dilationGridBase
-    ring
-  rw [heq]
-  exact ((Nat.coprime_add_mul_left_right (dilationGridSpacing k) 1 _).mpr
-    (Nat.coprime_one_right _)).symm
+  simp only [dilationGridMultiplier, dilationGridBase, Nat.coprime_add_mul_left_left,
+    Nat.mul_right_comm k (dilationGridSpacing k) (dilationGridBound k),
+    Nat.coprime_add_mul_right_left, Nat.coprime_one_left_eq_true]
 
 private theorem multipliers_coprime_of_index_lt {k : ℕ} {e f : DilationGridVertex k}
     (hef : dilationGridIndex k e < dilationGridIndex k f) :

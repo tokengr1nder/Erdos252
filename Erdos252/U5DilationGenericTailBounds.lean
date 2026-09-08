@@ -145,12 +145,9 @@ theorem tendsto_genericDilationTailError5_mul (k : ℕ) :
 
 theorem tendsto_genericDilationTailError5 (k : ℕ) :
     Tendsto (genericDilationTailError5 k) atTop (𝓝 0) := by
-  apply squeeze_zero' _ _ (tendsto_genericDilationTailError5_mul k)
-  · filter_upwards [eventually_ge_atTop (k + 1)] with n hn
-    exact genericDilationTailError5_nonneg k n hn
-  · filter_upwards [eventually_ge_atTop (k + 1)] with n hn
-    exact le_mul_of_one_le_left (genericDilationTailError5_nonneg k n hn)
-      (by linarith [(Nat.cast_nonneg n : (0 : ℝ) ≤ (n : ℝ))])
+  simpa only [mul_div_cancel_left₀ _ (Nat.cast_add_one_ne_zero (R := ℝ) _)] using
+    (tendsto_genericDilationTailError5_mul k).div_atTop
+    (tendsto_atTop_add_const_right _ 1 (tendsto_natCast_atTop_atTop (R := ℝ)))
 
 #print axioms genericDilationFiniteErrorConstant5_nonneg
 #print axioms genericDilationTailError5_eq_omitted_add_finite

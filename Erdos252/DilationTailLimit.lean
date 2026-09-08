@@ -78,16 +78,11 @@ theorem tendsto_dilationGridWeightedError (k A : ℕ)
     (hA : DilationGridCongruences k A) :
     Tendsto (fun t : ℕ => dilationGridWeightedError k (A + dilationGridModulus k * t))
       atTop (𝓝 0) := by
-  have hh := (tendsto_dilationGridWeightedError_mul k A hA).div_atTop
-    (tendsto_natCast_atTop_atTop (R := ℝ) |>.comp
-      (dilationGrid_affine_tendsto_atTop (dilationGridModulus k) A (dilationGridModulus_pos k)))
-  apply hh.congr'
-  filter_upwards [eventually_ge_atTop 1] with t ht
-  have hN : ((A + dilationGridModulus k * t : ℕ) : ℝ) ≠ 0 := by
-    have hp := dilationGridModulus_pos k
-    exact_mod_cast (show A + dilationGridModulus k * t ≠ 0 by nlinarith)
-  dsimp only [Function.comp_apply]
-  field_simp
+  have hN := (tendsto_natCast_atTop_atTop (R := ℝ)).comp
+    (dilationGrid_affine_tendsto_atTop (dilationGridModulus k) A (dilationGridModulus_pos k))
+  apply ((tendsto_dilationGridWeightedError_mul k A hA).div_atTop hN).congr'
+  filter_upwards [hN.eventually_ne_atTop 0] with t ht
+  exact mul_div_cancel_left₀ _ ht
 
 theorem tendsto_dilationGridWeightedMain {k : ℕ} (hk : 0 < k) (A : ℕ)
     (hA : DilationGridCongruences k A) :
@@ -125,11 +120,8 @@ theorem tendsto_dilationGridSurvivor_of_rational {k : ℕ} (hk : 0 < k)
   have hz := eventually_dilationGridWeightedTail_zero hk hx A hA
   have hmain : Tendsto (fun t : ℕ => ((A + dilationGridModulus k * t : ℕ) : ℝ) *
       dilationGridSurvivingMain k (A + dilationGridModulus k * t)) atTop (𝓝 0) := by
-    have hs : Tendsto (fun t : ℕ =>
-        -(((A + dilationGridModulus k * t : ℕ) : ℝ) *
-          dilationGridWeightedError k (A + dilationGridModulus k * t))) atTop (𝓝 0) := by
-      simpa only [neg_zero] using (tendsto_dilationGridWeightedError_mul k A hA).neg
-    apply hs.congr'
+    rw [← neg_zero]
+    apply (tendsto_dilationGridWeightedError_mul k A hA).neg.congr'
     filter_upwards [hz, eventually_ge_atTop (dilationGridTailThreshold k 0)] with t ht hlarge
     have htN : t ≤ A + dilationGridModulus k * t := by
       have := dilationGridModulus_pos k
@@ -137,10 +129,7 @@ theorem tendsto_dilationGridSurvivor_of_rational {k : ℕ} (hk : 0 < k)
     have heq := dilationGridWeightedTail_eq_main_add_error k (A + dilationGridModulus k * t)
     rw [ht, dilationGridWeightedMain_eq_surviving hk _ (hlarge.trans htN)
       (dilationGridCongruences_add_modulus_mul k A t hA)] at heq
-    have hh : dilationGridSurvivingMain k (A + dilationGridModulus k * t) =
-        -dilationGridWeightedError k (A + dilationGridModulus k * t) := by linarith
-    rw [hh]
-    ring
+    rw [eq_neg_of_add_eq_zero_left heq.symm, mul_neg]
   have hd := tendsto_dilationGridSurvivor_rescaling_progression k
     (dilationGridModulus k) A (dilationGridModulus_pos k)
   simpa only [sub_sub_cancel, sub_zero] using hmain.sub hd

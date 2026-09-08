@@ -58,16 +58,12 @@ theorem dilationGridFiniteMain_eq_final (k N : ℕ) :
       ∑ h ∈ Finset.Icc 1 (k + 1), (Nat.stirlingSecond k (h - 1) : ℝ) *
         dilationGridCore k N h (k + 1) := by
   unfold dilationGridFiniteMain
-  rw [Finset.sum_eq_single (k + 1)]
+  rw [Finset.sum_eq_single_of_mem (k + 1) (by simp)]
   · simp only [Nat.add_sub_cancel]
   · intro ell hell hne
-    apply Finset.sum_eq_zero
-    intro h hh
-    apply dilationGrid_lower_stirling_cancel k N _ hh
-    have := Finset.mem_Icc.mp hell
-    exact Finset.mem_Icc.mpr ⟨by omega, by omega⟩
-  · intro hnot
-    exact False.elim (hnot (Finset.mem_Icc.mpr ⟨by omega, le_rfl⟩))
+    refine Finset.sum_eq_zero (fun h hh => dilationGrid_lower_stirling_cancel k N ?_ hh)
+    exact Finset.mem_Icc.mpr ⟨(Finset.mem_Icc.mp hell).1, by
+      have := (Finset.mem_Icc.mp hell).2; omega⟩
 
 /-- The last reciprocal power is the normalized raw phase divided once more. -/
 theorem dilationGrid_sigma_div_succ (k x : ℕ) :

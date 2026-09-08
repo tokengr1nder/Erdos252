@@ -50,11 +50,7 @@ theorem dilationDifference_core {order ell : ℕ} (hell : ell < order)
     dilationDifference order j d
       (fun a b => a ^ ell * g (j * a - b)) p t = 0 := by
   unfold dilationDifference
-  have hid : ∀ i : Fin (order + 1),
-      j * (p + d * (i : ℕ)) - (t + j * d * (i : ℕ)) = j * p - t := by
-    intro i
-    ring
-  simp_rw [hid, ← mul_assoc]
+  simp_rw [mul_add, mul_assoc, add_sub_add_right_eq_sub, ← mul_assoc]
   rw [← Finset.sum_mul, dilationDifferenceWeight_moment hell, zero_mul]
 
 /-- Tilted differences commute, including when their orders are different. -/
