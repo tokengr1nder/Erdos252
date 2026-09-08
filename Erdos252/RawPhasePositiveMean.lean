@@ -139,15 +139,8 @@ theorem summable_rawPhaseProgressionMeanTerm_multiples_pos {k Q : ℕ}
     (hk : 0 < k) (hQ : 0 < Q) (A ell : ℕ) :
     Summable (fun d : ℕ =>
       if ell ∣ d then rawPhaseProgressionMeanTerm k Q A d else 0) := by
-  apply Summable.of_nonneg_of_le _ _ (summable_rawPhaseProgressionMeanTerm_pos hk hQ A)
-  · intro d
-    split_ifs
-    · exact (rawPhaseProgressionMeanTerm_bounds_pos hQ A d).1
-    · exact le_rfl
-  · intro d
-    split_ifs
-    · exact le_rfl
-    · exact (rawPhaseProgressionMeanTerm_bounds_pos hQ A d).1
+  exact (summable_rawPhaseProgressionMeanTerm_pos hk hQ A).summable_of_eq_zero_or_self
+    (fun d => by by_cases h : ell ∣ d <;> simp [h])
 
 /-- The exact fresh-prime refinement factor holds in every positive degree. -/
 theorem rawPhaseProgressionMean_refine_pos {k Q A B ell : ℕ}
@@ -156,22 +149,9 @@ theorem rawPhaseProgressionMean_refine_pos {k Q A B ell : ℕ}
     rawPhaseProgressionMean k (Q * ell) B =
       rawPhaseProgressionMean k Q A *
         (1 - 1 / (ell : ℝ) ^ (k + 1) + if ell ∣ B then 1 / (ell : ℝ) ^ k else 0) := by
-  have hs := summable_rawPhaseProgressionMeanTerm_pos hk hQ B
-  have hm := summable_rawPhaseProgressionMeanTerm_multiples_pos hk hQ B ell
-  have heq : rawPhaseProgressionMean k (Q * ell) B =
-      rawPhaseProgressionMean k Q B +
-        (if ell ∣ B then (ell : ℝ) - 1 else -1) *
-          (rawPhaseProgressionMean k Q B / (ell : ℝ) ^ (k + 1)) := by
-    calc
-      _ = ∑' d : ℕ, (rawPhaseProgressionMeanTerm k Q B d +
-          (if ell ∣ B then (ell : ℝ) - 1 else -1) *
-            (if ell ∣ d then rawPhaseProgressionMeanTerm k Q B d else 0)) :=
-        tsum_congr (rawPhaseProgressionMeanTerm_refine k hp hc B)
-      _ = _ := by
-        rw [hs.tsum_add (hm.mul_left _), tsum_mul_left,
-          rawPhaseProgressionMean_multiples k hp.pos hc]
-        rfl
-  rw [heq, rawPhaseProgressionMean_congr k hAB]
+  rw [rawPhaseProgressionMean_refine_of_summable
+    (summable_rawPhaseProgressionMeanTerm_pos hk hQ B) hp hc,
+    rawPhaseProgressionMean_congr k hAB]
   have he : (ell : ℝ) ≠ 0 := by exact_mod_cast hp.ne_zero
   by_cases hB : ell ∣ B
   · simp only [hB, ↓reduceIte, pow_succ]

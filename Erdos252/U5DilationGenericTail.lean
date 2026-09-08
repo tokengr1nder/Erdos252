@@ -94,14 +94,9 @@ private theorem generic_scaled_summand_eq_block5 (k n j : ℕ) (hn : 0 < n) :
 
 theorem genericScaledFullTail5_eq_tsum_block (k n : ℕ) (hn : 0 < n) :
     genericScaledFullTail5 k n = ∑' j : ℕ, genericBlockTerm5 k n j := by
-  have hsplit := (Tail.summable_sigma_div_factorial k).sum_add_tsum_nat_add n
-  have htail : alpha k - genericPrefix5 k n =
-      ∑' j : ℕ, (ArithmeticFunction.sigma k (j + n) : ℝ) /
-        ((j + n).factorial : ℝ) := by
-    unfold alpha genericPrefix5
-    linarith
-  unfold genericScaledFullTail5
-  rw [htail, ← tsum_mul_left]
+  unfold genericScaledFullTail5 alpha genericPrefix5
+  rw [← (Tail.summable_sigma_div_factorial k).sum_add_tsum_nat_add n,
+    add_sub_cancel_left, ← tsum_mul_left]
   exact tsum_congr (fun j => generic_scaled_summand_eq_block5 k n j hn)
 
 theorem summable_genericBlockTerm5 (k n : ℕ) (hn : 0 < n) :
@@ -192,12 +187,8 @@ theorem genericDilationTailMain5_eq_Icc (k n : ℕ) :
   rw [genericDilation_sum_range_succ_eq_Icc (k + 1) (fun h =>
     (ArithmeticFunction.sigma k (n + h) : ℝ) *
       genericDilationPolynomial5 h (k + 1) ((n + h : ℕ) : ℝ))]
-  apply Finset.sum_congr rfl
-  intro h hh
-  rw [genericDilationPolynomial5_eq_Icc, Finset.mul_sum]
-  apply Finset.sum_congr rfl
-  intro ell hell
-  ring
+  simp_rw [genericDilationPolynomial5_eq_Icc, Finset.mul_sum]
+  simp only [div_eq_mul_inv, mul_comm, mul_assoc]
 
 #print axioms genericPrefix5_at_five
 #print axioms genericScaledFullTail5_at_five

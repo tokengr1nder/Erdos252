@@ -175,8 +175,8 @@ private theorem genericDilation_ascFactorial_cast (n h : ℕ) :
   induction h with
   | zero => simp
   | succ h ih =>
-      rw [Nat.ascFactorial_succ, Nat.cast_mul, ih, Finset.prod_range_succ]
-      push_cast
+      simp only [Nat.ascFactorial_succ, Nat.cast_mul, ih, Finset.prod_range_succ,
+        Nat.cast_add, Nat.cast_one]
       ring
 
 /-- The generic descending product is exactly the actual ascending-factorial
@@ -191,11 +191,8 @@ theorem genericDilationReciprocal5_centered (n h : ℕ) :
   apply Finset.prod_congr rfl
   intro j hj
   have hjh := Finset.mem_range.mp hj
-  have hsum : h = (h - 1 - j) + j + 1 := by omega
-  have hsumR : (h : ℝ) = ((h - 1 - j : ℕ) : ℝ) + (j : ℝ) + 1 :=
-    by exact_mod_cast hsum
-  push_cast
-  linarith
+  push_cast [Nat.cast_sub (by omega : j ≤ h - 1), Nat.cast_sub (by omega : 1 ≤ h)]
+  ring
 
 /-- The arbitrary-order expansion bound for the actual natural factorial denominator. -/
 theorem genericDilationDenominator5_bounds (n h H L : ℕ)

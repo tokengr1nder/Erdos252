@@ -63,11 +63,9 @@ theorem isolatedShift5_exists_two_residues {ι : Type*}
     affineCongruence5_exists_residue_of_coprime (A := A + r i₀) hL hcop
   have hhit : L ∣ Q * v₁ + A + r i₀ := by
     simpa only [Nat.add_assoc] using hv₁
-  refine ⟨v₀, hv₀lt, v₁, hv₁lt, hv₀, hhit, ?_, ?_⟩
-  · intro i
-    exact isolatedShift5_not_dvd_add hv₀ (hrpos i) (hrL i)
-  · intro i
-    exact isolatedShift5_dvd_add_iff hhit (hrL i) (hrL i₀)
+  exact ⟨v₀, hv₀lt, v₁, hv₁lt, hv₀, hhit,
+    fun i => isolatedShift5_not_dvd_add hv₀ (hrpos i) (hrL i),
+    fun i => isolatedShift5_dvd_add_iff hhit (hrL i) (hrL i₀)⟩
 
 /-- Every finite family of positive shifts has a fresh prime and two normalized
 refinements, one missing all shifts and one hitting exactly a prescribed shift. -/

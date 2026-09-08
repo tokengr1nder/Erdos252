@@ -92,23 +92,17 @@ theorem dilationGridTailIndex_term_rescale {k : ℕ} (hk : 0 < k) (N : ℕ)
           ((N + dilationGridShift k e h : ℕ) : ℝ) ^ ell := by
   have hp : (dilationGridMultiplier k e : ℝ) ≠ 0 :=
     Nat.cast_ne_zero.mpr (dilationGridMultiplier_pos k e).ne'
-  have hs : (ArithmeticFunction.sigma k (N + dilationGridShift k e h) : ℝ) =
-      (ArithmeticFunction.sigma k (dilationGridMultiplier k e) : ℝ) *
-        (ArithmeticFunction.sigma k (dilationGridTailIndex k N e + h) : ℝ) := by
-    exact_mod_cast (dilationGridTailIndex_sigma_mul hk N e hN hcong hh).symm
-  rw [hs, ← dilationGridTailIndex_factorization k N e hN hcong (Finset.mem_Icc.mp hh).1,
-    Nat.cast_mul, mul_pow]
-  rw [mul_div_mul_left _ _ (pow_ne_zero ell hp), mul_div_assoc]
+  rw [← dilationGridTailIndex_factorization k N e hN hcong (Finset.mem_Icc.mp hh).1,
+    ArithmeticFunction.isMultiplicative_sigma.map_mul_of_coprime
+      (dilationGridTailIndex_coprime hk N e hcong hh)]
+  push_cast
+  rw [mul_pow, mul_div_mul_left _ _ (pow_ne_zero ell hp), mul_div_assoc]
 
 theorem dilationGridTailThreshold_vertex_le (k K : ℕ) (e : DilationGridVertex k) :
     dilationGridOffset k e + dilationGridMultiplier k e * K ≤ dilationGridTailThreshold k K := by
-  have ho := (dilationGridOffset_lt_base k e).le
-  have hp : dilationGridMultiplier k e ≤
-      dilationGridBase k + dilationGridSpacing k * dilationGridBound k := by
-    unfold dilationGridMultiplier
-    exact Nat.add_le_add_left
-      (Nat.mul_le_mul_left (dilationGridSpacing k) (dilationGridIndex_le k e)) _
-  exact Nat.add_le_add ho (Nat.mul_le_mul_right K hp)
+  exact Nat.add_le_add (dilationGridOffset_lt_base k e).le
+    (Nat.mul_le_mul_right K (Nat.add_le_add_left
+      (Nat.mul_le_mul_left (dilationGridSpacing k) (dilationGridIndex_le k e)) _))
 
 /-- One explicit threshold makes all quotient indices simultaneously large. -/
 theorem dilationGridTailIndex_ge (k N K : ℕ)

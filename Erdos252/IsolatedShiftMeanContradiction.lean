@@ -53,18 +53,9 @@ theorem isolatedShift5_weighted_mean_difference {ι : Type*} [Fintype ι]
     (∑ i, c i * (μ i * (β + if r i = r i₀ then κ else 0))) -
         (∑ i, c i * (μ i * β)) = c i₀ * μ i₀ * κ := by
   classical
-  rw [← Finset.sum_sub_distrib]
-  calc
-    _ = ∑ i, if i = i₀ then c i₀ * μ i₀ * κ else 0 := by
-      apply Finset.sum_congr rfl
-      intro i _
-      by_cases hi : i = i₀
-      · subst i
-        simp only [↓reduceIte]
-        ring
-      · have hr : r i ≠ r i₀ := fun h => hi (hunique i h)
-        simp only [hr, hi, ↓reduceIte, add_zero, sub_self]
-    _ = _ := by simp
+  have hr (i : ι) : r i = r i₀ ↔ i = i₀ := ⟨hunique i, fun h => h ▸ rfl⟩
+  simp_rw [mul_add, Finset.sum_add_distrib, add_sub_cancel_left, mul_ite, mul_zero, hr]
+  simp [mul_assoc]
 
 /-- Two explicitly separated refinement means rule out a zero limit of the
 original weighted sequence. No arithmetic distribution theorem is assumed
@@ -83,18 +74,10 @@ theorem isolatedShift5_not_tendsto_zero {ι : Type*} [Fintype ι]
     ¬ Tendsto (fun n : ℕ => ∑ i, c i * f (Q * n + A + r i))
       atTop (𝓝 0) := by
   intro hz
-  have hzero₀ := sequenceCesaro5_subprogression_tendsto hz hL v₀
-  have hzero₁ := sequenceCesaro5_subprogression_tendsto hz hL v₁
-  have hweighted₀ := finiteWeightedCesaro5
-    (fun i n => f (Q * (L * n + v₀) + A + r i)) c
-    (fun i => μ i * β) hmean₀
-  have hweighted₁ := finiteWeightedCesaro5
-    (fun i n => f (Q * (L * n + v₁) + A + r i)) c
-    (fun i => μ i * (β + if r i = r i₀ then κ else 0)) hmean₁
-  have heq₀ : (∑ i, c i * (μ i * β)) = 0 :=
-    tendsto_nhds_unique hweighted₀ hzero₀
-  have heq₁ : (∑ i, c i * (μ i * (β + if r i = r i₀ then κ else 0))) = 0 :=
-    tendsto_nhds_unique hweighted₁ hzero₁
+  have heq₀ := tendsto_nhds_unique (finiteWeightedCesaro5 _ c _ hmean₀)
+    (sequenceCesaro5_subprogression_tendsto hz hL v₀)
+  have heq₁ := tendsto_nhds_unique (finiteWeightedCesaro5 _ c _ hmean₁)
+    (sequenceCesaro5_subprogression_tendsto hz hL v₁)
   have hdiff := isolatedShift5_weighted_mean_difference r c μ i₀ β κ hunique
   rw [heq₀, heq₁, sub_self] at hdiff
   exact (mul_ne_zero (mul_ne_zero hc hμ.ne') hκ.ne') hdiff.symm

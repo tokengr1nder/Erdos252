@@ -67,39 +67,26 @@ theorem tendsto_dilationGridWeightedError_mul (k A : ℕ)
     (hA : DilationGridCongruences k A) :
     Tendsto (fun t : ℕ => ((A + dilationGridModulus k * t : ℕ) : ℝ) *
       dilationGridWeightedError k (A + dilationGridModulus k * t)) atTop (𝓝 0) := by
-  have hh : Tendsto (fun t : ℕ => ∑ e : DilationGridVertex k,
-      ((dilationGridWeightInt k e : ℝ) *
-        (ArithmeticFunction.sigma k (dilationGridMultiplier k e) : ℝ)) *
-      (((A + dilationGridModulus k * t : ℕ) : ℝ) *
-        genericDilationTailError5 k (dilationGridTailIndex k (A + dilationGridModulus k * t) e)))
-      atTop (𝓝 0) := by
-    simpa only [mul_zero, Finset.sum_const_zero] using
-      tendsto_finsetSum (Finset.univ : Finset (DilationGridVertex k)) (fun e _ =>
-        (tendsto_dilationGrid_vertex_error_mul k A hA e).const_mul
-          ((dilationGridWeightInt k e : ℝ) *
-            (ArithmeticFunction.sigma k (dilationGridMultiplier k e) : ℝ)))
   simpa only [dilationGridWeightedError, Finset.mul_sum,
-    mul_left_comm, mul_assoc] using hh
+    mul_left_comm, mul_assoc, mul_zero, Finset.sum_const_zero] using
+    tendsto_finsetSum (Finset.univ : Finset (DilationGridVertex k)) (fun e _ =>
+      (tendsto_dilationGrid_vertex_error_mul k A hA e).const_mul
+        ((dilationGridWeightInt k e : ℝ) *
+          (ArithmeticFunction.sigma k (dilationGridMultiplier k e) : ℝ)))
 
 theorem tendsto_dilationGridWeightedError (k A : ℕ)
     (hA : DilationGridCongruences k A) :
     Tendsto (fun t : ℕ => dilationGridWeightedError k (A + dilationGridModulus k * t))
       atTop (𝓝 0) := by
-  have hi : Tendsto (fun t : ℕ => (1 : ℝ) / ((A + dilationGridModulus k * t : ℕ) : ℝ))
-      atTop (𝓝 0) := by
-    simpa only [Function.comp_def] using
-      (tendsto_one_div_atTop_nhds_zero_nat (𝕜 := ℝ)).comp
-        (dilationGrid_affine_tendsto_atTop (dilationGridModulus k) A (dilationGridModulus_pos k))
-  have hh : Tendsto (fun t : ℕ =>
-      (((A + dilationGridModulus k * t : ℕ) : ℝ) *
-        dilationGridWeightedError k (A + dilationGridModulus k * t)) *
-          (1 / ((A + dilationGridModulus k * t : ℕ) : ℝ))) atTop (𝓝 0) := by
-    simpa only [mul_zero] using (tendsto_dilationGridWeightedError_mul k A hA).mul hi
+  have hh := (tendsto_dilationGridWeightedError_mul k A hA).div_atTop
+    (tendsto_natCast_atTop_atTop (R := ℝ) |>.comp
+      (dilationGrid_affine_tendsto_atTop (dilationGridModulus k) A (dilationGridModulus_pos k)))
   apply hh.congr'
   filter_upwards [eventually_ge_atTop 1] with t ht
   have hN : ((A + dilationGridModulus k * t : ℕ) : ℝ) ≠ 0 := by
     have hp := dilationGridModulus_pos k
     exact_mod_cast (show A + dilationGridModulus k * t ≠ 0 by nlinarith)
+  dsimp only [Function.comp_apply]
   field_simp
 
 theorem tendsto_dilationGridWeightedMain {k : ℕ} (hk : 0 < k) (A : ℕ)

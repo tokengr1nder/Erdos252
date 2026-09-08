@@ -48,11 +48,7 @@ private theorem sum_digits_eq_ofDigits (b n : ℕ) (e : Fin n → ℕ) :
   | succ n ih =>
       rw [Fin.sum_univ_succ, List.ofFn_succ, Nat.ofDigits, ← ih]
       simp only [Fin.val_zero, pow_zero, mul_one, Fin.val_succ, pow_succ]
-      rw [Finset.mul_sum]
-      congr 1
-      apply Finset.sum_congr rfl
-      intro j _
-      ring
+      simp only [Finset.mul_sum, mul_comm, mul_left_comm, Nat.cast_id]
 
 /-- The index is the usual fixed-length radix encoding. -/
 theorem dilationGridIndex_eq_ofDigits (k : ℕ) (e : DilationGridVertex k) :
@@ -69,16 +65,13 @@ theorem dilationGridBound_succ_le {k : ℕ} (hk : 1 ≤ k) :
 theorem dilationGridSpacing_pos (k : ℕ) : 0 < dilationGridSpacing k := Nat.factorial_pos _
 
 theorem dilationGridBase_pos (k : ℕ) : 0 < dilationGridBase k := by
-  unfold dilationGridBase
-  omega
+  exact Nat.add_pos_left Nat.one_pos _
 
 /-- Every symbolic radix index lies in the prescribed finite interval. -/
 theorem dilationGridIndex_le (k : ℕ) (e : DilationGridVertex k) :
     dilationGridIndex k e ≤ dilationGridBound k := by
-  have hd : ∀ d ∈ List.ofFn (fun j => (e j).val), d < k + 2 := by
-    intro d hd
-    obtain ⟨j, rfl⟩ := List.mem_ofFn.mp hd
-    exact (e j).isLt
+  have hd : ∀ d ∈ List.ofFn (fun j => (e j).val), d < k + 2 :=
+    List.forall_mem_ofFn_iff.mpr (fun j => (e j).isLt)
   have hh := Nat.ofDigits_lt_base_pow_length (by omega : 1 < k + 2) hd
   rw [List.length_ofFn, ← dilationGridIndex_eq_ofDigits] at hh
   unfold dilationGridBound
@@ -89,10 +82,8 @@ theorem dilationGridIndex_injective (k : ℕ) : Function.Injective (dilationGrid
   intro e f hef
   rw [dilationGridIndex_eq_ofDigits, dilationGridIndex_eq_ofDigits] at hef
   have hdigits (g : DilationGridVertex k) :
-      ∀ d ∈ List.ofFn (fun j => (g j).val), d < k + 2 := by
-    intro d hd
-    obtain ⟨j, rfl⟩ := List.mem_ofFn.mp hd
-    exact (g j).isLt
+      ∀ d ∈ List.ofFn (fun j => (g j).val), d < k + 2 :=
+    List.forall_mem_ofFn_iff.mpr (fun j => (g j).isLt)
   have hlist := Nat.ofDigits_inj_of_len_eq (by omega : 1 < k + 2)
     (L1 := List.ofFn (fun j => (e j).val))
     (L2 := List.ofFn (fun j => (f j).val))
@@ -116,17 +107,13 @@ theorem dilationGridWeightedIndex_le (k : ℕ) (e : DilationGridVertex k) :
 
 theorem dilationGridMultiplier_pos (k : ℕ) (e : DilationGridVertex k) :
     0 < dilationGridMultiplier k e := by
-  unfold dilationGridMultiplier
-  have := dilationGridBase_pos k
-  omega
+  exact Nat.add_pos_left (dilationGridBase_pos k) _
 
 theorem dilationGridMultiplier_injective (k : ℕ) :
     Function.Injective (dilationGridMultiplier k) := by
   intro e f hef
-  apply dilationGridIndex_injective k
-  unfold dilationGridMultiplier at hef
-  have hD := dilationGridSpacing_pos k
-  nlinarith
+  exact dilationGridIndex_injective k
+    (Nat.eq_of_mul_eq_mul_left (dilationGridSpacing_pos k) (Nat.add_left_cancel hef))
 
 /-- Each multiplier is one modulo the factorial spacing. -/
 theorem dilationGridMultiplier_coprime_spacing (k : ℕ) (e : DilationGridVertex k) :
@@ -147,10 +134,8 @@ private theorem multipliers_coprime_of_index_lt {k : ℕ} {e f : DilationGridVer
   have hlD : Nat.Coprime l (dilationGridSpacing k) :=
     (dilationGridMultiplier_coprime_spacing k e).coprime_dvd_left hle
   have hd := Nat.dvd_sub hlf hle
-  have heq : dilationGridMultiplier k f - dilationGridMultiplier k e =
-      dilationGridSpacing k * (dilationGridIndex k f - dilationGridIndex k e) := by
-    simp [dilationGridMultiplier, Nat.mul_sub_left_distrib, Nat.add_sub_add_left]
-  rw [heq] at hd
+  simp only [dilationGridMultiplier, Nat.add_sub_add_left,
+    ← Nat.mul_sub_left_distrib] at hd
   have hdiff : l ∣ dilationGridIndex k f - dilationGridIndex k e := hlD.dvd_mul_left.mp hd
   have hlF : l ≤ dilationGridBound k :=
     (Nat.le_of_dvd (Nat.sub_pos_of_lt hef) hdiff).trans
@@ -190,13 +175,8 @@ theorem dilationGridOffset_lt_base (k : ℕ) (e : DilationGridVertex k) :
 
 theorem dilationGridShift_pos (k : ℕ) (e : DilationGridVertex k) {h : ℕ} (hh : 1 ≤ h) :
     0 < dilationGridShift k e h := by
-  have ht := dilationGridOffset_lt_base k e
-  have hp : dilationGridBase k ≤ dilationGridMultiplier k e := by
-    unfold dilationGridMultiplier
-    omega
-  have hmul := Nat.mul_le_mul_right (dilationGridMultiplier k e) hh
-  unfold dilationGridShift
-  omega
+  exact Nat.sub_pos_of_lt ((dilationGridOffset_lt_base k e).trans_le
+    ((Nat.le_add_right _ _).trans (Nat.le_mul_of_pos_left _ hh)))
 
 /-- Natural subtraction in the shift expression is exact. -/
 theorem dilationGridShift_add_offset (k : ℕ) (e : DilationGridVertex k) {h : ℕ}
@@ -234,10 +214,7 @@ theorem dilationGridShift_succ_eq_iff (k : ℕ) (e : DilationGridVertex k) :
     rw [he] at hs
     unfold dilationGridOffset dilationGridMultiplier at hs
     have hmul : dilationGridSpacing k * dilationGridIndex k e = 0 := by nlinarith
-    have hI : dilationGridIndex k e = 0 := by
-      rcases Nat.mul_eq_zero.mp hmul with hD | hI
-      · exact False.elim ((dilationGridSpacing_pos k).ne' hD)
-      · exact hI
+    have hI := (Nat.mul_eq_zero.mp hmul).resolve_left (dilationGridSpacing_pos k).ne'
     apply dilationGridIndex_injective k
     rwa [dilationGridIndex_zero]
   · rintro rfl
@@ -252,16 +229,11 @@ theorem dilationGrid_exists_crt (k : ℕ) :
     ∃ N0 : ℕ, ∀ e : DilationGridVertex k,
       N0 ≡ dilationGridOffset k e [MOD (dilationGridMultiplier k e) ^ 2] := by
   classical
-  have hn : ∀ e ∈ (Finset.univ : Finset (DilationGridVertex k)),
-      (dilationGridMultiplier k e) ^ 2 ≠ 0 :=
-    fun e _ => (pow_pos (dilationGridMultiplier_pos k e) 2).ne'
-  have hcop : Set.Pairwise (Finset.univ : Finset (DilationGridVertex k))
-      (fun e f => Nat.Coprime ((dilationGridMultiplier k e) ^ 2)
-        ((dilationGridMultiplier k f) ^ 2)) := by
-    intro e _ f _ hef
-    exact ((dilationGridMultiplier_pairwise_coprime k hef).pow_left 2).pow_right 2
   let N0 := Nat.chineseRemainderOfFinset (dilationGridOffset k)
-    (fun e => (dilationGridMultiplier k e) ^ 2) Finset.univ hn hcop
+    (fun e => (dilationGridMultiplier k e) ^ 2) Finset.univ
+    (fun e _ => (pow_pos (dilationGridMultiplier_pos k e) 2).ne')
+    (fun e _ f _ hef =>
+      ((dilationGridMultiplier_pairwise_coprime k hef).pow_left 2).pow_right 2)
   exact ⟨N0, fun e => N0.property e (Finset.mem_univ e)⟩
 
 #print axioms dilationGridIndex_eq_ofDigits

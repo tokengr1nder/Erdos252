@@ -52,51 +52,27 @@ theorem dilation_sigma_le_pow_succ_div_sqrt (k n m : ℕ)
     (hnm : n + 1 ≤ m) :
     (ArithmeticFunction.sigma k m : ℝ) ≤
       (64 / Real.sqrt ((n : ℝ) + 1)) * (m : ℝ) ^ (k + 1) := by
-  have hm : 0 < m := by omega
-  have hmR : (0 : ℝ) < m := by exact_mod_cast hm
-  have hroot : 0 < Real.sqrt ((n : ℝ) + 1) := Real.sqrt_pos.mpr (by positivity)
-  have hsq := Real.sq_sqrt hmR.le
-  have hrootle : Real.sqrt ((n : ℝ) + 1) ≤ Real.sqrt (m : ℝ) := by
-    apply Real.sqrt_le_sqrt
-    exact_mod_cast hnm
-  have hprod : Real.sqrt (m : ℝ) * Real.sqrt ((n : ℝ) + 1) ≤ m := by
-    calc
-      _ ≤ Real.sqrt (m : ℝ) * Real.sqrt (m : ℝ) :=
-        mul_le_mul_of_nonneg_left hrootle (Real.sqrt_nonneg _)
-      _ = _ := by nlinarith only [hsq]
   calc
     _ ≤ 64 * (m : ℝ) ^ k * Real.sqrt (m : ℝ) :=
-      sigma_real_le_sixty_four_pow_sqrt k m hm
-    _ ≤ (64 / Real.sqrt ((n : ℝ) + 1)) * (m : ℝ) ^ (k + 1) := by
-      rw [div_mul_eq_mul_div]
-      apply (le_div_iff₀ hroot).mpr
-      rw [pow_succ]
-      have hh := mul_le_mul_of_nonneg_left hprod
-        (show 0 ≤ 64 * (m : ℝ) ^ k by positivity)
-      convert hh using 1 <;> ring
+      sigma_real_le_sixty_four_pow_sqrt k m (by omega)
+    _ = 64 * (m : ℝ) ^ (k + 1) / Real.sqrt (m : ℝ) := by
+      simp only [pow_succ, mul_assoc, mul_div_assoc, Real.div_sqrt]
+    _ ≤ 64 * (m : ℝ) ^ (k + 1) / Real.sqrt ((n : ℝ) + 1) := by
+      gcongr
+      exact_mod_cast hnm
+    _ = _ := by ring
 
 /-- Every omitted actual term obeys a fixed geometric majorant. -/
 theorem genericDilationOmittedTerm5_le (k n r : ℕ) :
     genericBlockTerm5 k (n + 1) (r + (k + 1)) ≤
       (64 / Real.sqrt ((n : ℝ) + 1)) * ((k + 1 : ℕ) : ℝ) ^ (k + 1) /
         ((n : ℝ) + 1) ^ (r + 1) := by
-  have hden : (0 : ℝ) < ((n + 1).ascFactorial (r + (k + 1) + 1) : ℝ) := by
-    exact_mod_cast Nat.ascFactorial_pos n _
   unfold genericBlockTerm5
-  calc
-    _ ≤ ((64 / Real.sqrt ((n : ℝ) + 1)) *
-        ((n + 1 + (r + (k + 1)) : ℕ) : ℝ) ^ (k + 1)) /
-          ((n + 1).ascFactorial (r + (k + 1) + 1) : ℝ) :=
-      (div_le_div_iff_of_pos_right hden).mpr
-        (dilation_sigma_le_pow_succ_div_sqrt k n _ (by omega))
-    _ = (64 / Real.sqrt ((n : ℝ) + 1)) *
-        (((n + 1 + (r + (k + 1)) : ℕ) : ℝ) ^ (k + 1) /
-          ((n + 1).ascFactorial (r + (k + 1) + 1) : ℝ)) := by ring
-    _ ≤ (64 / Real.sqrt ((n : ℝ) + 1)) *
-        (((k + 1 : ℕ) : ℝ) ^ (k + 1) / ((n : ℝ) + 1) ^ (r + 1)) :=
-      mul_le_mul_of_nonneg_left (dilation_polynomial_block_le (k + 1) n r (by omega))
-        (by positivity)
-    _ = _ := by ring
+  refine (div_le_div_of_nonneg_right
+    (dilation_sigma_le_pow_succ_div_sqrt k n _ (by omega)) (Nat.cast_nonneg _)).trans ?_
+  simpa only [mul_div_assoc] using
+    mul_le_mul_of_nonneg_left (dilation_polynomial_block_le (k + 1) n r (by omega))
+      (show 0 ≤ (64 : ℝ) / Real.sqrt ((n : ℝ) + 1) by positivity)
 
 private theorem hasSum_dilation_geometric_reciprocal
     (C : ℝ) (n : ℕ) (hn : 0 < n) :
@@ -125,14 +101,9 @@ theorem genericDilationOmittedTail5_le (k n : ℕ) (hn : 0 < n) :
       ((64 / Real.sqrt ((n : ℝ) + 1)) * ((k + 1 : ℕ) : ℝ) ^ (k + 1)) / (n : ℝ) := by
   have hs : Summable (fun r : ℕ => genericBlockTerm5 k (n + 1) (r + (k + 1))) :=
     (summable_nat_add_iff (k + 1)).2 (summable_genericBlockTerm5 k (n + 1) (by omega))
-  unfold genericDilationOmittedTail5
-  calc
-    _ ≤ ∑' r : ℕ,
-        ((64 / Real.sqrt ((n : ℝ) + 1)) * ((k + 1 : ℕ) : ℝ) ^ (k + 1)) /
-          ((n : ℝ) + 1) ^ (r + 1) :=
-      hs.tsum_le_tsum (genericDilationOmittedTerm5_le k n)
-        (summable_dilation_geometric_reciprocal _ n hn)
-    _ = _ := tsum_dilation_geometric_reciprocal _ n hn
+  simpa only [genericDilationOmittedTail5, tsum_dilation_geometric_reciprocal _ n hn] using
+    hs.tsum_le_tsum (genericDilationOmittedTerm5_le k n)
+      (summable_dilation_geometric_reciprocal _ n hn)
 
 /-- The actual omitted tail is negligible after scaling by the base index. -/
 theorem genericDilationOmittedTail5_scaled_le (k n : ℕ) (hn : 0 < n) :

@@ -51,14 +51,8 @@ theorem iteratedDilationDifference_eq_cube (order : ℕ) {n : ℕ}
       simp_rw [ih (fun i : Fin n => j i.succ) (fun i : Fin n => d i.succ)]
       rw [sum_dilation_cube_succ]
       simp_rw [Finset.mul_sum]
-      apply Finset.sum_congr rfl
-      intro a _
-      apply Finset.sum_congr rfl
-      intro e _
       simp only [dilationCubeWeight, Fin.prod_univ_succ, Fin.sum_univ_succ,
-        Fin.cons_zero, Fin.cons_succ]
-      rw [← add_assoc, ← add_assoc]
-      ring
+        Fin.cons_zero, Fin.cons_succ, add_assoc, mul_assoc]
 
 /-- A matching coordinate kills each core of degree below the symbolic order. -/
 theorem dilationCube_core {order n ell : ℕ}
@@ -70,9 +64,7 @@ theorem dilationCube_core {order n ell : ℕ}
           (t + ∑ a : Fin n, j a * d a * (e a : ℕ))))) = 0 := by
   rw [← iteratedDilationDifference_eq_cube order j d
     (fun p t => p ^ ell * g (j i * p - t)) p t]
-  have hmem : (j i, d i) ∈ List.ofFn (fun a => (j a, d a)) :=
-    List.mem_ofFn.mpr ⟨i, rfl⟩
-  rw [iteratedDilationDifference_core hmem hell g]
+  rw [iteratedDilationDifference_core (List.mem_ofFn.mpr ⟨i, rfl⟩) hell g]
 
 #print axioms dilationCubeWeightInt_rat
 #print axioms dilationCubeWeightInt_zero_ne_zero

@@ -55,7 +55,6 @@ theorem genericDilationFiniteError5_term_bound (k n j : ℕ)
             ((n : ℝ) + 1) ^ 2 := by
   have hx : (0 : ℝ) < ((n + (j + 1) : ℕ) : ℝ) := by
     exact_mod_cast (show 0 < n + (j + 1) by omega)
-  have hX : (0 : ℝ) < (n : ℝ) + 1 := by positivity
   have hXx : (n : ℝ) + 1 ≤ ((n + (j + 1) : ℕ) : ℝ) := by
     exact_mod_cast (show n + 1 ≤ n + (j + 1) by omega)
   have he := genericDilationError5_bounds (k + 1) (k + 1)
@@ -79,12 +78,7 @@ theorem genericDilationFiniteError5_term_bound (k n j : ℕ)
       field_simp
       ring
     _ ≤ 64 * ((k : ℝ) + 1) ^ (k + 1) *
-        (2 * Real.sqrt ((n : ℝ) + 1)) /
-          ((n + (j + 1) : ℕ) : ℝ) ^ 2 := by gcongr
-    _ ≤ 64 * ((k : ℝ) + 1) ^ (k + 1) *
-        (2 * Real.sqrt ((n : ℝ) + 1)) / ((n : ℝ) + 1) ^ 2 :=
-      div_le_div_of_nonneg_left (by positivity) (by positivity)
-        (pow_le_pow_left₀ hX.le hXx 2)
+        (2 * Real.sqrt ((n : ℝ) + 1)) / ((n : ℝ) + 1) ^ 2 := by gcongr
     _ = _ := by ring
 
 /-- The whole finite error, multiplied by the actual index plus one, is
@@ -96,24 +90,15 @@ theorem genericDilationFiniteError5_bounds (k n : ℕ) (hn : k + 1 ≤ n) :
           (Real.sqrt ((n : ℝ) + 1) / ((n : ℝ) + 1)) := by
   have hX : (n : ℝ) + 1 ≠ 0 := by positivity
   unfold genericDilationFiniteError5
+  have hb := Finset.sum_le_sum (s := Finset.range (k + 1)) (fun j hj =>
+    (genericDilationFiniteError5_term_bound k n j hn (Finset.mem_range.mp hj)).2)
   refine ⟨Finset.sum_nonneg (fun j hj =>
     (genericDilationFiniteError5_term_bound k n j hn (Finset.mem_range.mp hj)).1), ?_⟩
-  rw [Finset.mul_sum]
-  calc
-    _ ≤ ∑ _j ∈ Finset.range (k + 1), ((n : ℝ) + 1) *
-        (128 * ((k : ℝ) + 1) ^ (k + 1) * Real.sqrt ((n : ℝ) + 1) /
-          ((n : ℝ) + 1) ^ 2) := by
-      apply Finset.sum_le_sum
-      intro j hj
-      exact mul_le_mul_of_nonneg_left
-        (genericDilationFiniteError5_term_bound k n j hn (Finset.mem_range.mp hj)).2
-        (by positivity)
-    _ = _ := by
-      simp only [Finset.sum_const, Finset.card_range, nsmul_eq_mul,
-        genericDilationFiniteErrorConstant5, Nat.cast_add, Nat.cast_one]
-      rw [show k + 2 = (k + 1) + 1 by omega, pow_succ]
-      field_simp
-      ring
+  convert! mul_le_mul_of_nonneg_left hb (by positivity : 0 ≤ (n : ℝ) + 1) using 1
+  simp only [Finset.sum_const, Finset.card_range, nsmul_eq_mul,
+    genericDilationFiniteErrorConstant5, Nat.cast_add, Nat.cast_one]
+  rw [show k + 2 = (k + 1) + 1 by omega, pow_succ]
+  field_simp
 
 theorem tendsto_genericDilationFiniteError5_mul (k : ℕ) :
     Tendsto (fun n : ℕ => ((n : ℝ) + 1) * genericDilationFiniteError5 k n)

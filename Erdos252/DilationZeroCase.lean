@@ -76,11 +76,8 @@ theorem genericBlockTerm5_zero_le_geometric {n : ℕ} (hn : 4 ≤ n) (j : ℕ) :
       64 * Real.sqrt (n : ℝ) * (2 : ℝ) ^ j := by
     have hs := sigma_real_le_sixty_four_pow_sqrt 0 (n + j) (by omega)
     simp only [pow_zero, mul_one] at hs
-    calc
-      _ ≤ 64 * Real.sqrt ((n + j : ℕ) : ℝ) := hs
-      _ ≤ 64 * (Real.sqrt (n : ℝ) * (2 : ℝ) ^ j) :=
-        mul_le_mul_of_nonneg_left hsqrt (by norm_num)
-      _ = _ := by ring
+    exact hs.trans (by simpa only [mul_assoc] using
+      mul_le_mul_of_nonneg_left hsqrt (by norm_num : (0 : ℝ) ≤ 64))
   have hden : n * 4 ^ j ≤ n.ascFactorial (j + 1) := by
     calc
       n * 4 ^ j ≤ n * n ^ j := Nat.mul_le_mul_left n (Nat.pow_le_pow_left hn j)
@@ -127,11 +124,8 @@ theorem tendsto_genericScaledFullTail5_zero :
 theorem irrational_alpha_zero : Irrational (alpha 0) := by
   by_contra hx
   obtain ⟨N, hN⟩ := eventually_genericScaledFullTail5_integral 0 hx
-  have hint : ∀ᶠ n in atTop, ∃ z : ℤ, genericScaledFullTail5 0 n = z := by
-    filter_upwards [eventually_ge_atTop N] with n hn
-    exact hN n hn
   have hz := dilation5_eventually_zero_of_integral_tendsto
-    tendsto_genericScaledFullTail5_zero hint
+    tendsto_genericScaledFullTail5_zero ((eventually_ge_atTop N).mono hN)
   obtain ⟨n, hn, hnpos⟩ := (hz.and (eventually_ge_atTop 1)).exists
   exact (genericScaledFullTail5_pos_of_pos 0 n (by omega)).ne' hn
 

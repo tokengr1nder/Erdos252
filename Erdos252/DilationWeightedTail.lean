@@ -35,11 +35,7 @@ theorem dilationGridWeightedTail_eq_main_add_error (k N : ℕ) :
     dilationGridWeightedTail k N = dilationGridWeightedMain k N +
       dilationGridWeightedError k N := by
   unfold dilationGridWeightedTail dilationGridWeightedMain dilationGridWeightedError
-  rw [← Finset.sum_add_distrib]
-  apply Finset.sum_congr rfl
-  intro e he
-  rw [genericDilationTail5_expansion]
-  ring
+  simp_rw [genericDilationTail5_expansion, mul_add, Finset.sum_add_distrib]
 
 theorem dilationGridWeightedTail_integral_of_vertices (k N : ℕ)
     (hint : ∀ e : DilationGridVertex k, ∃ z : ℤ,
@@ -49,11 +45,7 @@ theorem dilationGridWeightedTail_integral_of_vertices (k N : ℕ)
   choose z hz using hint
   refine ⟨∑ e : DilationGridVertex k, dilationGridWeightInt k e *
     (ArithmeticFunction.sigma k (dilationGridMultiplier k e) : ℤ) * z e, ?_⟩
-  unfold dilationGridWeightedTail
-  push_cast
-  apply Finset.sum_congr rfl
-  intro e he
-  rw [hz e]
+  simp only [dilationGridWeightedTail, hz, Int.cast_sum, Int.cast_mul, Int.cast_natCast]
 
 theorem eventually_dilationGridWeightedTail_integral (k : ℕ)
     (hx : ¬ Irrational (alpha k)) :
@@ -104,12 +96,9 @@ theorem dilationGridTailMain_rescale {k : ℕ} (hk : 0 < k) (N : ℕ)
   intro h hh
   apply Finset.sum_congr rfl
   intro ell hell
-  calc
-    _ = (Nat.stirlingSecond (ell - 1) (h - 1) : ℝ) *
-        ((ArithmeticFunction.sigma k (dilationGridMultiplier k e) : ℝ) *
-          ((ArithmeticFunction.sigma k (dilationGridTailIndex k N e + h) : ℝ) /
-            ((dilationGridTailIndex k N e + h : ℕ) : ℝ) ^ ell)) := by ring
-    _ = _ := by rw [dilationGridTailIndex_term_rescale hk N e hN hcong hh ell]; ring
+  simpa only [mul_assoc, mul_left_comm, mul_div_assoc] using
+    congrArg ((Nat.stirlingSecond (ell - 1) (h - 1) : ℝ) * ·)
+      (dilationGridTailIndex_term_rescale hk N e hN hcong hh ell)
 
 /-- Cancellation identifies the actual weighted main term with the actual survivor main term. -/
 theorem dilationGridWeightedMain_eq_surviving {k : ℕ} (hk : 0 < k) (N : ℕ)

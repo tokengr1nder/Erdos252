@@ -63,12 +63,8 @@ theorem rawPhaseProgressionMeanTerm_refine (k : ℕ) {Q ell : ℕ}
   by_cases hd : ell ∣ d
   · simp only [hd, ↓reduceIte]
     have hprod : Nat.gcd d Q * ell ∣ B ↔ Nat.gcd d Q ∣ B ∧ ell ∣ B := by
-      constructor
-      · intro h
-        exact ⟨dvd_trans (dvd_mul_right (Nat.gcd d Q) ell) h,
-          dvd_trans (dvd_mul_left ell (Nat.gcd d Q)) h⟩
-      · intro h
-        exact (hc.symm.gcd_left d).mul_dvd_of_dvd_of_dvd h.1 h.2
+      exact ⟨fun h => ⟨dvd_of_mul_right_dvd h, dvd_of_mul_left_dvd h⟩,
+        fun h => (hc.symm.gcd_left d).mul_dvd_of_dvd_of_dvd h.1 h.2⟩
     by_cases hg : Nat.gcd d Q ∣ B <;> by_cases hB : ell ∣ B <;>
       simp only [hg, hB, hprod, and_self, and_false, false_and, ↓reduceIte]
     all_goals push_cast; ring
@@ -78,15 +74,8 @@ theorem summable_rawPhaseProgressionMeanTerm_multiples {k : ℕ}
     (hk : 2 ≤ k) (Q A ell : ℕ) :
     Summable (fun d : ℕ =>
       if ell ∣ d then rawPhaseProgressionMeanTerm k Q A d else 0) := by
-  apply Summable.of_nonneg_of_le _ _ (summable_rawPhaseProgressionMeanTerm hk Q A)
-  · intro d
-    split_ifs
-    · exact (rawPhaseProgressionMeanTerm_bounds hk Q A d).1
-    · exact le_rfl
-  · intro d
-    split_ifs
-    · exact le_rfl
-    · exact (rawPhaseProgressionMeanTerm_bounds hk Q A d).1
+  exact (summable_rawPhaseProgressionMeanTerm hk Q A).summable_of_eq_zero_or_self
+    (fun d => by by_cases h : ell ∣ d <;> simp [h])
 
 theorem rawPhaseProgressionMean_congr (k : ℕ) {Q A B : ℕ}
     (hAB : Nat.ModEq Q B A) :
@@ -94,25 +83,28 @@ theorem rawPhaseProgressionMean_congr (k : ℕ) {Q A B : ℕ}
   unfold rawPhaseProgressionMean
   exact tsum_congr (rawPhaseProgressionMeanTerm_congr k hAB)
 
+theorem rawPhaseProgressionMean_refine_of_summable {k Q B ell : ℕ}
+    (hs : Summable (rawPhaseProgressionMeanTerm k Q B))
+    (hp : ell.Prime) (hc : ell.Coprime Q) :
+    rawPhaseProgressionMean k (Q * ell) B = rawPhaseProgressionMean k Q B +
+      (if ell ∣ B then (ell : ℝ) - 1 else -1) *
+        (rawPhaseProgressionMean k Q B / (ell : ℝ) ^ (k + 1)) := by
+  have hm : Summable (fun d => if ell ∣ d then rawPhaseProgressionMeanTerm k Q B d else 0) :=
+    hs.summable_of_eq_zero_or_self (fun d => by by_cases h : ell ∣ d <;> simp [h])
+  change (∑' d, rawPhaseProgressionMeanTerm k (Q * ell) B d) = _
+  simp_rw [rawPhaseProgressionMeanTerm_refine k hp hc B]
+  rw [hs.tsum_add (hm.mul_left _), tsum_mul_left,
+    rawPhaseProgressionMean_multiples k hp.pos hc]
+  rfl
+
 theorem rawPhaseProgressionMean_refine_aux {k Q ell : ℕ}
     (hk : 2 ≤ k) (hp : ell.Prime) (hc : ell.Coprime Q) (B : ℕ) :
     rawPhaseProgressionMean k (Q * ell) B =
       (1 + (if ell ∣ B then (ell : ℝ) - 1 else -1) / (ell : ℝ) ^ (k + 1)) *
         rawPhaseProgressionMean k Q B := by
-  have hs := summable_rawPhaseProgressionMeanTerm hk Q B
-  have hm := summable_rawPhaseProgressionMeanTerm_multiples hk Q B ell
-  calc
-    _ = ∑' d : ℕ, (rawPhaseProgressionMeanTerm k Q B d +
-        (if ell ∣ B then (ell : ℝ) - 1 else -1) *
-          (if ell ∣ d then rawPhaseProgressionMeanTerm k Q B d else 0)) := by
-      exact tsum_congr (rawPhaseProgressionMeanTerm_refine k hp hc B)
-    _ = rawPhaseProgressionMean k Q B +
-        (if ell ∣ B then (ell : ℝ) - 1 else -1) *
-          (rawPhaseProgressionMean k Q B / (ell : ℝ) ^ (k + 1)) := by
-      rw [hs.tsum_add (hm.mul_left _), tsum_mul_left,
-        rawPhaseProgressionMean_multiples k hp.pos hc]
-      rfl
-    _ = _ := by ring
+  rw [rawPhaseProgressionMean_refine_of_summable
+    (summable_rawPhaseProgressionMeanTerm hk Q B) hp hc]
+  ring
 
 theorem rawPhaseProgressionMean_refine_no_hit {k Q A B ell : ℕ}
     (hk : 2 ≤ k) (hp : ell.Prime) (hc : ell.Coprime Q) (hAB : Nat.ModEq Q B A)
@@ -150,6 +142,7 @@ theorem rawPhaseProgressionMean_refine {k Q A B ell : ℕ}
 #print axioms rawPhaseProgressionMeanTerm_refine
 #print axioms summable_rawPhaseProgressionMeanTerm_multiples
 #print axioms rawPhaseProgressionMean_congr
+#print axioms rawPhaseProgressionMean_refine_of_summable
 #print axioms rawPhaseProgressionMean_refine_aux
 #print axioms rawPhaseProgressionMean_refine_no_hit
 #print axioms rawPhaseProgressionMean_refine_hit

@@ -18,11 +18,9 @@ theorem iteratedDilationDifference_zero (order : ℕ) (directions : List (ℚ ×
   induction directions with
   | nil => rfl
   | cons jd directions ih =>
-      change dilationDifference order jd.1 jd.2
-        (iteratedDilationDifference order directions (fun _ _ => 0)) = _
-      rw [ih]
+      simp only [iteratedDilationDifference, List.foldr_cons] at ih ⊢
       funext p t
-      exact dilationDifference_zero order jd.1 jd.2 p t
+      simp [ih, dilationDifference]
 
 theorem iteratedDilationDifference_comm_single (order otherOrder : ℕ)
     (directions : List (ℚ × ℚ)) (j d : ℚ) (F : ℚ → ℚ → ℚ) :
@@ -52,9 +50,8 @@ theorem iteratedDilationDifference_eq_zero_of_mem (order : ℕ)
         rw [← iteratedDilationDifference_comm_single, hzero,
           iteratedDilationDifference_zero]
       · change dilationDifference order he.1 he.2 (iteratedDilationDifference order directions F) = _
-        rw [ih htail]
         funext p t
-        exact dilationDifference_zero order he.1 he.2 p t
+        simp [ih htail, dilationDifference]
 
 /-- A matching direction kills all powers below an arbitrary symbolic order. -/
 theorem iteratedDilationDifference_core {order ell : ℕ}

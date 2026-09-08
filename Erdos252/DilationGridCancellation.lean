@@ -88,24 +88,21 @@ theorem rational_shift_cancellation_real {ι : Type*} [Fintype ι]
     (hcancel : ∀ g : ℕ → ℚ, (∑ i, a i * g (s i)) = 0) (g : ℕ → ℝ) :
     (∑ i, (a i : ℝ) * g (s i)) = 0 := by
   classical
-  have hrat (u : ℕ) : (∑ i ∈ Finset.univ.filter (fun i => s i = u), a i) = 0 := by
-    simpa only [mul_ite, mul_one, mul_zero, ← Finset.sum_filter] using
-      hcancel (fun x => if x = u then 1 else 0)
-  have hreal (u : ℕ) : (∑ i ∈ Finset.univ.filter (fun i => s i = u), (a i : ℝ)) = 0 := by
-    exact_mod_cast hrat u
+  have hreal (u : ℕ) : (∑ i, if s i = u then (a i : ℝ) else 0) = 0 := by
+    have hh := hcancel (fun x => if x = u then 1 else 0)
+    simp only [mul_ite, mul_one, mul_zero] at hh
+    simp only [← Finset.sum_filter] at hh ⊢
+    exact_mod_cast hh
   calc
-    _ = ∑ u ∈ Finset.univ.image s,
-        ∑ i ∈ Finset.univ.filter (fun i => s i = u), (a i : ℝ) * g (s i) := by
-      exact (Finset.sum_fiberwise_of_maps_to
-        (fun i hi => Finset.mem_image_of_mem s hi) (fun i => (a i : ℝ) * g (s i))).symm
-    _ = ∑ u ∈ Finset.univ.image s,
-        (∑ i ∈ Finset.univ.filter (fun i => s i = u), (a i : ℝ)) * g u := by
+    _ = ∑ i, ∑ u ∈ Finset.univ.image s,
+        if s i = u then (a i : ℝ) * g u else 0 := by
       apply Finset.sum_congr rfl
-      intro u _
-      rw [Finset.sum_mul]
-      apply Finset.sum_congr rfl
-      intro i hi
-      rw [(Finset.mem_filter.mp hi).2]
+      intro i _
+      simp [Finset.mem_image_of_mem s (Finset.mem_univ i)]
+    _ = ∑ u ∈ Finset.univ.image s,
+        (∑ i, if s i = u then (a i : ℝ) else 0) * g u := by
+      rw [Finset.sum_comm]
+      simp only [Finset.sum_mul, ite_mul, zero_mul]
     _ = 0 := by simp only [hreal, zero_mul, Finset.sum_const_zero]
 
 /-- Actual integer weights cancel every real-valued shifted core through degree `k`. -/

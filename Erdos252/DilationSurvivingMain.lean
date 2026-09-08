@@ -79,24 +79,10 @@ theorem dilationGrid_sigma_div_succ (k x : ℕ) :
 theorem dilationGridFiniteMain_eq_surviving (k N : ℕ) :
     dilationGridFiniteMain k N = dilationGridSurvivingMain k N := by
   rw [dilationGridFiniteMain_eq_final]
-  unfold dilationGridCore dilationGridSurvivingMain
-  simp_rw [Finset.mul_sum]
+  unfold dilationGridCore dilationGridSurvivingMain dilationGridCoefficient
+  simp_rw [Finset.mul_sum, dilationGrid_sigma_div_succ]
   rw [Finset.sum_comm]
-  apply Finset.sum_congr rfl
-  intro e _
-  apply Finset.sum_congr rfl
-  intro h _
-  rw [show (Nat.stirlingSecond k (h - 1) : ℝ) *
-      ((dilationGridWeightInt k e : ℝ) *
-        ((dilationGridMultiplier k e : ℝ) ^ (k + 1) *
-          ((ArithmeticFunction.sigma k (N + dilationGridShift k e h) : ℝ) /
-            ((N + dilationGridShift k e h : ℕ) : ℝ) ^ (k + 1)))) =
-      dilationGridCoefficient k e h *
-        ((ArithmeticFunction.sigma k (N + dilationGridShift k e h) : ℝ) /
-          ((N + dilationGridShift k e h : ℕ) : ℝ) ^ (k + 1)) by
-      unfold dilationGridCoefficient; ring]
-  rw [dilationGrid_sigma_div_succ]
-  ring
+  simp only [div_eq_mul_inv, mul_assoc, mul_comm, mul_left_comm]
 
 /-- Reordering the expanded vertex sums gives the same finite main term. -/
 theorem dilationGridFiniteMain_eq_vertex_sum (k N : ℕ) :
@@ -112,13 +98,7 @@ theorem dilationGridFiniteMain_eq_vertex_sum (k N : ℕ) :
   rw [Finset.sum_comm]
   conv_lhs => arg 2; ext h; rw [Finset.sum_comm]
   rw [Finset.sum_comm]
-  apply Finset.sum_congr rfl
-  intro e _
-  apply Finset.sum_congr rfl
-  intro h _
-  apply Finset.sum_congr rfl
-  intro ell _
-  ring
+  simp only [div_eq_mul_inv, mul_assoc, mul_comm, mul_left_comm]
 
 theorem dilationGridCoefficient_zero_succ (k : ℕ) :
     dilationGridCoefficient k (dilationGridZero k) (k + 1) =

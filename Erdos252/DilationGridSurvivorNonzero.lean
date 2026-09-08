@@ -24,29 +24,18 @@ theorem dilationGridShift_eq_succ_base_iff {k : ℕ} {e : DilationGridVertex k} 
     (hh : h ∈ Finset.Icc 1 (k + 1)) :
     dilationGridShift k e h = (k + 1) * dilationGridBase k ↔
       e = dilationGridZero k ∧ h = k + 1 := by
-  constructor
-  · intro heq
-    have hfinal : h = k + 1 := by
-      have hbounds := Finset.mem_Icc.mp hh
-      by_contra hne
-      have hlt := dilationGridShift_lt_succ_base k e (by omega : h ≤ k)
-      omega
-    subst h
-    exact ⟨(dilationGridShift_succ_eq_iff k e).mp heq, rfl⟩
-  · rintro ⟨rfl, rfl⟩
-    exact (dilationGridShift_succ_eq_iff k (dilationGridZero k)).mpr rfl
+  rcases lt_or_eq_of_le (Finset.mem_Icc.mp hh).2 with hlt | rfl
+  · have hne := ne_of_lt (dilationGridShift_lt_succ_base k e (show h ≤ k by omega))
+    simp only [hne, ne_of_lt hlt, and_false]
+  · simpa only [and_true] using dilationGridShift_succ_eq_iff k e
 
 /-- Flattening the double sum preserves all actual shifts and coefficients. -/
 theorem dilationGridSurvivor_eq_sum_terms (k N : ℕ) :
     dilationGridSurvivor k N =
       ∑ i : DilationGridTerm k, dilationGridCoefficient k i.1 i.2 *
         rawPhase k (N + dilationGridShift k i.1 i.2) := by
-  rw [Fintype.sum_prod_type]
-  unfold dilationGridSurvivor
-  apply Finset.sum_congr rfl
-  intro e _
-  exact (Finset.sum_coe_sort (Finset.Icc 1 (k + 1)) (fun h =>
-    dilationGridCoefficient k e h * rawPhase k (N + dilationGridShift k e h))).symm
+  simp only [Fintype.sum_prod_type, dilationGridSurvivor]
+  exact Finset.sum_congr rfl (fun e _ => (Finset.sum_coe_sort _ _).symm)
 
 /-- The exact final-order survivor has no zero limit along any positive-step
 arithmetic progression in any positive divisor-power degree. -/

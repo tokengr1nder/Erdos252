@@ -24,9 +24,7 @@ private theorem divisors_card_le_two_mul_nat_sqrt (n : ℕ) (hn : 0 < n) :
     intro d hd
     have hdvd := Nat.dvd_of_mem_divisors hd
     have hdpos := Nat.pos_of_dvd_of_pos hdvd hn
-    have hfactor : n = d * (n / d) := by
-      rw [Nat.mul_comm, Nat.div_mul_cancel hdvd]
-    rcases Nat.le_sqrt_of_eq_mul hfactor with hsmall | hsmall
+    rcases Nat.le_sqrt_of_eq_mul (Nat.mul_div_cancel' hdvd).symm with hsmall | hsmall
     · exact Finset.mem_union_left _ (Finset.mem_Icc.mpr ⟨hdpos, hsmall⟩)
     · apply Finset.mem_union_right
       exact Finset.mem_image.mpr ⟨n / d,
@@ -49,22 +47,17 @@ theorem divisors_card_le_sixty_four_sqrt (n : ℕ) (hn : 0 < n) :
 
 theorem sigma_le_divisors_card_mul_pow (k n : ℕ) :
     ArithmeticFunction.sigma k n ≤ n.divisors.card * n ^ k := by
-  rw [ArithmeticFunction.sigma_apply]
-  calc
-    _ ≤ ∑ _d ∈ n.divisors, n ^ k :=
-      Finset.sum_le_sum (fun d hd => Nat.pow_le_pow_left (Nat.divisor_le hd) k)
-    _ = _ := by simp only [Finset.sum_const, nsmul_eq_mul, Nat.cast_id]
+  simpa only [ArithmeticFunction.sigma_apply, Finset.sum_const, nsmul_eq_mul, Nat.cast_id] using
+    Finset.sum_le_sum (s := n.divisors)
+      (fun d hd => Nat.pow_le_pow_left (Nat.divisor_le hd) k)
 
 theorem sigma_real_le_sixty_four_pow_sqrt (k n : ℕ) (hn : 0 < n) :
     (ArithmeticFunction.sigma k n : ℝ) ≤ 64 * (n : ℝ) ^ k * Real.sqrt (n : ℝ) := by
-  have hs : (ArithmeticFunction.sigma k n : ℝ) ≤
-      (n.divisors.card : ℝ) * (n : ℝ) ^ k := by
-    exact_mod_cast sigma_le_divisors_card_mul_pow k n
-  calc
-    _ ≤ (n.divisors.card : ℝ) * (n : ℝ) ^ k := hs
-    _ ≤ (64 * Real.sqrt (n : ℝ)) * (n : ℝ) ^ k :=
-      mul_le_mul_of_nonneg_right (divisors_card_le_sixty_four_sqrt n hn) (by positivity)
-    _ = _ := by ring
+  refine le_trans (b := (n.divisors.card : ℝ) * (n : ℝ) ^ k)
+    (by exact_mod_cast sigma_le_divisors_card_mul_pow k n) ?_
+  simpa only [mul_assoc, mul_comm, mul_left_comm] using
+    mul_le_mul_of_nonneg_right (divisors_card_le_sixty_four_sqrt n hn)
+      (pow_nonneg (Nat.cast_nonneg n) k)
 
 theorem sigma_normalized_le_sixty_four_sqrt (k n : ℕ) (hn : 0 < n) :
     (ArithmeticFunction.sigma k n : ℝ) / (n : ℝ) ^ k ≤

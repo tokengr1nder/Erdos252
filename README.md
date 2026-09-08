@@ -10,7 +10,8 @@ theorem Erdos252.erdos_252 (k : ℕ) :
       (ArithmeticFunction.sigma k n : ℝ) / (n.factorial : ℝ))
 ```
 
-See [the proof outline](PROOF.md) and [verification details](VERIFICATION.md).
+See [the proof outline](PROOF.md), the [typeset PDF](PROOF.pdf)
+([LaTeX source](PROOF.tex)), and [verification details](VERIFICATION.md).
 
 ## Reproduce
 
@@ -46,4 +47,10 @@ This is an additional verification step, not a separate kernel implementation.
 The development contains no incomplete proof placeholders.
 [SHA256SUMS](SHA256SUMS) records the publication file hashes; hashes identify files,
 but do not verify the proof.
-Hashes refer to the LF-normalized file contents stored in Git.
+Hashes refer to the exact file contents stored in Git (LF-normalized for text files).
+
+To typeset the proof outline locally, install Tectonic and run from the repository root:
+
+```sh
+tectonic PROOF.tex
+```

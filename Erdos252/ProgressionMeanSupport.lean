@@ -1,5 +1,6 @@
 import Mathlib.Analysis.Asymptotics.SpecificAsymptotics
 import Mathlib.Algebra.Ring.Periodic
+import Mathlib.Algebra.Order.Floor.Semifield
 import Mathlib.Data.Nat.Prime.Basic
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Positivity
@@ -24,28 +25,9 @@ noncomputable section
 theorem nat_div_ratio_tendsto5 {d : ℕ} (hd : 0 < d) :
     Tendsto (fun N : ℕ => ((N / d : ℕ) : ℝ) / (N : ℝ)) atTop
       (𝓝 (1 / (d : ℝ))) := by
-  have hdR : (0 : ℝ) < d := by exact_mod_cast hd
-  have hlo : Tendsto (fun N : ℕ => 1 / (d : ℝ) - 1 / (N : ℝ)) atTop
-      (𝓝 (1 / (d : ℝ))) := by
-    simpa only [sub_zero] using tendsto_const_nhds.sub
-      (tendsto_one_div_atTop_nhds_zero_nat (𝕜 := ℝ))
-  apply tendsto_of_tendsto_of_tendsto_of_le_of_le' hlo tendsto_const_nhds
-  · filter_upwards [eventually_ge_atTop 1] with N hN
-    have hNR : (0 : ℝ) < N := by exact_mod_cast (show 0 < N by omega)
-    have hid : ((N % d : ℕ) : ℝ) + (d : ℝ) * ((N / d : ℕ) : ℝ) = N := by
-      exact_mod_cast Nat.mod_add_div N d
-    have hrem : ((N % d : ℕ) : ℝ) < d := by exact_mod_cast Nat.mod_lt N hd
-    have hflo : (N : ℝ) / (d : ℝ) - 1 ≤ ((N / d : ℕ) : ℝ) := by
-      apply (sub_le_iff_le_add).mpr
-      apply (div_le_iff₀ hdR).mpr
-      nlinarith
-    have hh := div_le_div_of_nonneg_right hflo hNR.le
-    convert hh using 1; first | rfl | field_simp
-  · filter_upwards [eventually_ge_atTop 1] with N hN
-    have hNR : (0 : ℝ) < N := by exact_mod_cast (show 0 < N by omega)
-    have hh := div_le_div_of_nonneg_right
-      (Nat.cast_div_le (m := N) (n := d) (α := ℝ)) hNR.le
-    convert hh using 1; first | rfl | field_simp
+  simpa only [Function.comp_def, one_div_mul_eq_div, Nat.floor_div_eq_div] using
+    (tendsto_nat_floor_mul_div_atTop (a := (1 : ℝ) / (d : ℝ))
+      (div_pos zero_lt_one (Nat.cast_pos.mpr hd)).le).comp tendsto_natCast_atTop_atTop
 
 /-- Complete blocks of a periodic sequence have their exact expected sum. -/
 theorem periodic_sum_blocks5 {f : ℕ → ℝ} {d : ℕ}

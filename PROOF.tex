@@ -1,0 +1,213 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=20mm]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{microtype}
+\usepackage[hidelinks]{hyperref}
+\hypersetup{
+  pdftitle={Erdos 252: proof outline},
+  pdfauthor={Tokengrinder},
+  pdfsubject={Irrationality of the factorial divisor-sum series},
+  pdfkeywords={Erdos 252, irrationality, Lean, proof outline}
+}
+\newtheorem*{theorem}{Theorem}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\stirling}[2]{\left\{\begin{smallmatrix}#1\\#2\end{smallmatrix}\right\}}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{2pt plus 1pt}
+\linespread{0.94}
+\AtBeginDocument{%
+  \setlength{\abovedisplayskip}{6pt plus 1pt minus 1pt}%
+  \setlength{\belowdisplayskip}{6pt plus 1pt minus 1pt}%
+  \setlength{\abovedisplayshortskip}{0pt plus 1pt}%
+  \setlength{\belowdisplayshortskip}{4pt plus 1pt minus 1pt}%
+}
+\setlength{\emergencystretch}{2em}
+\makeatletter
+\renewcommand\section{\@startsection{section}{1}{\z@}%
+  {-1.7ex plus -.3ex minus -.2ex}{.8ex plus .2ex}%
+  {\normalfont\large\bfseries}}
+\renewcommand\paragraph{\@startsection{paragraph}{4}{\z@}%
+  {1.2ex plus .3ex minus .2ex}{-1em}%
+  {\normalfont\normalsize\bfseries}}
+\makeatother
+\pagestyle{plain}
+
+\begin{document}
+
+\begin{center}
+  {\Large\bfseries Erd\H{o}s 252}\par
+  \smallskip
+  {\large Irrationality of the factorial divisor-sum series}\par
+  \medskip
+  Tokengrinder
+\end{center}
+
+\textbf{Proof outline.}
+This is a mathematical exposition of the accompanying Lean
+formalization. It describes the main constructions and the contradiction;
+the complete rigorous proof, including all estimates and finite arithmetic,
+is the Lean development linked below.
+
+For a positive integer $n$ and $k\in\N=\{0,1,2,\ldots\}$, put
+\[
+  \sigma_k(n)=\sum_{d\mid n}d^k,
+  \qquad
+  \alpha_k=\sum_{n=1}^{\infty}\frac{\sigma_k(n)}{n!}.
+\]
+The series converges for every $k$. In the formal statement the sum starts
+at $n=0$; the corresponding divisor-sum term is zero.
+
+\begin{theorem}
+For every $k\in\N$, the real number $\alpha_k$ is irrational.
+\end{theorem}
+
+\section*{Positive exponents}
+
+Fix $k\geq 1$ and suppose, for a contradiction, that $\alpha_k$ is rational.
+Clearing its denominator by a sufficiently large factorial shows that
+\[
+  T_n=n!\sum_{m>n}\frac{\sigma_k(m)}{m!}\in\Z
+  \qquad\text{for all sufficiently large }n.
+\]
+All grids, coefficients, shifts, and moduli below are fixed once $k$ is fixed.
+
+\paragraph{1. Expand the tails.}
+Let $\stirling{a}{b}$ denote a Stirling number of the second kind.
+Expanding the first $k+1$ factorial denominators in reciprocal powers gives
+\[
+  T_n=
+  \sum_{h=1}^{k+1}\sum_{\ell=1}^{k+1}
+    \stirling{\ell-1}{h-1}
+    \frac{\sigma_k(n+h)}{(n+h)^\ell}
+  +O_k(n^{-3/2}).
+\]
+Pairing each divisor with its complementary divisor bounds the divisor
+count by a constant times $\sqrt n$. Consequently
+$\sigma_k(n)=O_k(n^{k+1/2})$. Together with a geometric bound for the
+omitted tail, this controls both sources of expansion error.
+
+\paragraph{2. Align shifted arguments.}
+Use the finite grid $E=\{0,1,\ldots,k+1\}^k$. One explicit choice in the
+formalization is
+\[
+  b=k+2,\qquad F=b^k-1,\qquad D=F!,\qquad B=1+kDF,
+\]
+\[
+  p_e=B+D\sum_{j=0}^{k-1}e_jb^j,
+  \qquad
+  t_e=D\sum_{j=0}^{k-1}(j+1)e_jb^j
+  \qquad(e\in E).
+\]
+The integers $p_e$ are pairwise coprime, and the shifts
+$r_{e,h}=hp_e-t_e$ are positive for $1\leq h\leq k+1$.
+The Chinese remainder theorem supplies a progression $N=A+Qm$, $A,m\in\N$, with
+$Q=\prod_{e\in E}p_e^2$, satisfying $N\equiv t_e\pmod{p_e^2}$ for every $e$.
+For sufficiently large $N$, the integer $n_e=(N-t_e)/p_e$ is positive.
+The squared congruence gives $p_e\mid n_e$. Every retained $h$ divides $D$,
+while $\gcd(p_e,D)=1$, so $\gcd(p_e,n_e+h)=1$. Multiplicativity gives
+\[
+  \sigma_k(p_e)\sigma_k(n_e+h)
+    =\sigma_k(N+r_{e,h})
+  \qquad(1\leq h\leq k+1).
+\]
+None of the multipliers $p_e$ is required to be prime.
+
+\paragraph{3. Cancel the large terms.}
+Assign the integer binomial weights
+\[
+  w_e=\prod_{j=0}^{k-1}(-1)^{k+1-e_j}\binom{k+1}{e_j}.
+\]
+For a term with $1\leq h\leq\ell\leq k$, varying coordinate $e_{h-1}$
+leaves the shift $r_{e,h}$ fixed. The remaining multiplier is a polynomial
+of degree at most $k$ in that coordinate. Its order-$(k+1)$ finite
+difference vanishes. Terms with $h>\ell$ have zero Stirling coefficient.
+Thus every denominator order $\ell\leq k$ cancels exactly.
+
+To name the surviving terms, let
+\[
+  I=E\times\{1,\ldots,k+1\},\qquad
+  c_{e,h}=w_ep_e^{k+1}\stirling{k}{h-1},\qquad
+  \rho_k(x)=\frac{\sigma_k(x)}{x^k}\quad(x\in\N,\ x\geq1).
+\]
+The weighted tail $\sum_e w_e\sigma_k(p_e)T_{n_e}$ is an integer for all
+sufficiently large $N$ in the progression. After cancellation it equals
+\[
+  \sum_{(e,h)\in I}
+    \frac{c_{e,h}\rho_k(N+r_{e,h})}{N+r_{e,h}}
+    +O_k(N^{-3/2}).
+\]
+Since $\rho_k(x)=O_k(\sqrt x)$, this integer tends to zero and hence is
+eventually zero. Multiplying by $N$, the error still tends to zero.
+Replacing $N/(N+r_{e,h})$ by $1$ introduces only another vanishing error.
+It follows that
+\[
+  R(N):=\sum_{(e,h)\in I}c_{e,h}\rho_k(N+r_{e,h})
+  \longrightarrow0
+  \quad\text{along }N=A+Qm.
+\]
+
+\paragraph{4. Contradict the remaining limit.}
+The shift $r_*=(k+1)B$, indexed by the zero vertex and $h=k+1$, occurs
+exactly once; its coefficient $c_*$ is nonzero. For a positive step $Q$
+and positive offset $a$, the actual arithmetic-progression mean is
+\[
+  \lim_{M\to\infty}\frac1M\sum_{j=0}^{M-1}\rho_k(Qj+a)
+   =\mu_Q(a)
+   :=\sum_{\substack{d\geq1\\\gcd(d,Q)\mid a}}
+       \frac{\gcd(d,Q)}{d^{k+1}}>0.
+\]
+This includes $k=1$: summable domination is applied to averaged divisor
+counts, not to an unjustified uniform bound on the pointwise divisor sum.
+
+Choose a fresh prime $L$ larger than $Q$ and every shift. Refining the
+progression by a residue $v\in\{0,\ldots,L-1\}$ changes its individual means by the factor
+\[
+  \mu_{QL}(Qv+a)
+   =\mu_Q(a)\left(1-L^{-(k+1)}
+          +\mathbf{1}_{\{L\mid Qv+a\}}L^{-k}\right),
+\]
+where $\mathbf{1}$ is the indicator of the stated divisibility condition.
+One residue makes $Qv+A$ divisible by $L$ and therefore misses every
+positive shift. Another makes $Qv+A+r_*$ divisible by $L$ and hits only
+the unique shift $r_*$. The two resulting means of $R$ differ by
+\[
+  c_*\,\mu_Q(A+r_*)\,L^{-k}\ne0.
+\]
+But both means must be zero if $R(A+Qm)\to0$, because the same limit holds
+on either subprogression and under Ces\`aro averaging. This is the desired
+contradiction.
+
+\section*{Exponent zero}
+
+For $k=0$, divisor pairing and a geometric estimate directly give
+$0<T_n=O(n^{-1/2})$. These positive tails cannot be eventually integral:
+for large $n$ they lie strictly between $0$ and $1$. Rationality would
+force precisely that eventual integrality, so $\alpha_0$ is irrational too.
+
+\section*{Formal verification and sources}
+
+\begingroup\small
+The complete theorem is \texttt{Erdos252.erdos\_252}. Its checked axiom
+dependencies are exactly \texttt{propext}, \texttt{Classical.choice}, and
+\texttt{Quot.sound}. Build, statement audits, and fresh replay using
+Lean's kernel have passed with Lean 4.33.1 and the pinned mathlib revision.
+Fresh replay uses Lean's own kernel, not a separate kernel implementation.
+No prime-pattern conjecture, distribution assumption, or finite
+computational surrogate is used.
+
+The \href{https://github.com/tokengr1nder/Erdos252}{source repository}
+provides reproduction instructions and exact dependency revisions. Its
+formal entrypoints are the
+\href{https://github.com/tokengr1nder/Erdos252/blob/main/Erdos252/Solution.lean}{complete theorem},
+the \href{https://github.com/tokengr1nder/Erdos252/blob/main/Erdos252/DilationIrrationality.lean}{positive-exponent proof},
+the \href{https://github.com/tokengr1nder/Erdos252/blob/main/Erdos252/DilationZeroCase.lean}{zero-exponent proof},
+and the \href{https://github.com/tokengr1nder/Erdos252/blob/main/audit/Statement.lean}{statement audit}
+(definitions, summability, and reindexing). See also the
+\href{https://www.erdosproblems.com/252}{original problem statement}.
+\par\endgroup
+
+\end{document}

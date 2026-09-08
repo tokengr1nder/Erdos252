@@ -49,10 +49,10 @@ theorem dilationGrid_main_term_tendsto_zero (k : ℕ) (e : DilationGridVertex k)
 theorem tendsto_dilationGridSurvivingMain (k : ℕ) :
     Tendsto (dilationGridSurvivingMain k) atTop (𝓝 0) := by
   unfold dilationGridSurvivingMain
-  have hh := tendsto_finsetSum (Finset.univ : Finset (DilationGridVertex k))
-    (fun e _ => tendsto_finsetSum (Finset.Icc 1 (k + 1))
-      (fun h _ => dilationGrid_main_term_tendsto_zero k e h))
-  simpa only [Finset.sum_const_zero] using hh
+  simpa only [Finset.sum_const_zero] using
+    tendsto_finsetSum (Finset.univ : Finset (DilationGridVertex k))
+      (fun e _ => tendsto_finsetSum (Finset.Icc 1 (k + 1))
+        (fun h _ => dilationGrid_main_term_tendsto_zero k e h))
 
 /-- Exact difference between one rescaled reciprocal term and its raw term. -/
 theorem dilationGrid_rescaling_term_identity (k N : ℕ) (e : DilationGridVertex k)
@@ -77,11 +77,8 @@ theorem dilationGridSurvivor_rescaling_eq_sum (k N : ℕ) :
           ((N + dilationGridShift k e h : ℕ) : ℝ)) * (dilationGridShift k e h : ℝ) := by
   unfold dilationGridSurvivingMain dilationGridSurvivor
   simp_rw [Finset.mul_sum, ← Finset.sum_sub_distrib]
-  apply Finset.sum_congr rfl
-  intro e _
-  apply Finset.sum_congr rfl
-  intro h hh
-  exact dilationGrid_rescaling_term_identity k N e hh
+  exact Finset.sum_congr rfl (fun e _ =>
+    Finset.sum_congr rfl (fun h hh => dilationGrid_rescaling_term_identity k N e hh))
 
 /-- The difference after multiplying the main expression by `N` tends to zero. -/
 theorem tendsto_dilationGridSurvivor_rescaling (k : ℕ) :
