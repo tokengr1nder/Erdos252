@@ -26,10 +26,7 @@ theorem affineCongruence5_exists_residue_of_coprime {d Q A : ℕ}
   push_cast
   rw [ZMod.natCast_zmod_val]
   dsimp [x]
-  calc
-    (Q : ZMod d) * (-(A : ZMod d) * (Q : ZMod d)⁻¹) + (A : ZMod d) =
-        -(A : ZMod d) * ((Q : ZMod d) * (Q : ZMod d)⁻¹) + (A : ZMod d) := by ring
-    _ = 0 := by rw [ZMod.coe_mul_inv_eq_one Q hcop]; ring
+  rw [mul_left_comm, ZMod.coe_mul_inv_eq_one Q hcop, mul_one, neg_add_cancel]
 
 /-- Once a coprime affine congruence has a solution, its whole solution set is one residue class. -/
 theorem affineCongruence5_iff_modEq_of_coprime {d Q A v : ℕ}
@@ -53,19 +50,13 @@ theorem affineCongruence5_exists_reduced_residue {d Q A : ℕ} (hd : 0 < d)
   have hg : 0 < g := Nat.gcd_pos_of_pos_left Q hd
   have hgd : g ∣ d := Nat.gcd_dvd_left d Q
   have hgQ : g ∣ Q := Nat.gcd_dvd_right d Q
-  have hga : g ∣ A := hcompat
   have hd' : 0 < d / g := Nat.div_pos_iff.mpr ⟨hg, Nat.le_of_dvd hd hgd⟩
   have hcop : Nat.Coprime (Q / g) (d / g) := (Nat.coprime_div_gcd_div_gcd hg).symm
   obtain ⟨v, hvlt, hv⟩ := affineCongruence5_exists_residue_of_coprime (A := A / g) hd' hcop
-  refine ⟨v, hvlt, ?_⟩
-  intro j
+  refine ⟨v, hvlt, fun j => ?_⟩
   have hred : d ∣ Q * j + A ↔ d / g ∣ (Q / g) * j + A / g := by
-    have hdEq : g * (d / g) = d := Nat.mul_div_cancel' hgd
-    have hQEq : g * (Q / g) = Q := Nat.mul_div_cancel' hgQ
-    have hAEq : g * (A / g) = A := Nat.mul_div_cancel' hga
-    conv_lhs => rw [← hdEq, ← hQEq, ← hAEq]
-    rw [show g * (Q / g) * j + g * (A / g) = g * ((Q / g) * j + A / g) by ring]
-    exact Nat.mul_dvd_mul_iff_left hg
+    rw [Nat.div_dvd_iff_dvd_mul hgd hg, Nat.mul_add, ← Nat.mul_assoc,
+      Nat.mul_div_cancel' hgQ, Nat.mul_div_cancel' hcompat]
   exact hred.trans (affineCongruence5_iff_modEq_of_coprime hcop hv j)
 
 /-- A solution necessarily satisfies the elementary gcd compatibility condition. -/
@@ -82,12 +73,8 @@ theorem affineCongruence5_count_period (Q A d : ℕ) (hd : 0 < d) :
   by_cases hcompat : Nat.gcd d Q ∣ A
   · rw [if_pos hcompat]
     obtain ⟨v, hvlt, hv⟩ := affineCongruence5_exists_reduced_residue hd hcompat
-    have hset : (Finset.range d).filter (fun j => d ∣ Q * j + A) =
-        (Finset.range d).filter (fun j => j ≡ v [MOD d / Nat.gcd d Q]) := by
-      apply Finset.filter_congr
-      intro j hj
-      exact hv j
-    rw [hset, ← Nat.count_eq_card_filter_range]
+    simp_rw [hv]
+    rw [← Nat.count_eq_card_filter_range]
     have hg : 0 < Nat.gcd d Q := Nat.gcd_pos_of_pos_left Q hd
     have hd' : 0 < d / Nat.gcd d Q := Nat.div_pos_iff.mpr
       ⟨hg, Nat.le_of_dvd hd (Nat.gcd_dvd_left d Q)⟩
@@ -96,10 +83,8 @@ theorem affineCongruence5_count_period (Q A d : ℕ) (hd : 0 < d) :
     simp only [Nat.not_lt_zero, if_false, Nat.add_zero]
     exact Nat.div_div_self (Nat.gcd_dvd_left d Q) hd.ne'
   · rw [if_neg hcompat]
-    apply Finset.card_eq_zero.mpr
-    apply Finset.eq_empty_iff_forall_notMem.mpr
-    intro j hj
-    exact hcompat (affineCongruence5_gcd_dvd (Finset.mem_filter.mp hj).2)
+    exact Finset.card_eq_zero.mpr (Finset.filter_eq_empty_iff.mpr
+      (fun j _ hj => hcompat (affineCongruence5_gcd_dvd hj)))
 
 #print axioms affineCongruence5_exists_residue_of_coprime
 #print axioms affineCongruence5_iff_modEq_of_coprime

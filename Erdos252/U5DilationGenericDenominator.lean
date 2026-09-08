@@ -2,6 +2,7 @@ import Mathlib.Combinatorics.Enumerative.Stirling
 import Mathlib.Algebra.BigOperators.Field
 import Mathlib.Algebra.BigOperators.Intervals
 import Mathlib.Data.Real.Basic
+import Mathlib.Data.Nat.Factorial.BigOperators
 import Mathlib.Tactic.FieldSimp
 import Mathlib.Tactic.GCongr
 import Mathlib.Tactic.Linarith
@@ -172,12 +173,7 @@ theorem genericDilationCoefficient5_diagonal (h : ℕ) :
 private theorem genericDilation_ascFactorial_cast (n h : ℕ) :
     ((n + 1).ascFactorial h : ℝ) =
       ∏ j ∈ Finset.range h, ((n : ℝ) + 1 + (j : ℝ)) := by
-  induction h with
-  | zero => simp
-  | succ h ih =>
-      simp only [Nat.ascFactorial_succ, Nat.cast_mul, ih, Finset.prod_range_succ,
-        Nat.cast_add, Nat.cast_one]
-      ring
+  simp only [Nat.ascFactorial_eq_prod_range, Nat.cast_prod, Nat.cast_add, Nat.cast_one]
 
 /-- The generic descending product is exactly the actual ascending-factorial
 denominator when centered at its largest factor. -/

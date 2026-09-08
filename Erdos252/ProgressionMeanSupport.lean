@@ -38,12 +38,9 @@ theorem periodic_sum_blocks5 {f : ℕ → ℝ} {d : ℕ}
   | zero => simp
   | succ b ih =>
       rw [Nat.mul_succ, Finset.sum_range_add, ih]
-      have hp : (∑ n ∈ Finset.range d, f (d * b + n)) =
-          ∑ n ∈ Finset.range d, f n := by
-        apply Finset.sum_congr rfl
-        intro n _
+      have hp (n : ℕ) : f (d * b + n) = f n := by
         simpa only [Nat.cast_id, Nat.mul_comm, Nat.add_comm] using (hf.nat_mul b) n
-      rw [hp]
+      simp_rw [hp]
       push_cast
       ring
 
@@ -64,19 +61,14 @@ theorem periodic_nonneg_cesaro5 {f : ℕ → ℝ} {d : ℕ}
         (tendsto_one_div_atTop_nhds_zero_nat (𝕜 := ℝ))).mul_const S
   apply tendsto_of_tendsto_of_tendsto_of_le_of_le hlo hhi
   · intro N
-    have hcover : d * (N / d) ≤ N := by
-      have := Nat.mod_add_div N d
-      omega
+    have hcover := Nat.mul_div_le N d
     have hh := Finset.sum_le_sum_of_subset_of_nonneg (Finset.range_mono hcover)
       (fun n _ _ => hpos n)
     rw [periodic_sum_blocks5 hf] at hh
     have hr := div_le_div_of_nonneg_right hh (by positivity : (0 : ℝ) ≤ N)
     convert hr using 1; first | rfl | ring
   · intro N
-    have hcover : N ≤ d * (N / d + 1) := by
-      have := Nat.mod_add_div N d
-      have := Nat.mod_lt N hd
-      nlinarith
+    have hcover := (Nat.lt_mul_div_succ N hd).le
     have hh := Finset.sum_le_sum_of_subset_of_nonneg (Finset.range_mono hcover)
       (fun n _ _ => hpos n)
     rw [periodic_sum_blocks5 hf] at hh

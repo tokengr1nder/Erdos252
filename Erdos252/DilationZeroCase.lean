@@ -20,11 +20,11 @@ noncomputable section
 theorem genericScaledFullTail5_pos_of_pos (k n : ℕ) (hn : 0 < n) :
     0 < genericScaledFullTail5 k n := by
   rw [genericScaledFullTail5_eq_tsum_block k n hn]
-  have hσ : (0 : ℝ) < ArithmeticFunction.sigma k n := by
-    exact_mod_cast ArithmeticFunction.sigma_pos k n hn.ne'
-  have hnR : (0 : ℝ) < n := by exact_mod_cast hn
   have hfirst : 0 < genericBlockTerm5 k n 0 := by
-    simpa [genericBlockTerm5, Nat.ascFactorial] using div_pos hσ hnR
+    simp only [genericBlockTerm5, Nat.ascFactorial_zero, Nat.ascFactorial_succ,
+      Nat.add_zero, Nat.mul_one]
+    exact div_pos (Nat.cast_pos.mpr (ArithmeticFunction.sigma_pos k n hn.ne'))
+      (Nat.cast_pos.mpr hn)
   exact hfirst.trans_le ((summable_genericBlockTerm5 k n hn).le_tsum 0
     (fun j _ => genericBlockTerm5_nonneg k n j))
 
@@ -50,10 +50,7 @@ theorem tendsto_genericDilationTailMain5_zero :
     rw [genericDilationTailMain5_zero_eq]
     have hs := sigma_real_le_sixty_four_pow_sqrt 0 (n + 1) (Nat.succ_pos n)
     simp only [pow_zero, mul_one] at hs
-    calc
-      _ ≤ (64 * Real.sqrt ((n + 1 : ℕ) : ℝ)) / ((n + 1 : ℕ) : ℝ) :=
-        div_le_div_of_nonneg_right hs (by positivity)
-      _ = _ := by ring
+    simpa only [mul_div_assoc] using div_le_div_of_nonneg_right hs (by positivity)
 
 /-- Each zero-degree block is dominated by one fixed geometric series. -/
 theorem genericBlockTerm5_zero_le_geometric {n : ℕ} (hn : 4 ≤ n) (j : ℕ) :

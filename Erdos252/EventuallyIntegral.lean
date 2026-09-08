@@ -24,9 +24,7 @@ theorem dilation5_eventually_zero_of_integral_tendsto {f : ℕ → ℝ}
   filter_upwards [hint, hsmall] with n hn hs
   obtain ⟨z, hz⟩ := hn
   rw [hz] at hs ⊢
-  have hzi : |z| < (1 : ℤ) := by exact_mod_cast hs
-  have hz0 : z = 0 := by have := abs_lt.mp hzi; omega
-  simp only [hz0, Int.cast_zero]
+  exact_mod_cast Int.abs_lt_one_iff.mp (show |z| < 1 by exact_mod_cast hs)
 
 #print axioms dilation5_eventually_zero_of_integral_tendsto
 

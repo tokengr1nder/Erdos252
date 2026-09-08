@@ -46,10 +46,7 @@ theorem dilationGridShift_rat_eq (k : ℕ) (e : DilationGridVertex k) {h : ℕ}
     (hh : 1 ≤ h) :
     (dilationGridShift k e h : ℚ) =
       (h : ℚ) * (dilationGridMultiplier k e : ℚ) - (dilationGridOffset k e : ℚ) := by
-  have heq : (dilationGridShift k e h : ℚ) + (dilationGridOffset k e : ℚ) =
-      (h : ℚ) * (dilationGridMultiplier k e : ℚ) := by
-    exact_mod_cast dilationGridShift_add_offset k e hh
-  linarith
+  exact eq_sub_of_add_eq (by exact_mod_cast dilationGridShift_add_offset k e hh)
 
 /-- All lower-order shifted cores cancel on the actual symbolic grid. -/
 theorem dilationGrid_core_rat_cancel {k h ell : ℕ}

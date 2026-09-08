@@ -27,17 +27,13 @@ theorem dilation_polynomial_ascending_bound (d n r : ℕ) (hd : 0 < d) :
       _ ≤ (d * (n + 1 + (r + 1))) ^ d := Nat.pow_le_pow_left hlin d
       _ = d ^ d * (n + 1 + (r + 1)) ^ d := Nat.mul_pow _ _ _
       _ ≤ _ := Nat.mul_le_mul_left _ (Nat.pow_succ_le_ascFactorial _ _)
-  have hsplit : (n + 1).ascFactorial (r + 1) *
-      (n + 1 + (r + 1)).ascFactorial d =
-      (n + 1).ascFactorial (r + d + 1) := by
-    rw [Nat.ascFactorial_mul_ascFactorial]
-    congr 1
-    omega
   calc
     _ ≤ (d ^ d * (n + 1 + (r + 1)).ascFactorial d) *
         (n + 1).ascFactorial (r + 1) :=
       Nat.mul_le_mul hnum (Nat.pow_succ_le_ascFactorial _ _)
-    _ = _ := by rw [← hsplit]; ring
+    _ = _ := by
+      rw [mul_assoc, Nat.mul_comm ((n + 1 + (r + 1)).ascFactorial d),
+        Nat.ascFactorial_mul_ascFactorial, Nat.add_right_comm r 1 d]
 
 theorem dilation_polynomial_block_le (d n r : ℕ) (hd : 0 < d) :
     ((n + 1 + (r + d) : ℕ) : ℝ) ^ d /

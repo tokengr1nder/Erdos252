@@ -28,9 +28,7 @@ theorem affineCongruence_count_le_quotient {Q A d : ℕ}
     apply Finset.mem_Icc.mpr
     constructor
     · exact Nat.div_pos (Nat.le_of_dvd (by omega : 0 < Q * n + A) hmem.2) hd
-    · apply Nat.div_le_div_right
-      exact Nat.add_le_add_right (Nat.mul_le_mul_left Q
-        (Nat.le_of_lt (Finset.mem_range.mp hmem.1))) A
+    · exact Nat.div_le_div_right (by gcongr; exact (Finset.mem_range.mp hmem.1).le)
   have hinj : (S : Set ℕ).InjOn (fun n : ℕ => (Q * n + A) / d) := by
     intro n hn j hj heq
     dsimp only at heq
@@ -88,14 +86,10 @@ theorem rawPhaseProgressionMeanTerm_bounds_pos {k Q : ℕ}
     0 ≤ rawPhaseProgressionMeanTerm k Q A d ∧
       rawPhaseProgressionMeanTerm k Q A d ≤ (Q : ℝ) / (d : ℝ) ^ (k + 1) := by
   rw [rawPhaseProgressionMeanTerm_eq_gcd]
-  split_ifs
-  · constructor
-    · positivity
-    · apply div_le_div_of_nonneg_right _ (by positivity)
-      exact_mod_cast Nat.gcd_le_right d hQ
-  · constructor
-    · exact le_rfl
-    · positivity
+  split_ifs <;> refine ⟨by positivity, ?_⟩
+  · exact div_le_div_of_nonneg_right (by exact_mod_cast Nat.gcd_le_right d hQ)
+      (by positivity)
+  · positivity
 
 theorem summable_rawPhaseProgressionMeanTerm_pos {k Q : ℕ}
     (hk : 0 < k) (hQ : 0 < Q) (A : ℕ) :
@@ -123,17 +117,12 @@ theorem rawPhase_cesaro_progression_pos {k Q A : ℕ}
   have hh := tendsto_tsum_of_dominated_convergence hs
     (fun d => rawPhaseDivisorTerm_cesaro_pos hk Q A d)
     (Eventually.of_forall (fun N d => rawPhaseDivisorTerm_cesaro_bound_pos hk hQ hA d N))
-  apply hh.congr'
-  apply Eventually.of_forall
-  intro N
-  dsimp only
+  refine hh.congr' (Eventually.of_forall (fun N => ?_))
   rw [tsum_div_const,
     Summable.tsum_finsetSum (fun n (_hn : n ∈ Finset.range N) =>
       summable_rawPhaseDivisorTerm_of_pos k (by omega : 0 < Q * n + A))]
-  congr 1
-  apply Finset.sum_congr rfl
-  intro n _
-  exact (rawPhase_eq_tsum_divisorTerm k (by omega : 0 < Q * n + A)).symm
+  exact congrArg (fun x : ℝ => x / N) (Finset.sum_congr rfl
+    (fun n _ => (rawPhase_eq_tsum_divisorTerm k (by omega : 0 < Q * n + A)).symm))
 
 theorem summable_rawPhaseProgressionMeanTerm_multiples_pos {k Q : ℕ}
     (hk : 0 < k) (hQ : 0 < Q) (A ell : ℕ) :
