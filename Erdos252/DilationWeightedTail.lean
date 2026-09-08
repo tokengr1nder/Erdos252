@@ -1,0 +1,135 @@
+import Erdos252.DilationGridTailIndex
+import Erdos252.DilationSurvivingMain
+import Erdos252.U5DilationGenericTail
+
+/-!
+# Actual weighted factorial tails on every positive-dimensional grid
+
+The finite sums use exactly the integer weights already checked in the
+symbolic cancellation argument. All tails refer to the original `alpha k`.
+-/
+
+namespace Erdos252
+
+open Filter
+open scoped BigOperators Topology
+
+noncomputable section
+
+def dilationGridWeightedTail (k N : ℕ) : ℝ :=
+  ∑ e : DilationGridVertex k, (dilationGridWeightInt k e : ℝ) *
+    (ArithmeticFunction.sigma k (dilationGridMultiplier k e) : ℝ) *
+      genericScaledFullTail5 k (dilationGridTailIndex k N e + 1)
+
+def dilationGridWeightedMain (k N : ℕ) : ℝ :=
+  ∑ e : DilationGridVertex k, (dilationGridWeightInt k e : ℝ) *
+    (ArithmeticFunction.sigma k (dilationGridMultiplier k e) : ℝ) *
+      genericDilationTailMain5 k (dilationGridTailIndex k N e)
+
+def dilationGridWeightedError (k N : ℕ) : ℝ :=
+  ∑ e : DilationGridVertex k, (dilationGridWeightInt k e : ℝ) *
+    (ArithmeticFunction.sigma k (dilationGridMultiplier k e) : ℝ) *
+      genericDilationTailError5 k (dilationGridTailIndex k N e)
+
+theorem dilationGridWeightedTail_eq_main_add_error (k N : ℕ) :
+    dilationGridWeightedTail k N = dilationGridWeightedMain k N +
+      dilationGridWeightedError k N := by
+  unfold dilationGridWeightedTail dilationGridWeightedMain dilationGridWeightedError
+  rw [← Finset.sum_add_distrib]
+  apply Finset.sum_congr rfl
+  intro e he
+  rw [genericDilationTail5_expansion]
+  ring
+
+theorem dilationGridWeightedTail_integral_of_vertices (k N : ℕ)
+    (hint : ∀ e : DilationGridVertex k, ∃ z : ℤ,
+      genericScaledFullTail5 k (dilationGridTailIndex k N e + 1) = z) :
+    ∃ z : ℤ, dilationGridWeightedTail k N = z := by
+  classical
+  choose z hz using hint
+  refine ⟨∑ e : DilationGridVertex k, dilationGridWeightInt k e *
+    (ArithmeticFunction.sigma k (dilationGridMultiplier k e) : ℤ) * z e, ?_⟩
+  unfold dilationGridWeightedTail
+  push_cast
+  apply Finset.sum_congr rfl
+  intro e he
+  rw [hz e]
+
+theorem eventually_dilationGridWeightedTail_integral (k : ℕ)
+    (hx : ¬ Irrational (alpha k)) :
+    ∃ T : ℕ, ∀ N : ℕ, T ≤ N → ∃ z : ℤ, dilationGridWeightedTail k N = z := by
+  obtain ⟨K, hK⟩ := eventually_genericScaledFullTail5_integral k hx
+  refine ⟨dilationGridTailThreshold k K, fun N hN => ?_⟩
+  apply dilationGridWeightedTail_integral_of_vertices
+  intro e
+  apply hK
+  exact (dilationGridTailIndex_ge k N K hN e).trans (Nat.le_succ _)
+
+theorem eventually_dilationGridWeightedTail_integral_on_progression (k : ℕ)
+    (hx : ¬ Irrational (alpha k)) (A : ℕ) :
+    ∀ᶠ t : ℕ in atTop, ∃ z : ℤ,
+      dilationGridWeightedTail k (A + dilationGridModulus k * t) = z := by
+  obtain ⟨T, hT⟩ := eventually_dilationGridWeightedTail_integral k hx
+  filter_upwards [eventually_ge_atTop T] with t ht
+  apply hT
+  have htN : t ≤ A + dilationGridModulus k * t := by
+    have := dilationGridModulus_pos k
+    nlinarith
+  exact ht.trans htN
+
+/-- Every actual quotient index tends to infinity on a positive-step progression. -/
+theorem tendsto_dilationGridTailIndex (k Q A : ℕ) (hQ : 0 < Q)
+    (e : DilationGridVertex k) :
+    Tendsto (fun t : ℕ => dilationGridTailIndex k (A + Q * t) e) atTop atTop := by
+  apply tendsto_atTop.2
+  intro K
+  filter_upwards [eventually_ge_atTop (dilationGridTailThreshold k K)] with t ht
+  have htN : t ≤ A + Q * t := by nlinarith
+  exact dilationGridTailIndex_ge k _ K (ht.trans htN) e
+
+/-- Exact rescaling of the generic finite main term at one actual grid vertex. -/
+theorem dilationGridTailMain_rescale {k : ℕ} (hk : 0 < k) (N : ℕ)
+    (e : DilationGridVertex k) (hN : dilationGridOffset k e ≤ N)
+    (hcong : N ≡ dilationGridOffset k e [MOD (dilationGridMultiplier k e) ^ 2]) :
+    (ArithmeticFunction.sigma k (dilationGridMultiplier k e) : ℝ) *
+        genericDilationTailMain5 k (dilationGridTailIndex k N e) =
+      ∑ h ∈ Finset.Icc 1 (k + 1), ∑ ell ∈ Finset.Icc 1 (k + 1),
+        (Nat.stirlingSecond (ell - 1) (h - 1) : ℝ) *
+          (dilationGridMultiplier k e : ℝ) ^ ell *
+            (ArithmeticFunction.sigma k (N + dilationGridShift k e h) : ℝ) /
+              ((N + dilationGridShift k e h : ℕ) : ℝ) ^ ell := by
+  rw [genericDilationTailMain5_eq_Icc]
+  simp_rw [Finset.mul_sum]
+  apply Finset.sum_congr rfl
+  intro h hh
+  apply Finset.sum_congr rfl
+  intro ell hell
+  calc
+    _ = (Nat.stirlingSecond (ell - 1) (h - 1) : ℝ) *
+        ((ArithmeticFunction.sigma k (dilationGridMultiplier k e) : ℝ) *
+          ((ArithmeticFunction.sigma k (dilationGridTailIndex k N e + h) : ℝ) /
+            ((dilationGridTailIndex k N e + h : ℕ) : ℝ) ^ ell)) := by ring
+    _ = _ := by rw [dilationGridTailIndex_term_rescale hk N e hN hcong hh ell]; ring
+
+/-- Cancellation identifies the actual weighted main term with the actual survivor main term. -/
+theorem dilationGridWeightedMain_eq_surviving {k : ℕ} (hk : 0 < k) (N : ℕ)
+    (hN : dilationGridTailThreshold k 0 ≤ N) (hcong : DilationGridCongruences k N) :
+    dilationGridWeightedMain k N = dilationGridSurvivingMain k N := by
+  rw [← dilationGridFiniteMain_eq_surviving, dilationGridFiniteMain_eq_vertex_sum]
+  unfold dilationGridWeightedMain
+  apply Finset.sum_congr rfl
+  intro e he
+  rw [mul_assoc, dilationGridTailMain_rescale hk N e
+    (dilationGridTailThreshold_offset_le k N 0 hN e) (hcong e)]
+
+#print axioms dilationGridWeightedTail_eq_main_add_error
+#print axioms dilationGridWeightedTail_integral_of_vertices
+#print axioms eventually_dilationGridWeightedTail_integral
+#print axioms eventually_dilationGridWeightedTail_integral_on_progression
+#print axioms tendsto_dilationGridTailIndex
+#print axioms dilationGridTailMain_rescale
+#print axioms dilationGridWeightedMain_eq_surviving
+
+end
+
+end Erdos252
