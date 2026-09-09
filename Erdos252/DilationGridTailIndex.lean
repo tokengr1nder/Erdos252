@@ -66,18 +66,6 @@ theorem dilationGridTailIndex_coprime {k : ℕ} (hk : 0 < k) (N : ℕ)
     (Nat.dvd_factorial (Finset.mem_Icc.mp hh).1
       ((Finset.mem_Icc.mp hh).2.trans (dilationGridBound_succ_le hk)))
 
-/-- Divisor-sum multiplicativity for the actual common shifted numerator. -/
-theorem dilationGridTailIndex_sigma_mul {k : ℕ} (hk : 0 < k) (N : ℕ)
-    (e : DilationGridVertex k) (hN : dilationGridOffset k e ≤ N)
-    (hcong : N ≡ dilationGridOffset k e [MOD (dilationGridMultiplier k e) ^ 2])
-    {h : ℕ} (hh : h ∈ Finset.Icc 1 (k + 1)) :
-    ArithmeticFunction.sigma k (dilationGridMultiplier k e) *
-        ArithmeticFunction.sigma k (dilationGridTailIndex k N e + h) =
-      ArithmeticFunction.sigma k (N + dilationGridShift k e h) := by
-  rw [← dilationGridTailIndex_factorization k N e hN hcong (Finset.mem_Icc.mp hh).1]
-  exact (ArithmeticFunction.isMultiplicative_sigma.map_mul_of_coprime
-    (dilationGridTailIndex_coprime hk N e hcong hh)).symm
-
 /-- Exact numerator and denominator rescaling for every denominator exponent. -/
 theorem dilationGridTailIndex_term_rescale {k : ℕ} (hk : 0 < k) (N : ℕ)
     (e : DilationGridVertex k) (hN : dilationGridOffset k e ≤ N)
@@ -141,7 +129,6 @@ theorem dilationGridCongruences_exists (k : ℕ) :
 #print axioms dilationGridTailIndex_mul_add_offset
 #print axioms dilationGridTailIndex_factorization
 #print axioms dilationGridTailIndex_coprime
-#print axioms dilationGridTailIndex_sigma_mul
 #print axioms dilationGridTailIndex_term_rescale
 #print axioms dilationGridTailThreshold_vertex_le
 #print axioms dilationGridTailIndex_ge

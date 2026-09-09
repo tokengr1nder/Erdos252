@@ -37,23 +37,17 @@ theorem dilationGridWeightedTail_eq_main_add_error (k N : ℕ) :
   unfold dilationGridWeightedTail dilationGridWeightedMain dilationGridWeightedError
   simp_rw [genericDilationTail5_expansion, mul_add, Finset.sum_add_distrib]
 
-theorem dilationGridWeightedTail_integral_of_vertices (k N : ℕ)
-    (hint : ∀ e : DilationGridVertex k, ∃ z : ℤ,
-      genericScaledFullTail5 k (dilationGridTailIndex k N e + 1) = z) :
-    ∃ z : ℤ, dilationGridWeightedTail k N = z := by
-  classical
-  choose z hz using hint
-  refine ⟨∑ e : DilationGridVertex k, dilationGridWeightInt k e *
-    (ArithmeticFunction.sigma k (dilationGridMultiplier k e) : ℤ) * z e, ?_⟩
-  simp only [dilationGridWeightedTail, hz, Int.cast_sum, Int.cast_mul, Int.cast_natCast]
-
 theorem eventually_dilationGridWeightedTail_integral (k : ℕ)
     (hx : ¬ Irrational (alpha k)) :
     ∃ T : ℕ, ∀ N : ℕ, T ≤ N → ∃ z : ℤ, dilationGridWeightedTail k N = z := by
+  classical
   obtain ⟨K, hK⟩ := eventually_genericScaledFullTail5_integral k hx
   refine ⟨dilationGridTailThreshold k K, fun N hN => ?_⟩
-  exact dilationGridWeightedTail_integral_of_vertices k N
-    (fun e => hK _ ((dilationGridTailIndex_ge k N K hN e).trans (Nat.le_succ _)))
+  choose z hz using fun e : DilationGridVertex k =>
+    hK _ ((dilationGridTailIndex_ge k N K hN e).trans (Nat.le_succ _))
+  exact ⟨∑ e : DilationGridVertex k, dilationGridWeightInt k e *
+    (ArithmeticFunction.sigma k (dilationGridMultiplier k e) : ℤ) * z e,
+    by simp only [dilationGridWeightedTail, hz, Int.cast_sum, Int.cast_mul, Int.cast_natCast]⟩
 
 theorem eventually_dilationGridWeightedTail_integral_on_progression (k : ℕ)
     (hx : ¬ Irrational (alpha k)) (A : ℕ) :
@@ -103,7 +97,6 @@ theorem dilationGridWeightedMain_eq_surviving {k : ℕ} (hk : 0 < k) (N : ℕ)
     (dilationGridTailThreshold_offset_le k N 0 hN e) (hcong e)]
 
 #print axioms dilationGridWeightedTail_eq_main_add_error
-#print axioms dilationGridWeightedTail_integral_of_vertices
 #print axioms eventually_dilationGridWeightedTail_integral
 #print axioms eventually_dilationGridWeightedTail_integral_on_progression
 #print axioms tendsto_dilationGridTailIndex

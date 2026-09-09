@@ -19,9 +19,7 @@ theorem eventually_factorial_mul_eq_int_of_not_irrational {x : ℝ}
   refine ⟨r.den, fun n hn ↦ ?_⟩
   obtain ⟨c, hc⟩ := Nat.dvd_factorial r.pos hn
   refine ⟨(c : ℤ) * r.num, ?_⟩
-  rw [Rat.cast_def]
-  have hden : (r.den : ℝ) ≠ 0 := ne_of_gt (Nat.cast_pos.mpr r.pos)
-  rw [hc]
+  rw [Rat.cast_def, hc]
   push_cast
   field_simp
 

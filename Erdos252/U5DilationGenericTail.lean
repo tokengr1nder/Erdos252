@@ -1,4 +1,5 @@
-import Erdos252.FactorialSeries
+import Erdos252.RationalFactorial
+import Erdos252.Tail
 import Erdos252.U5DilationGenericDenominator
 
 /-!
@@ -9,9 +10,13 @@ eventual integrality, and the finite Stirling block has an exact decomposition
 with the actual infinite tail. No irrationality assertion is made here.
 -/
 
+open scoped Nat BigOperators ArithmeticFunction.sigma
+
 namespace Erdos252
 
-open scoped BigOperators ArithmeticFunction.sigma
+/-- The factorial divisor-sum series.  Its `n = 0` term is zero. -/
+noncomputable def alpha (k : ℕ) : ℝ :=
+  ∑' n : ℕ, (ArithmeticFunction.sigma k n : ℝ) / (n ! : ℝ)
 
 /-- The actual factorial-series prefix, excluding the term at `n`. -/
 noncomputable def genericPrefix5 (k n : ℕ) : ℝ :=
@@ -39,24 +44,22 @@ noncomputable def genericDilationTailError5 (k n : ℕ) : ℝ :=
 noncomputable def genericDilationOmittedTail5 (k n H : ℕ) : ℝ :=
   ∑' r : ℕ, genericBlockTerm5 k (n + 1) (r + H)
 
-theorem genericPrefix5_at_five (n : ℕ) : genericPrefix5 5 n = prefix5 n := rfl
-
-theorem genericScaledFullTail5_at_five (n : ℕ) :
-    genericScaledFullTail5 5 n = scaledFullTail5 n := rfl
+/-- The finite part of the actual expansion error. -/
+noncomputable def genericDilationFiniteError5 (k n : ℕ) : ℝ :=
+  ∑ j ∈ Finset.range (k + 1),
+    (ArithmeticFunction.sigma k (n + (j + 1)) : ℝ) *
+      genericDilationError5 (j + 1) (k + 1) ((n + (j + 1) : ℕ) : ℝ)
 
 /-- The factorial-scaled actual prefix is integral for every exponent. -/
 theorem genericPrefix5_scaled_integral (k n : ℕ) :
     ∃ z : ℤ, ((n - 1).factorial : ℝ) * genericPrefix5 k n = z := by
-  let z : ℕ := ∑ m ∈ Finset.range n,
-    ((n - 1).factorial / m.factorial) * ArithmeticFunction.sigma k m
-  refine ⟨(z : ℤ), ?_⟩
-  unfold genericPrefix5 z
+  refine ⟨((∑ m ∈ Finset.range n,
+    ((n - 1).factorial / m.factorial) * ArithmeticFunction.sigma k m : ℕ) : ℤ), ?_⟩
+  unfold genericPrefix5
   rw [Finset.mul_sum]
   push_cast
-  apply Finset.sum_congr rfl
-  intro m hm
-  have hmn : m ≤ n - 1 := Nat.le_sub_one_of_lt (Finset.mem_range.mp hm)
-  push_cast [Nat.factorial_dvd_factorial hmn]
+  refine Finset.sum_congr rfl fun m hm => ?_
+  push_cast [Nat.factorial_dvd_factorial (Nat.le_sub_one_of_lt (Finset.mem_range.mp hm))]
   field
 
 /-- Rationality makes every sufficiently late actual scaled tail integral. -/
@@ -67,10 +70,7 @@ theorem eventually_genericScaledFullTail5_integral (k : ℕ)
   refine ⟨N + 1, fun n hn => ?_⟩
   obtain ⟨za, hza⟩ := hN (n - 1) (by omega)
   obtain ⟨zp, hzp⟩ := genericPrefix5_scaled_integral k n
-  refine ⟨za - zp, ?_⟩
-  unfold genericScaledFullTail5
-  rw [mul_sub, hza, hzp]
-  exact (Int.cast_sub za zp).symm
+  exact ⟨za - zp, by rw [genericScaledFullTail5, mul_sub, hza, hzp, Int.cast_sub]⟩
 
 private theorem generic_factorial_ratio5 (n j : ℕ) (hn : 0 < n) :
     ((n - 1).factorial : ℝ) / ((n + j).factorial : ℝ) =
@@ -98,10 +98,9 @@ theorem genericScaledFullTail5_eq_tsum_block (k n : ℕ) (hn : 0 < n) :
   exact tsum_congr (fun j => generic_scaled_summand_eq_block5 k n j hn)
 
 theorem summable_genericBlockTerm5 (k n : ℕ) (hn : 0 < n) :
-    Summable (genericBlockTerm5 k n) := by
-  exact (((summable_nat_add_iff n).2 (Tail.summable_sigma_div_factorial k)).mul_left
-    ((n - 1).factorial : ℝ)).congr
-    (fun j => generic_scaled_summand_eq_block5 k n j hn)
+    Summable (genericBlockTerm5 k n) :=
+  (((summable_nat_add_iff n).2 (Tail.summable_sigma_div_factorial k)).mul_left
+    ((n - 1).factorial : ℝ)).congr (fun j => generic_scaled_summand_eq_block5 k n j hn)
 
 theorem genericBlockTerm5_nonneg (k n j : ℕ) : 0 ≤ genericBlockTerm5 k n j := by
   unfold genericBlockTerm5
@@ -133,11 +132,9 @@ theorem genericBlockTerm5_expansion (k n j L : ℕ) :
 /-- Exact decomposition of the generic actual expansion error into the
 omitted infinite tail and the finite denominator remainders. -/
 theorem genericDilationTailError5_eq (k n : ℕ) :
-    genericDilationTailError5 k n = genericDilationOmittedTail5 k n (k + 1) +
-      ∑ j ∈ Finset.range (k + 1),
-        (ArithmeticFunction.sigma k (n + (j + 1)) : ℝ) *
-          genericDilationError5 (j + 1) (k + 1) ((n + (j + 1) : ℕ) : ℝ) := by
-  unfold genericDilationTailError5 genericDilationTailMain5
+    genericDilationTailError5 k n =
+      genericDilationOmittedTail5 k n (k + 1) + genericDilationFiniteError5 k n := by
+  unfold genericDilationTailError5 genericDilationTailMain5 genericDilationFiniteError5
   rw [genericScaledFullTail5_split k n (k + 1)]
   simp_rw [genericBlockTerm5_expansion k n _ (k + 1)]
   rw [Finset.sum_add_distrib]
@@ -184,12 +181,8 @@ theorem genericDilationTailMain5_eq_Icc (k n : ℕ) :
   simp_rw [genericDilationPolynomial5_eq_Icc, Finset.mul_sum]
   simp only [div_eq_mul_inv, mul_comm, mul_assoc]
 
-#print axioms genericPrefix5_at_five
-#print axioms genericScaledFullTail5_at_five
 #print axioms genericPrefix5_scaled_integral
 #print axioms eventually_genericScaledFullTail5_integral
-#print axioms generic_factorial_ratio5
-#print axioms generic_scaled_summand_eq_block5
 #print axioms genericScaledFullTail5_eq_tsum_block
 #print axioms summable_genericBlockTerm5
 #print axioms genericBlockTerm5_nonneg

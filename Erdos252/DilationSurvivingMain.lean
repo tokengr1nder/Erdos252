@@ -96,29 +96,19 @@ theorem dilationGridFiniteMain_eq_vertex_sum (k N : ℕ) :
   rw [Finset.sum_comm]
   simp only [div_eq_mul_inv, mul_assoc, mul_comm, mul_left_comm]
 
-theorem dilationGridCoefficient_zero_succ (k : ℕ) :
-    dilationGridCoefficient k (dilationGridZero k) (k + 1) =
-      (dilationGridWeightInt k (dilationGridZero k) : ℝ) *
-        (dilationGridBase k : ℝ) ^ (k + 1) := by
-  simp only [dilationGridCoefficient, dilationGridMultiplier,
-    dilationGridIndex_zero, mul_zero, add_zero,
-    Nat.add_sub_cancel, Nat.stirlingSecond_self, Nat.cast_one, mul_one]
-
 /-- The isolated final-order coefficient never vanishes. -/
 theorem dilationGridCoefficient_zero_succ_ne_zero (k : ℕ) :
     dilationGridCoefficient k (dilationGridZero k) (k + 1) ≠ 0 := by
-  rw [dilationGridCoefficient_zero_succ]
-  apply mul_ne_zero
-  · exact_mod_cast dilationGridWeightInt_zero_ne_zero k
-  · apply pow_ne_zero
-    exact_mod_cast (dilationGridBase_pos k).ne'
+  simp only [dilationGridCoefficient, dilationGridMultiplier, dilationGridIndex_zero,
+    mul_zero, add_zero, Nat.add_sub_cancel, Nat.stirlingSecond_self, Nat.cast_one, mul_one]
+  exact mul_ne_zero (by exact_mod_cast dilationGridWeightInt_zero_ne_zero k)
+    (pow_ne_zero _ (by exact_mod_cast (dilationGridBase_pos k).ne'))
 
 #print axioms dilationGrid_lower_stirling_cancel
 #print axioms dilationGridFiniteMain_eq_final
 #print axioms dilationGrid_sigma_div_succ
 #print axioms dilationGridFiniteMain_eq_surviving
 #print axioms dilationGridFiniteMain_eq_vertex_sum
-#print axioms dilationGridCoefficient_zero_succ
 #print axioms dilationGridCoefficient_zero_succ_ne_zero
 
 end

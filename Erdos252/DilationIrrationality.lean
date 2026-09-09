@@ -21,11 +21,6 @@ theorem irrational_alpha_pos {k : ℕ} (hk : 0 < k) : Irrational (alpha k) := by
     (dilationGridModulus_pos k)
   simpa only [Nat.add_comm] using hz
 
-theorem irrational_sigma_factorial_series_pos {k : ℕ} (hk : 0 < k) :
-    Irrational (∑' n : ℕ, (ArithmeticFunction.sigma k n : ℝ) / (n.factorial : ℝ)) :=
-  irrational_alpha_pos hk
-
 #print axioms irrational_alpha_pos
-#print axioms irrational_sigma_factorial_series_pos
 
 end Erdos252

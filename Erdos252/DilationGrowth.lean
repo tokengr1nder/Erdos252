@@ -8,8 +8,7 @@ import Mathlib.Tactic.Ring
 # A common sublinear normalized divisor-sum bound for every exponent
 
 Pairing a divisor with its complementary divisor gives a square-root bound
-directly. The public constant is kept unchanged; the estimate covers zero,
-one, and every larger exponent without the historical divisor-power module.
+directly. The estimate covers zero, one, and every larger exponent.
 -/
 
 namespace Erdos252

@@ -10,8 +10,7 @@ import Mathlib.Tactic.Ring
 # Elementary support for arithmetic-progression means
 
 These periodic-average and prime-gcd lemmas are independent of any divisor-sum
-exponent. Their existing names are retained so the historical APIs re-export
-the same declarations.
+exponent.
 -/
 
 namespace Erdos252

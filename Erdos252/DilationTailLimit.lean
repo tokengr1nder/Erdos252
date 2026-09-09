@@ -18,15 +18,17 @@ open scoped BigOperators Topology
 
 noncomputable section
 
+private theorem le_progression (k A t : ℕ) : t ≤ A + dilationGridModulus k * t :=
+  (Nat.le_mul_of_pos_left t (dilationGridModulus_pos k)).trans (Nat.le_add_left _ _)
+
 /-- The common argument is bounded by one multiplier times its index plus one. -/
 theorem dilationGridTailIndex_common_le (k N : ℕ) (e : DilationGridVertex k)
     (hN : dilationGridOffset k e ≤ N)
     (hcong : N ≡ dilationGridOffset k e [MOD (dilationGridMultiplier k e) ^ 2]) :
     (N : ℝ) ≤ (dilationGridMultiplier k e : ℝ) *
       ((dilationGridTailIndex k N e : ℝ) + 1) := by
-  have hh := dilationGridTailIndex_factorization k N e hN hcong (by norm_num : 1 ≤ 1)
   have hn : N ≤ dilationGridMultiplier k e * (dilationGridTailIndex k N e + 1) := by
-    rw [hh]
+    rw [dilationGridTailIndex_factorization k N e hN hcong (by norm_num : 1 ≤ 1)]
     exact Nat.le_add_right _ _
   exact_mod_cast hn
 
@@ -50,17 +52,11 @@ theorem tendsto_dilationGrid_vertex_error_mul (k A : ℕ)
       0 ≤ genericDilationTailError5 k (dilationGridTailIndex k (A + dilationGridModulus k * t) e) := by
     filter_upwards [hindex.eventually (eventually_ge_atTop (k + 1))] with t ht
     exact genericDilationTailError5_nonneg k _ ht
-  apply squeeze_zero' _ _ hlim
-  · filter_upwards [hnonneg] with t ht
-    exact mul_nonneg (Nat.cast_nonneg _) ht
-  · filter_upwards [hnonneg, eventually_ge_atTop (dilationGridTailThreshold k 0)] with t ht hlarge
-    have htN : t ≤ A + dilationGridModulus k * t := by
-      have := dilationGridModulus_pos k
-      nlinarith
-    have hN := dilationGridTailThreshold_offset_le k _ 0 (hlarge.trans htN) e
-    have hb := dilationGridTailIndex_common_le k _ e hN
-      (dilationGridCongruences_add_modulus_mul k A t hA e)
-    simpa only [mul_assoc] using mul_le_mul_of_nonneg_right hb ht
+  refine squeeze_zero' (hnonneg.mono fun t ht => mul_nonneg (Nat.cast_nonneg _) ht) ?_ hlim
+  filter_upwards [hnonneg, eventually_ge_atTop (dilationGridTailThreshold k 0)] with t ht hlarge
+  have hN := dilationGridTailThreshold_offset_le k _ 0 (hlarge.trans (le_progression k A t)) e
+  simpa only [mul_assoc] using mul_le_mul_of_nonneg_right (dilationGridTailIndex_common_le k _ e
+    hN (dilationGridCongruences_add_modulus_mul k A t hA e)) ht
 
 /-- Fixed signed weights preserve the vanishing scaled-error limit. -/
 theorem tendsto_dilationGridWeightedError_mul (k A : ℕ)
@@ -80,67 +76,55 @@ theorem tendsto_dilationGridWeightedError (k A : ℕ)
       atTop (𝓝 0) := by
   have hN := (tendsto_natCast_atTop_atTop (R := ℝ)).comp
     (dilationGrid_affine_tendsto_atTop (dilationGridModulus k) A (dilationGridModulus_pos k))
-  apply ((tendsto_dilationGridWeightedError_mul k A hA).div_atTop hN).congr'
+  refine ((tendsto_dilationGridWeightedError_mul k A hA).div_atTop hN).congr' ?_
   filter_upwards [hN.eventually_ne_atTop 0] with t ht
   exact mul_div_cancel_left₀ _ ht
 
-theorem tendsto_dilationGridWeightedMain {k : ℕ} (hk : 0 < k) (A : ℕ)
+/-- Beyond the threshold, the weighted main term is the surviving main term
+along the whole CRT progression. -/
+theorem eventually_dilationGridWeightedMain_eq_surviving {k : ℕ} (hk : 0 < k) (A : ℕ)
     (hA : DilationGridCongruences k A) :
-    Tendsto (fun t : ℕ => dilationGridWeightedMain k (A + dilationGridModulus k * t))
-      atTop (𝓝 0) := by
-  apply (tendsto_dilationGridSurvivingMain_progression k (dilationGridModulus k) A
-    (dilationGridModulus_pos k)).congr'
+    (fun t : ℕ => dilationGridWeightedMain k (A + dilationGridModulus k * t)) =ᶠ[atTop]
+      fun t : ℕ => dilationGridSurvivingMain k (A + dilationGridModulus k * t) := by
   filter_upwards [eventually_ge_atTop (dilationGridTailThreshold k 0)] with t ht
-  have htN : t ≤ A + dilationGridModulus k * t := by
-    have := dilationGridModulus_pos k
-    nlinarith
-  exact (dilationGridWeightedMain_eq_surviving hk _ (ht.trans htN)
-    (dilationGridCongruences_add_modulus_mul k A t hA)).symm
+  exact dilationGridWeightedMain_eq_surviving hk _ (ht.trans (le_progression k A t))
+    (dilationGridCongruences_add_modulus_mul k A t hA)
 
 theorem tendsto_dilationGridWeightedTail {k : ℕ} (hk : 0 < k) (A : ℕ)
     (hA : DilationGridCongruences k A) :
     Tendsto (fun t : ℕ => dilationGridWeightedTail k (A + dilationGridModulus k * t))
       atTop (𝓝 0) := by
-  have hh := (tendsto_dilationGridWeightedMain hk A hA).add
-    (tendsto_dilationGridWeightedError k A hA)
-  simpa only [← dilationGridWeightedTail_eq_main_add_error, add_zero] using hh
-
-theorem eventually_dilationGridWeightedTail_zero {k : ℕ} (hk : 0 < k)
-    (hx : ¬ Irrational (alpha k)) (A : ℕ) (hA : DilationGridCongruences k A) :
-    ∀ᶠ t : ℕ in atTop, dilationGridWeightedTail k (A + dilationGridModulus k * t) = 0 := by
-  exact dilation5_eventually_zero_of_integral_tendsto
-    (tendsto_dilationGridWeightedTail hk A hA)
-    (eventually_dilationGridWeightedTail_integral_on_progression k hx A)
+  have hmain := (tendsto_dilationGridSurvivingMain_progression k (dilationGridModulus k) A
+    (dilationGridModulus_pos k)).congr'
+    (eventually_dilationGridWeightedMain_eq_surviving hk A hA).symm
+  simpa only [← dilationGridWeightedTail_eq_main_add_error, add_zero] using
+    hmain.add (tendsto_dilationGridWeightedError k A hA)
 
 /-- Rationality forces the actual generic survivor to vanish on a CRT progression. -/
 theorem tendsto_dilationGridSurvivor_of_rational {k : ℕ} (hk : 0 < k)
     (hx : ¬ Irrational (alpha k)) (A : ℕ) (hA : DilationGridCongruences k A) :
     Tendsto (fun t : ℕ => dilationGridSurvivor k (A + dilationGridModulus k * t))
       atTop (𝓝 0) := by
-  have hz := eventually_dilationGridWeightedTail_zero hk hx A hA
+  have hz := dilation5_eventually_zero_of_integral_tendsto
+    (tendsto_dilationGridWeightedTail hk A hA)
+    (eventually_dilationGridWeightedTail_integral_on_progression k hx A)
   have hmain : Tendsto (fun t : ℕ => ((A + dilationGridModulus k * t : ℕ) : ℝ) *
       dilationGridSurvivingMain k (A + dilationGridModulus k * t)) atTop (𝓝 0) := by
     rw [← neg_zero]
-    apply (tendsto_dilationGridWeightedError_mul k A hA).neg.congr'
-    filter_upwards [hz, eventually_ge_atTop (dilationGridTailThreshold k 0)] with t ht hlarge
-    have htN : t ≤ A + dilationGridModulus k * t := by
-      have := dilationGridModulus_pos k
-      nlinarith
-    have heq := dilationGridWeightedTail_eq_main_add_error k (A + dilationGridModulus k * t)
-    rw [ht, dilationGridWeightedMain_eq_surviving hk _ (hlarge.trans htN)
-      (dilationGridCongruences_add_modulus_mul k A t hA)] at heq
-    rw [eq_neg_of_add_eq_zero_left heq.symm, mul_neg]
-  have hd := tendsto_dilationGridSurvivor_rescaling_progression k
-    (dilationGridModulus k) A (dilationGridModulus_pos k)
-  simpa only [sub_sub_cancel, sub_zero] using hmain.sub hd
+    refine (tendsto_dilationGridWeightedError_mul k A hA).neg.congr' ?_
+    filter_upwards [hz, eventually_dilationGridWeightedMain_eq_surviving hk A hA] with t ht heq
+    rw [← heq, eq_neg_of_add_eq_zero_left
+      ((dilationGridWeightedTail_eq_main_add_error k _).symm.trans ht), mul_neg]
+  simpa only [sub_sub_cancel, sub_zero] using hmain.sub
+    (tendsto_dilationGridSurvivor_rescaling_progression k (dilationGridModulus k) A
+      (dilationGridModulus_pos k))
 
 #print axioms dilationGridTailIndex_common_le
 #print axioms tendsto_dilationGrid_vertex_error_mul
 #print axioms tendsto_dilationGridWeightedError_mul
 #print axioms tendsto_dilationGridWeightedError
-#print axioms tendsto_dilationGridWeightedMain
+#print axioms eventually_dilationGridWeightedMain_eq_surviving
 #print axioms tendsto_dilationGridWeightedTail
-#print axioms eventually_dilationGridWeightedTail_zero
 #print axioms tendsto_dilationGridSurvivor_of_rational
 
 end

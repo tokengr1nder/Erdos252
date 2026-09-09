@@ -73,8 +73,7 @@ theorem genericDilationPolynomial5_recurrence (h L : ℕ) (x : ℝ) (hh : 1 ≤ 
   simp only [Nat.succ_sub_one, Nat.stirlingSecond_zero_succ,
     Nat.cast_zero, zero_div, add_zero]
   rw [Finset.mul_sum, ← Finset.sum_add_distrib, Finset.sum_div]
-  apply Finset.sum_congr rfl
-  intro i hi
+  refine Finset.sum_congr rfl fun i _ => ?_
   rw [Nat.stirlingSecond_succ_succ]
   push_cast
   simp only [pow_succ, div_eq_mul_inv, mul_inv_rev]
@@ -98,23 +97,19 @@ theorem genericDilationError5_recurrence (h L : ℕ) (x : ℝ)
 theorem genericDilationReciprocal5_bounds (h H : ℕ) (x : ℝ)
     (hh : 1 ≤ h) (hH : h ≤ H) (hx : (H : ℝ) ≤ x) :
     0 < genericDilationReciprocal5 h x ∧ genericDilationReciprocal5 h x ≤ 1 / x := by
-  induction h with
-  | zero => omega
-  | succ h ih =>
-      by_cases hz : h = 0
-      · subst h
-        rw [genericDilationReciprocal5_one]
-        have hxpos : (0 : ℝ) < x := by
-          have hHR : (1 : ℝ) ≤ H := by exact_mod_cast hH
-          linarith
-        exact ⟨one_div_pos.mpr hxpos, le_rfl⟩
-      have hhpos : 1 ≤ h := by omega
-      have hb := ih hhpos (by omega)
-      have hdiff : (1 : ℝ) ≤ x - (h : ℝ) := by
-        have hhR : (h : ℝ) + 1 ≤ H := by exact_mod_cast hH
-        linarith
-      rw [genericDilationReciprocal5_succ]
-      exact ⟨div_pos hb.1 (by linarith), (div_le_self hb.1.le hdiff).trans hb.2⟩
+  induction h, hh using Nat.le_induction with
+  | base =>
+    rw [genericDilationReciprocal5_one]
+    exact ⟨one_div_pos.mpr (lt_of_lt_of_le one_pos ((Nat.one_le_cast.mpr hH).trans hx)),
+      le_rfl⟩
+  | succ h hh ih =>
+    have hdiff : (1 : ℝ) ≤ x - h := by
+      have := (Nat.cast_le (α := ℝ)).mpr hH
+      push_cast at this
+      linarith
+    have hb := ih (by omega)
+    rw [genericDilationReciprocal5_succ]
+    exact ⟨div_pos hb.1 (by linarith), (div_le_self hb.1.le hdiff).trans hb.2⟩
 
 /-- The finite error bound is uniform over all product lengths `1..H`.
 No convergence theorem or unproved asymptotic hypothesis is used. -/
@@ -122,53 +117,39 @@ theorem genericDilationError5_bounds (H L : ℕ) (x : ℝ) (hx : (H : ℝ) ≤ x
     (h : ℕ) (hh : 1 ≤ h) (hH : h ≤ H) :
     0 ≤ genericDilationError5 h L x ∧
       genericDilationError5 h L x ≤ (H : ℝ) ^ L / x ^ (L + 1) := by
-  have hHpos : (0 : ℝ) < H := by exact_mod_cast (show 0 < H by omega)
-  have hxpos : 0 < x := hHpos.trans_le hx
+  have hxpos : 0 < x := lt_of_lt_of_le (by exact_mod_cast (show 0 < H by omega)) hx
   induction L generalizing h with
   | zero =>
-      simp only [genericDilationError5, genericDilationPolynomial5_zero, sub_zero,
-        pow_zero, zero_add, pow_one]
-      have hb := genericDilationReciprocal5_bounds h H x hh hH hx
-      exact ⟨hb.1.le, hb.2⟩
+    simp only [genericDilationError5, genericDilationPolynomial5_zero, sub_zero,
+      pow_zero, zero_add, pow_one]
+    exact ⟨(genericDilationReciprocal5_bounds h H x hh hH hx).1.le,
+      (genericDilationReciprocal5_bounds h H x hh hH hx).2⟩
   | succ L ih =>
-      by_cases he : h = 1
-      · subst h
-        simp only [genericDilationError5, genericDilationReciprocal5_one,
-          genericDilationPolynomial5_one, sub_self]
-        exact ⟨le_rfl, by positivity⟩
-      obtain ⟨j, rfl⟩ := Nat.exists_eq_succ_of_ne_zero (by omega : h ≠ 0)
-      have hj : 1 ≤ j := by omega
-      have hjH : j ≤ H := by omega
-      have hdiff : 0 < x - (j : ℝ) := by
-        have hjR : (j : ℝ) + 1 ≤ H := by exact_mod_cast hH
-        linarith
-      have hprev := ih j hj hjH
-      have hcurr := ih (j + 1) hh hH
-      rw [genericDilationError5_recurrence j L x hj hxpos.ne' hdiff.ne']
-      refine ⟨div_nonneg (add_nonneg hprev.1 (mul_nonneg (Nat.cast_nonneg j) hcurr.1))
-        hxpos.le, ?_⟩
-      calc
-        _ ≤ ((H : ℝ) ^ L / x ^ (L + 1) +
-            (j : ℝ) * ((H : ℝ) ^ L / x ^ (L + 1))) / x :=
-          (div_le_div_iff_of_pos_right hxpos).mpr
-            (add_le_add hprev.2 (mul_le_mul_of_nonneg_left hcurr.2 (Nat.cast_nonneg j)))
-        _ = ((j : ℝ) + 1) * (H : ℝ) ^ L / x ^ (L + 2) := by
-          rw [show L + 2 = (L + 1) + 1 by omega, pow_succ]
-          ring
-        _ ≤ (H : ℝ) * (H : ℝ) ^ L / x ^ (L + 2) := by
-          gcongr
-          exact_mod_cast hH
-        _ = (H : ℝ) ^ (L + 1) / x ^ (L + 1 + 1) := by ring
-
-/-- Triangular support of the actual coefficient array. -/
-theorem genericDilationCoefficient5_eq_zero {h ell : ℕ}
-    (hell : 1 ≤ ell) (hlt : ell < h) :
-    Nat.stirlingSecond (ell - 1) (h - 1) = 0 :=
-  Nat.stirlingSecond_eq_zero_of_lt (by omega)
-
-/-- The last shift at the last reciprocal degree has coefficient one. -/
-theorem genericDilationCoefficient5_diagonal (h : ℕ) :
-    Nat.stirlingSecond (h - 1) (h - 1) = 1 := Nat.stirlingSecond_self _
+    obtain ⟨j, rfl⟩ := Nat.exists_eq_succ_of_ne_zero (by omega : h ≠ 0)
+    rcases Nat.eq_zero_or_pos j with rfl | hj
+    · simp only [genericDilationError5, genericDilationReciprocal5_one,
+        genericDilationPolynomial5_one, sub_self]
+      exact ⟨le_rfl, by positivity⟩
+    have hdiff : 0 < x - (j : ℝ) := by
+      have hjR : (j : ℝ) + 1 ≤ H := by exact_mod_cast hH
+      linarith
+    have hprev := ih j hj (by omega)
+    have hcurr := ih (j + 1) hh hH
+    rw [genericDilationError5_recurrence j L x hj hxpos.ne' hdiff.ne']
+    refine ⟨div_nonneg (add_nonneg hprev.1 (mul_nonneg (Nat.cast_nonneg j) hcurr.1))
+      hxpos.le, ?_⟩
+    calc
+      _ ≤ ((H : ℝ) ^ L / x ^ (L + 1) +
+          (j : ℝ) * ((H : ℝ) ^ L / x ^ (L + 1))) / x :=
+        (div_le_div_iff_of_pos_right hxpos).mpr
+          (add_le_add hprev.2 (mul_le_mul_of_nonneg_left hcurr.2 (Nat.cast_nonneg j)))
+      _ = ((j : ℝ) + 1) * (H : ℝ) ^ L / x ^ (L + 2) := by
+        rw [pow_succ x (L + 1)]
+        ring
+      _ ≤ (H : ℝ) * (H : ℝ) ^ L / x ^ (L + 2) := by
+        gcongr
+        exact_mod_cast hH
+      _ = (H : ℝ) ^ (L + 1) / x ^ (L + 1 + 1) := by ring
 
 private theorem genericDilation_ascFactorial_cast (n h : ℕ) :
     ((n + 1).ascFactorial h : ℝ) =
@@ -184,23 +165,10 @@ theorem genericDilationReciprocal5_centered (n h : ℕ) :
   rw [genericDilation_ascFactorial_cast]
   congr 1
   rw [← Finset.prod_range_reflect (fun j : ℕ => ((n + h : ℕ) : ℝ) - (j : ℝ)) h]
-  apply Finset.prod_congr rfl
-  intro j hj
+  refine Finset.prod_congr rfl fun j hj => ?_
   have hjh := Finset.mem_range.mp hj
   push_cast [Nat.cast_sub (by omega : j ≤ h - 1), Nat.cast_sub (by omega : 1 ≤ h)]
   ring
-
-/-- The arbitrary-order expansion bound for the actual natural factorial denominator. -/
-theorem genericDilationDenominator5_bounds (n h H L : ℕ)
-    (hh : 1 ≤ h) (hH : h ≤ H) (hn : H ≤ n + h) :
-    0 ≤ (1 : ℝ) / ((n + 1).ascFactorial h : ℝ) -
-        genericDilationPolynomial5 h L ((n + h : ℕ) : ℝ) ∧
-      (1 : ℝ) / ((n + 1).ascFactorial h : ℝ) -
-        genericDilationPolynomial5 h L ((n + h : ℕ) : ℝ) ≤
-          (H : ℝ) ^ L / ((n + h : ℕ) : ℝ) ^ (L + 1) := by
-  have hb := genericDilationError5_bounds H L ((n + h : ℕ) : ℝ)
-    (by exact_mod_cast hn) h hh hH
-  simpa only [genericDilationError5, genericDilationReciprocal5_centered] using hb
 
 #print axioms genericDilationReciprocal5_succ
 #print axioms genericDilationReciprocal5_one
@@ -211,10 +179,6 @@ theorem genericDilationDenominator5_bounds (n h H L : ℕ)
 #print axioms genericDilationError5_recurrence
 #print axioms genericDilationReciprocal5_bounds
 #print axioms genericDilationError5_bounds
-#print axioms genericDilationCoefficient5_eq_zero
-#print axioms genericDilationCoefficient5_diagonal
-#print axioms genericDilation_ascFactorial_cast
 #print axioms genericDilationReciprocal5_centered
-#print axioms genericDilationDenominator5_bounds
 
 end Erdos252

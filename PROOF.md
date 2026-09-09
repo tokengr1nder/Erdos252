@@ -58,7 +58,7 @@ The mean calculation includes $k=1$: it uses summable domination of averaged div
 
 ## Exponent zero
 
-Divisor pairing directly gives $0<T_n=O(n^{-1/2})$. Such tails cannot be eventually integral. This completes the case $k=0$.
+Divisor pairing and a geometric estimate give $0<T_n=O(n^{-1/2})$. Such tails cannot be eventually integral. This completes the case $k=0$.
 
 ## Formal entrypoints
 

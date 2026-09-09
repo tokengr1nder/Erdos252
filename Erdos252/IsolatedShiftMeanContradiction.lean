@@ -30,13 +30,6 @@ theorem finiteWeightedCesaro5 {ι : Type*} [Fintype ι]
     ← Finset.mul_sum, mul_assoc] using
     tendsto_finsetSum Finset.univ (fun i _ => (hμ i).const_mul (c i))
 
-/-- A convergent sequence has the same limit under normalized finite averaging. -/
-theorem sequenceCesaro5_tendsto {f : ℕ → ℝ} {a : ℝ}
-    (hf : Tendsto f atTop (𝓝 a)) :
-    Tendsto (fun N : ℕ => (∑ n ∈ Finset.range N, f n) / (N : ℝ))
-      atTop (𝓝 a) := by
-  simpa only [div_eq_mul_inv, mul_comm] using hf.cesaro
-
 /-- A positive-step subprogression preserves a sequence limit and its Cesaro limit. -/
 theorem sequenceCesaro5_subprogression_tendsto {f : ℕ → ℝ} {a : ℝ}
     (hf : Tendsto f atTop (𝓝 a)) {L : ℕ} (hL : 0 < L) (v : ℕ) :
@@ -44,7 +37,7 @@ theorem sequenceCesaro5_subprogression_tendsto {f : ℕ → ℝ} {a : ℝ}
       (∑ n ∈ Finset.range N, f (L * n + v)) / (N : ℝ)) atTop (𝓝 a) := by
   have hlin : Tendsto (fun n : ℕ => L * n + v) atTop atTop :=
     (tendsto_add_atTop_nat v).comp (tendsto_id.const_mul_atTop' hL)
-  exact sequenceCesaro5_tendsto (hf.comp hlin)
+  simpa only [div_eq_mul_inv, mul_comm, Function.comp_def] using (hf.comp hlin).cesaro
 
 /-- An isolated shift contributes exactly its own weighted change in mean. -/
 theorem isolatedShift5_weighted_mean_difference {ι : Type*} [Fintype ι]
@@ -58,35 +51,10 @@ theorem isolatedShift5_weighted_mean_difference {ι : Type*} [Fintype ι]
   simp [mul_assoc]
 
 /-- Two explicitly separated refinement means rule out a zero limit of the
-original weighted sequence. No arithmetic distribution theorem is assumed
-implicitly: both individual Cesaro limits occur in the hypotheses. -/
+original weighted sequence. The first residue misses every shift and the
+second residue hits exactly the distinguished shift; both individual Cesaro
+limits occur in the hypotheses. -/
 theorem isolatedShift5_not_tendsto_zero {ι : Type*} [Fintype ι]
-    (f : ℕ → ℝ) (r : ι → ℕ) (c μ : ι → ℝ) (i₀ : ι)
-    (Q A L v₀ v₁ : ℕ) (β κ : ℝ) (hL : 0 < L)
-    (hunique : ∀ i, r i = r i₀ → i = i₀)
-    (hc : c i₀ ≠ 0) (hμ : 0 < μ i₀) (hκ : 0 < κ)
-    (hmean₀ : ∀ i, Tendsto (fun N : ℕ =>
-      (∑ n ∈ Finset.range N, f (Q * (L * n + v₀) + A + r i)) / (N : ℝ))
-      atTop (𝓝 (μ i * β)))
-    (hmean₁ : ∀ i, Tendsto (fun N : ℕ =>
-      (∑ n ∈ Finset.range N, f (Q * (L * n + v₁) + A + r i)) / (N : ℝ))
-      atTop (𝓝 (μ i * (β + if r i = r i₀ then κ else 0)))) :
-    ¬ Tendsto (fun n : ℕ => ∑ i, c i * f (Q * n + A + r i))
-      atTop (𝓝 0) := by
-  intro hz
-  have heq₀ := tendsto_nhds_unique (finiteWeightedCesaro5 _ c _ hmean₀)
-    (sequenceCesaro5_subprogression_tendsto hz hL v₀)
-  have heq₁ := tendsto_nhds_unique (finiteWeightedCesaro5 _ c _ hmean₁)
-    (sequenceCesaro5_subprogression_tendsto hz hL v₁)
-  have hdiff := isolatedShift5_weighted_mean_difference r c μ i₀ β κ hunique
-  rw [heq₀, heq₁, sub_self] at hdiff
-  exact (mul_ne_zero (mul_ne_zero hc hμ.ne') hκ.ne') hdiff.symm
-
-/-- Divisibility-based refinement formulas specialize directly to the abstract
-isolated-shift contradiction. The first residue misses every shift and the
-second residue hits exactly the distinguished shift. -/
-theorem isolatedShift5_not_tendsto_zero_of_divisibility_means
-    {ι : Type*} [Fintype ι]
     (f : ℕ → ℝ) (r : ι → ℕ) (c μ : ι → ℝ) (i₀ : ι)
     (Q A L v₀ v₁ : ℕ) (β κ : ℝ) (hL : 0 < L)
     (hunique : ∀ i, r i = r i₀ → i = i₀)
@@ -96,21 +64,21 @@ theorem isolatedShift5_not_tendsto_zero_of_divisibility_means
     (hmean : ∀ v i, Tendsto (fun N : ℕ =>
       (∑ n ∈ Finset.range N, f (Q * (L * n + v) + A + r i)) / (N : ℝ))
       atTop (𝓝 (μ i * (β + if L ∣ Q * v + A + r i then κ else 0)))) :
-    ¬ Tendsto (fun n : ℕ => ∑ i, c i * f (Q * n + A + r i))
-      atTop (𝓝 0) := by
-  apply isolatedShift5_not_tendsto_zero f r c μ i₀ Q A L v₀ v₁ β κ hL
-    hunique hc hμ hκ
-  · intro i
-    simpa only [hmiss i, ↓reduceIte, add_zero] using hmean v₀ i
-  · intro i
-    simpa only [hhit i] using hmean v₁ i
+    ¬ Tendsto (fun n : ℕ => ∑ i, c i * f (Q * n + A + r i)) atTop (𝓝 0) := by
+  intro hz
+  have heq (v : ℕ) := tendsto_nhds_unique (finiteWeightedCesaro5 _ c _ (hmean v))
+    (sequenceCesaro5_subprogression_tendsto hz hL v)
+  have h₀ := heq v₀
+  have h₁ := heq v₁
+  simp only [hmiss, hhit, ↓reduceIte, add_zero] at h₀ h₁
+  have hdiff := isolatedShift5_weighted_mean_difference r c μ i₀ β κ hunique
+  rw [h₀, h₁, sub_self] at hdiff
+  exact (mul_ne_zero (mul_ne_zero hc hμ.ne') hκ.ne') hdiff.symm
 
 #print axioms finiteWeightedCesaro5
-#print axioms sequenceCesaro5_tendsto
 #print axioms sequenceCesaro5_subprogression_tendsto
 #print axioms isolatedShift5_weighted_mean_difference
 #print axioms isolatedShift5_not_tendsto_zero
-#print axioms isolatedShift5_not_tendsto_zero_of_divisibility_means
 
 end
 

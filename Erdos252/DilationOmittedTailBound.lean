@@ -70,7 +70,7 @@ theorem genericDilationOmittedTerm5_le (k n r : ℕ) :
     mul_le_mul_of_nonneg_left (dilation_polynomial_block_le (k + 1) n r (by omega))
       (show 0 ≤ (64 : ℝ) / Real.sqrt ((n : ℝ) + 1) by positivity)
 
-private theorem hasSum_dilation_geometric_reciprocal
+theorem hasSum_dilation_geometric_reciprocal
     (C : ℝ) (n : ℕ) (hn : 0 < n) :
     HasSum (fun r : ℕ => C / ((n : ℝ) + 1) ^ (r + 1)) (C / (n : ℝ)) := by
   have hnR : (0 : ℝ) < n := by exact_mod_cast hn
@@ -84,22 +84,14 @@ private theorem hasSum_dilation_geometric_reciprocal
   · field_simp [hnR.ne']
     ring
 
-theorem summable_dilation_geometric_reciprocal (C : ℝ) (n : ℕ) (hn : 0 < n) :
-    Summable (fun r : ℕ => C / ((n : ℝ) + 1) ^ (r + 1)) :=
-  (hasSum_dilation_geometric_reciprocal C n hn).summable
-
-theorem tsum_dilation_geometric_reciprocal (C : ℝ) (n : ℕ) (hn : 0 < n) :
-    (∑' r : ℕ, C / ((n : ℝ) + 1) ^ (r + 1)) = C / (n : ℝ) :=
-  (hasSum_dilation_geometric_reciprocal C n hn).tsum_eq
-
 theorem genericDilationOmittedTail5_le (k n : ℕ) (hn : 0 < n) :
     genericDilationOmittedTail5 k n (k + 1) ≤
       ((64 / Real.sqrt ((n : ℝ) + 1)) * ((k + 1 : ℕ) : ℝ) ^ (k + 1)) / (n : ℝ) := by
   have hs : Summable (fun r : ℕ => genericBlockTerm5 k (n + 1) (r + (k + 1))) :=
     (summable_nat_add_iff (k + 1)).2 (summable_genericBlockTerm5 k (n + 1) (by omega))
-  simpa only [genericDilationOmittedTail5, tsum_dilation_geometric_reciprocal _ n hn] using
+  simpa only [genericDilationOmittedTail5, (hasSum_dilation_geometric_reciprocal _ n hn).tsum_eq] using
     hs.tsum_le_tsum (genericDilationOmittedTerm5_le k n)
-      (summable_dilation_geometric_reciprocal _ n hn)
+      (hasSum_dilation_geometric_reciprocal _ n hn).summable
 
 /-- The actual omitted tail is negligible after scaling by the base index. -/
 theorem genericDilationOmittedTail5_scaled_le (k n : ℕ) (hn : 0 < n) :
@@ -124,8 +116,7 @@ theorem genericDilationOmittedTail5_scaled_le (k n : ℕ) (hn : 0 < n) :
 #print axioms dilation_polynomial_block_le
 #print axioms dilation_sigma_le_pow_succ_div_sqrt
 #print axioms genericDilationOmittedTerm5_le
-#print axioms summable_dilation_geometric_reciprocal
-#print axioms tsum_dilation_geometric_reciprocal
+#print axioms hasSum_dilation_geometric_reciprocal
 #print axioms genericDilationOmittedTail5_le
 #print axioms genericDilationOmittedTail5_scaled_le
 

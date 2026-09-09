@@ -15,24 +15,6 @@ namespace Erdos252
 open Filter
 open scoped BigOperators Topology
 
-/-- The finite part of the actual expansion error. -/
-noncomputable def genericDilationFiniteError5 (k n : ℕ) : ℝ :=
-  ∑ j ∈ Finset.range (k + 1),
-    (ArithmeticFunction.sigma k (n + (j + 1)) : ℝ) *
-      genericDilationError5 (j + 1) (k + 1) ((n + (j + 1) : ℕ) : ℝ)
-
-noncomputable def genericDilationFiniteErrorConstant5 (k : ℕ) : ℝ :=
-  128 * ((k : ℝ) + 1) ^ (k + 2)
-
-theorem genericDilationFiniteErrorConstant5_nonneg (k : ℕ) :
-    0 ≤ genericDilationFiniteErrorConstant5 k := by
-  unfold genericDilationFiniteErrorConstant5
-  positivity
-
-theorem genericDilationTailError5_eq_omitted_add_finite (k n : ℕ) :
-    genericDilationTailError5 k n = genericDilationOmittedTail5 k n (k + 1) +
-      genericDilationFiniteError5 k n := genericDilationTailError5_eq k n
-
 private theorem genericDilation_sqrt_shift_bound5 (n h : ℕ)
     (hh : h ≤ n + 1) :
     Real.sqrt ((n + h : ℕ) : ℝ) ≤ 2 * Real.sqrt ((n : ℝ) + 1) := by
@@ -86,8 +68,7 @@ bounded by a fixed multiple of `sqrt(n+1)/(n+1)`. -/
 theorem genericDilationFiniteError5_bounds (k n : ℕ) (hn : k + 1 ≤ n) :
     0 ≤ genericDilationFiniteError5 k n ∧
       ((n : ℝ) + 1) * genericDilationFiniteError5 k n ≤
-        genericDilationFiniteErrorConstant5 k *
-          (Real.sqrt ((n : ℝ) + 1) / ((n : ℝ) + 1)) := by
+        128 * ((k : ℝ) + 1) ^ (k + 2) * (Real.sqrt ((n : ℝ) + 1) / ((n : ℝ) + 1)) := by
   have hX : (n : ℝ) + 1 ≠ 0 := by positivity
   unfold genericDilationFiniteError5
   have hb := Finset.sum_le_sum (s := Finset.range (k + 1)) (fun j hj =>
@@ -95,19 +76,18 @@ theorem genericDilationFiniteError5_bounds (k n : ℕ) (hn : k + 1 ≤ n) :
   refine ⟨Finset.sum_nonneg (fun j hj =>
     (genericDilationFiniteError5_term_bound k n j hn (Finset.mem_range.mp hj)).1), ?_⟩
   convert! mul_le_mul_of_nonneg_left hb (by positivity : 0 ≤ (n : ℝ) + 1) using 1
-  simp only [Finset.sum_const, Finset.card_range, nsmul_eq_mul,
-    genericDilationFiniteErrorConstant5, Nat.cast_add, Nat.cast_one]
+  simp only [Finset.sum_const, Finset.card_range, nsmul_eq_mul, Nat.cast_add, Nat.cast_one]
   rw [show k + 2 = (k + 1) + 1 by omega, pow_succ]
   field_simp
 
 theorem tendsto_genericDilationFiniteError5_mul (k : ℕ) :
     Tendsto (fun n : ℕ => ((n : ℝ) + 1) * genericDilationFiniteError5 k n)
       atTop (𝓝 0) := by
-  have hlim : Tendsto (fun n : ℕ => genericDilationFiniteErrorConstant5 k *
+  have hlim : Tendsto (fun n : ℕ => 128 * ((k : ℝ) + 1) ^ (k + 2) *
       (Real.sqrt ((n : ℝ) + 1) / ((n : ℝ) + 1))) atTop (𝓝 0) := by
     simpa only [Function.comp_apply, Nat.cast_add, Nat.cast_one, mul_zero] using
       (tendsto_sqrt_nat_div_nat.comp (tendsto_add_atTop_nat 1)).const_mul
-        (genericDilationFiniteErrorConstant5 k)
+        (128 * ((k : ℝ) + 1) ^ (k + 2))
   apply squeeze_zero' _ _ hlim
   · filter_upwards [eventually_ge_atTop (k + 1)] with n hn
     exact mul_nonneg (by positivity) (genericDilationFiniteError5_bounds k n hn).1
@@ -138,10 +118,8 @@ theorem tendsto_genericDilationOmittedTail5_mul (k : ℕ) :
 theorem tendsto_genericDilationTailError5_mul (k : ℕ) :
     Tendsto (fun n : ℕ => ((n : ℝ) + 1) * genericDilationTailError5 k n)
       atTop (𝓝 0) := by
-  simpa only [← mul_add, ← genericDilationTailError5_eq_omitted_add_finite,
-    add_zero] using
-      (tendsto_genericDilationOmittedTail5_mul k).add
-        (tendsto_genericDilationFiniteError5_mul k)
+  simpa only [← mul_add, ← genericDilationTailError5_eq, add_zero] using
+    (tendsto_genericDilationOmittedTail5_mul k).add (tendsto_genericDilationFiniteError5_mul k)
 
 theorem tendsto_genericDilationTailError5 (k : ℕ) :
     Tendsto (genericDilationTailError5 k) atTop (𝓝 0) := by
@@ -149,8 +127,6 @@ theorem tendsto_genericDilationTailError5 (k : ℕ) :
     (tendsto_genericDilationTailError5_mul k).div_atTop
     (tendsto_atTop_add_const_right _ 1 (tendsto_natCast_atTop_atTop (R := ℝ)))
 
-#print axioms genericDilationFiniteErrorConstant5_nonneg
-#print axioms genericDilationTailError5_eq_omitted_add_finite
 #print axioms genericDilation_sqrt_shift_bound5
 #print axioms genericDilationFiniteError5_term_bound
 #print axioms genericDilationFiniteError5_bounds

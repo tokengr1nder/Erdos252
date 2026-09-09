@@ -1,5 +1,5 @@
 import Erdos252.DilationSurvivingMain
-import Erdos252.RawPhasePositiveMean
+import Erdos252.RawPhaseFreshPrimeMean
 
 /-!
 # The actual symbolic-degree grid survivor cannot tend to zero

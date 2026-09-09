@@ -3,15 +3,17 @@ import Erdos252.ProgressionMeanSupport
 import Mathlib.NumberTheory.ArithmeticFunction.Misc
 import Mathlib.Algebra.BigOperators.Field
 import Mathlib.Analysis.PSeries
-import Mathlib.Analysis.Normed.Group.FunctionSeries
 import Mathlib.Analysis.Normed.Group.Tannery
 
 /-!
-# Actual divisor-phase means in every degree at least two
+# Actual divisor-phase means in every positive degree
 
-The real phase `sigma k n / n^k` is an absolutely and uniformly convergent
-series of periodic reciprocal-divisor terms. Its arithmetic-progression mean
-is the explicit local gcd series with denominator exponent `k+1`.
+The real phase `sigma k n / n^k` is a finite sum of periodic
+reciprocal-divisor terms. Positive affine arguments inject their divisible
+values into positive multiples, which gives an averaged bound with denominator
+exponent `k+1`. Dominated convergence then yields the arithmetic-progression
+mean as the explicit local gcd series, in every positive degree including the
+non-uniformly bounded degree one.
 -/
 
 namespace Erdos252
@@ -26,198 +28,140 @@ def rawPhase (k n : ℕ) : ℝ := (ArithmeticFunction.sigma k n : ℝ) / (n : �
 def rawPhaseDivisorTerm (k d n : ℕ) : ℝ :=
   if d ∣ n then 1 / (d : ℝ) ^ k else 0
 
-def rawPhaseTruncation (k D n : ℕ) : ℝ :=
-  ∑ d ∈ Finset.range D, rawPhaseDivisorTerm k d n
-
 def rawPhaseProgressionMeanTerm (k Q A d : ℕ) : ℝ :=
   (∑ j ∈ Finset.range d, rawPhaseDivisorTerm k d (Q * j + A)) / (d : ℝ)
 
 def rawPhaseProgressionMean (k Q A : ℕ) : ℝ :=
   ∑' d : ℕ, rawPhaseProgressionMeanTerm k Q A d
 
-theorem divisor_quotient_power_ratio (k : ℕ)
-    {m d : ℕ} (hm : 0 < m) (hd : d ∈ m.divisors) :
-    (((m / d : ℕ) : ℝ) ^ k) / (m : ℝ) ^ k = (1 : ℝ) / (d : ℝ) ^ k := by
-  rw [Nat.cast_div_charZero (Nat.dvd_of_mem_divisors hd), div_pow,
-    div_right_comm, div_self (by positivity : (m : ℝ) ^ k ≠ 0)]
-
-theorem rawPhase_eq_sum_divisors_reciprocal (k : ℕ) {n : ℕ} (hn : 0 < n) :
-    rawPhase k n = ∑ d ∈ n.divisors, (1 : ℝ) / (d : ℝ) ^ k := by
-  unfold rawPhase
-  rw [ArithmeticFunction.sigma_eq_sum_div]
-  push_cast
-  rw [Finset.sum_div]
-  exact Finset.sum_congr rfl (fun d hd => divisor_quotient_power_ratio k hn hd)
-
 theorem rawPhaseDivisorTerm_bounds (k d n : ℕ) :
     0 ≤ rawPhaseDivisorTerm k d n ∧ rawPhaseDivisorTerm k d n ≤ 1 / (d : ℝ) ^ k := by
   unfold rawPhaseDivisorTerm
   split_ifs <;> constructor <;> first | exact le_rfl | positivity
 
-theorem summable_rawPhaseDivisorTerm {k : ℕ} (hk : 2 ≤ k) (n : ℕ) :
-    Summable (fun d => rawPhaseDivisorTerm k d n) := by
-  exact Summable.of_nonneg_of_le (fun d => (rawPhaseDivisorTerm_bounds k d n).1)
-    (fun d => (rawPhaseDivisorTerm_bounds k d n).2)
-    (Real.summable_one_div_nat_pow.mpr (by omega : 1 < k))
+/-- The phase is the finite sum of its reciprocal divisor powers. -/
+theorem hasSum_rawPhaseDivisorTerm (k : ℕ) {n : ℕ} (hn : 0 < n) :
+    HasSum (fun d => rawPhaseDivisorTerm k d n) (rawPhase k n) := by
+  have hsum : rawPhase k n = ∑ d ∈ n.divisors, rawPhaseDivisorTerm k d n := by
+    unfold rawPhase
+    rw [ArithmeticFunction.sigma_eq_sum_div]
+    push_cast
+    rw [Finset.sum_div]
+    refine Finset.sum_congr rfl fun d hd => ?_
+    rw [rawPhaseDivisorTerm, if_pos (Nat.dvd_of_mem_divisors hd),
+      Nat.cast_div_charZero (Nat.dvd_of_mem_divisors hd), div_pow, div_right_comm,
+      div_self (by positivity : (n : ℝ) ^ k ≠ 0)]
+  rw [hsum]
+  refine hasSum_sum_of_ne_finset_zero fun d hd => ?_
+  simp only [Nat.mem_divisors, hn.ne', ne_eq, not_false_eq_true, and_true] at hd
+  simp [rawPhaseDivisorTerm, hd]
 
-theorem rawPhase_eq_tsum_divisorTerm (k : ℕ) {n : ℕ} (hn : 0 < n) :
-    rawPhase k n = ∑' d : ℕ, rawPhaseDivisorTerm k d n := by
-  rw [rawPhase_eq_sum_divisors_reciprocal k hn]
-  rw [tsum_eq_sum (s := n.divisors) (fun d hd => by
-    have hndvd : ¬ d ∣ n := fun h => hd (Nat.mem_divisors.mpr ⟨h, hn.ne'⟩)
-    simp only [rawPhaseDivisorTerm, hndvd, ↓reduceIte])]
-  exact Finset.sum_congr rfl (fun d hd => by
-    simp only [rawPhaseDivisorTerm, Nat.dvd_of_mem_divisors hd, ↓reduceIte])
-
-theorem rawPhase_truncation_bounds {k n : ℕ} (hk : 2 ≤ k) (hn : 0 < n) (D : ℕ) :
-    0 ≤ rawPhase k n - rawPhaseTruncation k (D + 1) n ∧
-      rawPhase k n - rawPhaseTruncation k (D + 1) n ≤
-        ∑' j : ℕ, 1 / ((j + (D + 1) : ℕ) : ℝ) ^ k := by
-  have hsum := (summable_rawPhaseDivisorTerm hk n).sum_add_tsum_nat_add (D + 1)
-  have heq : rawPhase k n - rawPhaseTruncation k (D + 1) n =
-      ∑' j : ℕ, rawPhaseDivisorTerm k (j + (D + 1)) n := by
-    rw [rawPhase_eq_tsum_divisorTerm k hn, ← hsum]
-    simp only [rawPhaseTruncation, add_sub_cancel_left]
-  rw [heq]
-  constructor
-  · exact tsum_nonneg (fun j => (rawPhaseDivisorTerm_bounds k _ n).1)
-  · have hinj : Function.Injective (fun j : ℕ => j + (D + 1)) :=
-      fun _ _ h => Nat.add_right_cancel h
-    exact ((summable_rawPhaseDivisorTerm hk n).comp_injective hinj).tsum_le_tsum
-      (fun j => (rawPhaseDivisorTerm_bounds k _ n).2)
-      ((Real.summable_one_div_nat_pow.mpr (by omega : 1 < k)).comp_injective hinj)
-
-theorem rawPhase_uniform_truncation {k : ℕ} (hk : 2 ≤ k) :
-    TendstoUniformlyOn (rawPhaseTruncation k) (rawPhase k) atTop (Set.Ioi 0) := by
-  have hbound (d n : ℕ) (_hn : n ∈ Set.Ioi 0) :
-      ‖rawPhaseDivisorTerm k d n‖ ≤ 1 / (d : ℝ) ^ k := by
-    rw [Real.norm_eq_abs, abs_of_nonneg (rawPhaseDivisorTerm_bounds k d n).1]
-    exact (rawPhaseDivisorTerm_bounds k d n).2
-  have hu := tendstoUniformlyOn_tsum_nat
-    (Real.summable_one_div_nat_pow.mpr (by omega : 1 < k)) hbound
-  exact hu.congr_right (fun n hn => (rawPhase_eq_tsum_divisorTerm k hn).symm)
-
-theorem rawPhaseDivisorTerm_cesaro_pos {k : ℕ} (hk : 0 < k) (Q A d : ℕ) :
+theorem rawPhaseDivisorTerm_cesaro {k : ℕ} (hk : 0 < k) (Q A d : ℕ) :
     Tendsto (fun N : ℕ =>
       (∑ n ∈ Finset.range N, rawPhaseDivisorTerm k d (Q * n + A)) / (N : ℝ)) atTop
       (𝓝 (rawPhaseProgressionMeanTerm k Q A d)) := by
-  by_cases hd : d = 0
-  · subst d
-    simp [rawPhaseDivisorTerm, rawPhaseProgressionMeanTerm, zero_pow hk.ne']
-  · apply periodic_nonneg_cesaro5 (Nat.pos_of_ne_zero hd)
-    · intro n
-      simp only [rawPhaseDivisorTerm, Nat.mul_add, Nat.add_right_comm (Q * n),
-        ← Nat.dvd_add_iff_left (dvd_mul_left d Q)]
-    · intro n
-      exact (rawPhaseDivisorTerm_bounds k d (Q * n + A)).1
-
-theorem rawPhaseDivisorTerm_cesaro {k : ℕ} (hk : 2 ≤ k) (Q A d : ℕ) :
-    Tendsto (fun N : ℕ =>
-      (∑ n ∈ Finset.range N, rawPhaseDivisorTerm k d (Q * n + A)) / (N : ℝ)) atTop
-      (𝓝 (rawPhaseProgressionMeanTerm k Q A d)) := by
-  exact rawPhaseDivisorTerm_cesaro_pos (by omega) Q A d
-
-theorem rawPhaseDivisorTerm_cesaro_bound (k Q A d N : ℕ) :
-    ‖(∑ n ∈ Finset.range N, rawPhaseDivisorTerm k d (Q * n + A)) / (N : ℝ)‖ ≤
-      1 / (d : ℝ) ^ k := by
-  by_cases hN : N = 0
-  · subst N
-    simp
-  have hn : (0 : ℝ) < N := by exact_mod_cast Nat.pos_of_ne_zero hN
-  have hs0 : 0 ≤ ∑ n ∈ Finset.range N, rawPhaseDivisorTerm k d (Q * n + A) :=
-    Finset.sum_nonneg (fun n _ => (rawPhaseDivisorTerm_bounds k d _).1)
-  rw [Real.norm_eq_abs, abs_of_nonneg (div_nonneg hs0 hn.le)]
-  apply (div_le_iff₀ hn).mpr
-  calc
-    _ ≤ ∑ _n ∈ Finset.range N, (1 : ℝ) / (d : ℝ) ^ k :=
-      Finset.sum_le_sum (fun n _ => (rawPhaseDivisorTerm_bounds k d _).2)
-    _ = _ := by simp only [Finset.sum_const, Finset.card_range, nsmul_eq_mul]; ring
-
-theorem rawPhaseProgressionMeanTerm_eq_card (k Q A d : ℕ) :
-    rawPhaseProgressionMeanTerm k Q A d =
-      (((Finset.range d).filter (fun j => d ∣ Q * j + A)).card : ℝ) / (d : ℝ) ^ (k + 1) := by
-  unfold rawPhaseProgressionMeanTerm rawPhaseDivisorTerm
-  rw [← Finset.sum_filter]
-  simp only [Finset.sum_const, nsmul_eq_mul, pow_succ]
-  ring
-
-theorem rawPhaseProgressionMeanTerm_bounds {k : ℕ} (hk : 2 ≤ k) (Q A d : ℕ) :
-    0 ≤ rawPhaseProgressionMeanTerm k Q A d ∧
-      rawPhaseProgressionMeanTerm k Q A d ≤ 1 / (d : ℝ) ^ k := by
-  have _ := hk
-  exact ⟨div_nonneg (Finset.sum_nonneg
-    (fun j _ => (rawPhaseDivisorTerm_bounds k d _).1)) (Nat.cast_nonneg d),
-    (Real.le_norm_self _).trans (rawPhaseDivisorTerm_cesaro_bound k Q A d d)⟩
-
-theorem summable_rawPhaseProgressionMeanTerm {k : ℕ} (hk : 2 ≤ k) (Q A : ℕ) :
-    Summable (rawPhaseProgressionMeanTerm k Q A) := by
-  exact Summable.of_nonneg_of_le (fun d => (rawPhaseProgressionMeanTerm_bounds hk Q A d).1)
-    (fun d => (rawPhaseProgressionMeanTerm_bounds hk Q A d).2)
-    (Real.summable_one_div_nat_pow.mpr (by omega : 1 < k))
-
-theorem one_le_rawPhaseProgressionMean {k : ℕ} (hk : 2 ≤ k) (Q A : ℕ) :
-    1 ≤ rawPhaseProgressionMean k Q A := by
-  have hh := (summable_rawPhaseProgressionMeanTerm hk Q A).le_tsum 1
-    (fun d _ => (rawPhaseProgressionMeanTerm_bounds hk Q A d).1)
-  simpa [rawPhaseProgressionMean, rawPhaseProgressionMeanTerm, rawPhaseDivisorTerm] using hh
-
-theorem rawPhase_cesaro_progression {k : ℕ} (hk : 2 ≤ k) (Q : ℕ) {A : ℕ} (hA : 0 < A) :
-    Tendsto (fun N : ℕ =>
-      (∑ n ∈ Finset.range N, rawPhase k (Q * n + A)) / (N : ℝ)) atTop
-      (𝓝 (rawPhaseProgressionMean k Q A)) := by
-  have hh := tendsto_tsum_of_dominated_convergence
-    (Real.summable_one_div_nat_pow.mpr (by omega : 1 < k))
-    (fun d => rawPhaseDivisorTerm_cesaro hk Q A d)
-    (Eventually.of_forall (fun N d => rawPhaseDivisorTerm_cesaro_bound k Q A d N))
-  refine hh.congr' (Eventually.of_forall (fun N => ?_))
-  rw [tsum_div_const,
-    Summable.tsum_finsetSum (fun n (_hn : n ∈ Finset.range N) =>
-      summable_rawPhaseDivisorTerm hk (Q * n + A))]
-  exact congrArg (fun x : ℝ => x / N) (Finset.sum_congr rfl
-    (fun n _ => (rawPhase_eq_tsum_divisorTerm k (by omega : 0 < Q * n + A)).symm))
+  rcases Nat.eq_zero_or_pos d with rfl | hd
+  · simp [rawPhaseDivisorTerm, rawPhaseProgressionMeanTerm, zero_pow hk.ne']
+  · refine periodic_nonneg_cesaro5 hd (fun n => ?_)
+      (fun n => (rawPhaseDivisorTerm_bounds k d _).1)
+    simp only [rawPhaseDivisorTerm, Nat.mul_add, Nat.add_right_comm (Q * n),
+      ← Nat.dvd_add_iff_left (dvd_mul_left d Q)]
 
 theorem rawPhaseProgressionMeanTerm_eq_gcd (k Q A d : ℕ) :
     rawPhaseProgressionMeanTerm k Q A d =
       if Nat.gcd d Q ∣ A then (Nat.gcd d Q : ℝ) / (d : ℝ) ^ (k + 1) else 0 := by
-  by_cases hd : d = 0
-  · subst d
-    simp [rawPhaseProgressionMeanTerm]
-  · rw [rawPhaseProgressionMeanTerm_eq_card,
-      affineCongruence5_count_period Q A d (Nat.pos_of_ne_zero hd)]
-    split_ifs <;> simp
+  rcases Nat.eq_zero_or_pos d with rfl | hd
+  · simp [rawPhaseProgressionMeanTerm]
+  · unfold rawPhaseProgressionMeanTerm rawPhaseDivisorTerm
+    rw [← Finset.sum_filter, Finset.sum_const, affineCongruence5_count_period Q A d hd]
+    split_ifs
+    · simp only [nsmul_eq_mul, pow_succ]
+      ring
+    · simp
 
-theorem rawPhaseProgressionMean_eq_tsum_gcd (k Q A : ℕ) :
-    rawPhaseProgressionMean k Q A =
-      ∑' d : ℕ, if Nat.gcd d Q ∣ A then (Nat.gcd d Q : ℝ) / (d : ℝ) ^ (k + 1) else 0 := by
-  unfold rawPhaseProgressionMean
-  exact tsum_congr (rawPhaseProgressionMeanTerm_eq_gcd k Q A)
+/-- Positive affine values that are divisible by `d` inject into the multiples
+of `d` up to the largest value. -/
+theorem affineCongruence_count_le_quotient {Q A d : ℕ}
+    (hQ : 0 < Q) (hA : 0 < A) (N : ℕ) :
+    ((Finset.range N).filter (fun n => d ∣ Q * n + A)).card ≤ (Q * N + A) / d := by
+  rw [← Nat.Ioc_filter_dvd_card_eq_div]
+  refine Finset.card_le_card_of_injOn (fun n => Q * n + A) (fun n hn => ?_)
+    (fun n _ m _ h => Nat.eq_of_mul_eq_mul_left hQ (Nat.add_right_cancel h))
+  simp only [Finset.mem_coe, Finset.mem_filter, Finset.mem_range, Finset.mem_Ioc] at hn ⊢
+  exact ⟨⟨by omega, Nat.add_le_add_right (Nat.mul_le_mul_left Q hn.1.le) A⟩, hn.2⟩
 
-theorem rawPhase_cesaro_progression_gcd {k : ℕ} (hk : 2 ≤ k) (Q : ℕ) {A : ℕ}
-    (hA : 0 < A) :
+theorem rawPhaseDivisorTerm_cesaro_bound {k Q A : ℕ}
+    (hk : 0 < k) (hQ : 0 < Q) (hA : 0 < A) (d N : ℕ) :
+    ‖(∑ n ∈ Finset.range N, rawPhaseDivisorTerm k d (Q * n + A)) / (N : ℝ)‖ ≤
+      ((Q + A : ℕ) : ℝ) / (d : ℝ) ^ (k + 1) := by
+  rcases Nat.eq_zero_or_pos N with rfl | hN
+  · simp only [Finset.range_zero, Finset.sum_empty, Nat.cast_zero, div_zero, norm_zero]
+    positivity
+  rcases Nat.eq_zero_or_pos d with rfl | hd
+  · simp [rawPhaseDivisorTerm, zero_pow hk.ne']
+  have hNR : (0 : ℝ) < N := by exact_mod_cast hN
+  have hdR : (0 : ℝ) < d := by exact_mod_cast hd
+  have hmul : (((Finset.range N).filter (fun n => d ∣ Q * n + A)).card : ℝ) * d ≤
+      ((Q + A : ℕ) : ℝ) * N := by
+    have hcard := affineCongruence_count_le_quotient hQ hA N (d := d)
+    exact_mod_cast (Nat.mul_le_mul_right d hcard).trans
+      ((Nat.div_mul_le_self _ _).trans (by nlinarith))
+  have heq : (∑ n ∈ Finset.range N, rawPhaseDivisorTerm k d (Q * n + A)) / (N : ℝ) =
+      (((Finset.range N).filter (fun n => d ∣ Q * n + A)).card : ℝ) / ((d : ℝ) ^ k * N) := by
+    unfold rawPhaseDivisorTerm
+    rw [← Finset.sum_filter]
+    simp only [Finset.sum_const, nsmul_eq_mul]
+    ring
+  rw [heq, Real.norm_eq_abs, abs_of_nonneg (by positivity), pow_succ,
+    div_le_div_iff₀ (by positivity) (by positivity)]
+  nlinarith [mul_le_mul_of_nonneg_left hmul (pow_nonneg hdR.le k)]
+
+theorem rawPhaseProgressionMeanTerm_bounds {k Q : ℕ} (hQ : 0 < Q) (A d : ℕ) :
+    0 ≤ rawPhaseProgressionMeanTerm k Q A d ∧
+      rawPhaseProgressionMeanTerm k Q A d ≤ (Q : ℝ) / (d : ℝ) ^ (k + 1) := by
+  rw [rawPhaseProgressionMeanTerm_eq_gcd]
+  split_ifs <;> refine ⟨by positivity, ?_⟩
+  · exact div_le_div_of_nonneg_right (by exact_mod_cast Nat.gcd_le_right d hQ)
+      (by positivity)
+  · positivity
+
+theorem summable_rawPhaseProgressionMeanTerm {k Q : ℕ} (hk : 0 < k) (hQ : 0 < Q) (A : ℕ) :
+    Summable (rawPhaseProgressionMeanTerm k Q A) :=
+  Summable.of_nonneg_of_le (fun d => (rawPhaseProgressionMeanTerm_bounds hQ A d).1)
+    (fun d => (rawPhaseProgressionMeanTerm_bounds hQ A d).2)
+    (by simpa only [mul_one_div] using
+      (Real.summable_one_div_nat_pow.mpr (by omega : 1 < k + 1)).mul_left (Q : ℝ))
+
+theorem one_le_rawPhaseProgressionMean {k Q : ℕ} (hk : 0 < k) (hQ : 0 < Q) (A : ℕ) :
+    1 ≤ rawPhaseProgressionMean k Q A := by
+  have hh := (summable_rawPhaseProgressionMeanTerm hk hQ A).le_tsum 1
+    (fun d _ => (rawPhaseProgressionMeanTerm_bounds hQ A d).1)
+  simpa [rawPhaseProgressionMean, rawPhaseProgressionMeanTerm, rawPhaseDivisorTerm] using hh
+
+/-- The actual phase averages along any positive arithmetic progression. -/
+theorem rawPhase_cesaro_progression {k Q A : ℕ} (hk : 0 < k) (hQ : 0 < Q) (hA : 0 < A) :
     Tendsto (fun N : ℕ =>
       (∑ n ∈ Finset.range N, rawPhase k (Q * n + A)) / (N : ℝ)) atTop
-      (𝓝 (∑' d : ℕ, if Nat.gcd d Q ∣ A then
-        (Nat.gcd d Q : ℝ) / (d : ℝ) ^ (k + 1) else 0)) := by
-  simpa only [rawPhaseProgressionMean_eq_tsum_gcd] using rawPhase_cesaro_progression hk Q hA
+      (𝓝 (rawPhaseProgressionMean k Q A)) := by
+  have hs : Summable (fun d : ℕ => ((Q + A : ℕ) : ℝ) / (d : ℝ) ^ (k + 1)) := by
+    simpa only [mul_one_div] using
+      (Real.summable_one_div_nat_pow.mpr (by omega : 1 < k + 1)).mul_left ((Q + A : ℕ) : ℝ)
+  refine (tendsto_tsum_of_dominated_convergence hs (fun d => rawPhaseDivisorTerm_cesaro hk Q A d)
+    (Eventually.of_forall (fun N d => rawPhaseDivisorTerm_cesaro_bound hk hQ hA d N))).congr'
+    (Eventually.of_forall fun N => ?_)
+  rw [tsum_div_const,
+    (hasSum_sum fun n _ => hasSum_rawPhaseDivisorTerm k (by omega : 0 < Q * n + A)).tsum_eq]
 
-#print axioms divisor_quotient_power_ratio
-#print axioms rawPhase_eq_sum_divisors_reciprocal
 #print axioms rawPhaseDivisorTerm_bounds
-#print axioms summable_rawPhaseDivisorTerm
-#print axioms rawPhase_eq_tsum_divisorTerm
-#print axioms rawPhase_truncation_bounds
-#print axioms rawPhase_uniform_truncation
-#print axioms rawPhaseDivisorTerm_cesaro_pos
+#print axioms hasSum_rawPhaseDivisorTerm
 #print axioms rawPhaseDivisorTerm_cesaro
+#print axioms rawPhaseProgressionMeanTerm_eq_gcd
+#print axioms affineCongruence_count_le_quotient
 #print axioms rawPhaseDivisorTerm_cesaro_bound
-#print axioms rawPhaseProgressionMeanTerm_eq_card
 #print axioms rawPhaseProgressionMeanTerm_bounds
 #print axioms summable_rawPhaseProgressionMeanTerm
 #print axioms one_le_rawPhaseProgressionMean
 #print axioms rawPhase_cesaro_progression
-#print axioms rawPhaseProgressionMeanTerm_eq_gcd
-#print axioms rawPhaseProgressionMean_eq_tsum_gcd
-#print axioms rawPhase_cesaro_progression_gcd
 
 end
 
