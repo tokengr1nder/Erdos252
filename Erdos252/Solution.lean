@@ -186,15 +186,11 @@ theorem stirlingErr_bounds (H L : ℕ) (x : ℝ) (hx : (H : ℝ) ≤ x) (j : ℕ
 denominator when centered at its largest factor. -/
 theorem descRecip_centered (n h : ℕ) :
     descRecip h ((n + h : ℕ) : ℝ) = 1 / ((n + 1).ascFactorial h : ℝ) := by
-  unfold descRecip
-  rw [Nat.ascFactorial_eq_prod_range]
-  push_cast
+  rw [descRecip, ← Nat.add_descFactorial_eq_ascFactorial,
+    Nat.descFactorial_eq_prod_range, Nat.cast_prod]
   congr 1
-  rw [← Finset.prod_range_reflect (fun j : ℕ => (n : ℝ) + (h : ℝ) - (j : ℝ)) h]
-  refine Finset.prod_congr rfl fun j hj => ?_
-  have hjh := Finset.mem_range.mp hj
-  push_cast [Nat.cast_sub (by omega : j ≤ h - 1), Nat.cast_sub (by omega : 1 ≤ h)]
-  ring
+  exact Finset.prod_congr rfl fun j hj =>
+    (Nat.cast_sub (by have := Finset.mem_range.mp hj; omega)).symm
 
 /-- The factorial divisor-sum series.  Its `n = 0` term is zero. -/
 def alpha (k : ℕ) : ℝ := ∑' n : ℕ, (σ k n : ℝ) / (n ! : ℝ)
@@ -248,12 +244,9 @@ theorem eventually_scaledTail_integral (k : ℕ) (hx : ¬ Irrational (alpha k)) 
 
 private theorem factorial_ratio (n j : ℕ) (hn : 0 < n) :
     ((n - 1).factorial : ℝ) / ((n + j).factorial : ℝ) = 1 / (n.ascFactorial (j + 1) : ℝ) := by
-  obtain ⟨m, rfl⟩ := Nat.exists_eq_succ_of_ne_zero hn.ne'
-  have ha : ((m + 1).ascFactorial (j + 1) : ℝ) ≠ 0 := by positivity
-  field_simp
-  norm_cast
-  simpa only [Nat.succ_eq_add_one, Nat.add_sub_cancel, Nat.add_assoc, Nat.add_comm 1] using
-    Nat.factorial_mul_ascFactorial m (j + 1)
+  rw [show n + j = n + (j + 1) - 1 by omega,
+    ← Nat.factorial_mul_ascFactorial' n (j + 1) hn,
+    Nat.cast_mul, div_mul_eq_div_div, div_self (by positivity)]
 
 private theorem scaled_summand_eq_blockTerm (k n j : ℕ) (hn : 0 < n) : ((n - 1).factorial : ℝ) *
         ((σ k (j + n) : ℝ) / ((j + n).factorial : ℝ)) =
@@ -314,9 +307,7 @@ theorem tailMain_eq_range (k n : ℕ) : tailMain k n =
 theorem poly_ascending_bound (d n r : ℕ) (hd : 0 < d) :
     (n + 1 + (r + d)) ^ d * (n + 1) ^ (r + 1) ≤ d ^ d * (n + 1).ascFactorial (r + d + 1) := by
   have hlin : n + 1 + (r + d) ≤ d * (n + 1 + (r + 1)) := by
-    have hh : 0 ≤ (d - 1) * (n + r + 1) := Nat.zero_le _
-    have hdd : d - 1 + 1 = d := by omega
-    nlinarith
+    nlinarith [Nat.mul_le_mul_right (n + r + 1) hd]
   have hnum : (n + 1 + (r + d)) ^ d ≤ d ^ d * (n + 1 + (r + 1)).ascFactorial d := by
     calc
       _ ≤ (d * (n + 1 + (r + 1))) ^ d := Nat.pow_le_pow_left hlin d
@@ -697,16 +688,6 @@ theorem tendsto_cesaro_sub {f : ℕ → ℝ} {a : ℝ}
   simpa only [div_eq_mul_inv, mul_comm, Function.comp_def, id_eq] using
     (hf.comp ((tendsto_add_atTop_nat v).comp (tendsto_id.const_mul_atTop' hL))).cesaro
 
-/-- An isolated shift contributes exactly its own weighted change in mean. -/
-theorem mean_difference {ι : Type*} [Fintype ι] (r : ι → ℕ) (c μ : ι → ℝ) (i₀ : ι) (β κ : ℝ)
-    (hunique : ∀ i, r i = r i₀ → i = i₀) :
-    (∑ i, c i * (μ i * (β + if r i = r i₀ then κ else 0))) -
-        (∑ i, c i * (μ i * β)) = c i₀ * μ i₀ * κ := by
-  classical
-  have hr (i : ι) : r i = r i₀ ↔ i = i₀ := ⟨hunique i, fun h => h ▸ rfl⟩
-  simp_rw [mul_add, Finset.sum_add_distrib, add_sub_cancel_left, mul_ite, mul_zero, hr]
-  simp [mul_assoc]
-
 /-- The prime's local gcd is either the prime or one. -/
 theorem gcd_eq_prime_or_one {ell : ℕ} (hp : ell.Prime) (d : ℕ) :
     Nat.gcd d ell = if ell ∣ d then ell else 1 := by
@@ -716,12 +697,7 @@ theorem gcd_eq_prime_or_one {ell : ℕ} (hp : ell.Prime) (d : ℕ) :
 
 theorem meanTerm_mul (k : ℕ) {Q ell : ℕ} (hc : ell.Coprime Q) (A d : ℕ) :
     meanTerm k Q A (ell * d) = meanTerm k Q A d / (ell : ℝ) ^ (k + 1) := by
-  simp only [meanTerm, hc.gcd_mul_left_cancel]
-  split_ifs
-  · push_cast
-    rw [mul_pow]
-    ring
-  · simp
+  simp [meanTerm, hc.gcd_mul_left_cancel, mul_pow, ite_div, div_div, mul_comm]
 
 theorem progMean_multiples (k : ℕ) {Q ell : ℕ} (hell : 0 < ell) (hc : ell.Coprime Q) (A : ℕ) :
     (∑' d : ℕ, if ell ∣ d then meanTerm k Q A d else 0) = progMean k Q A / (ell : ℝ) ^ (k + 1) := by
@@ -735,17 +711,12 @@ theorem progMean_multiples (k : ℕ) {Q ell : ℕ} (hell : 0 < ell) (hc : ell.Co
 theorem meanTerm_refine (k : ℕ) {Q ell : ℕ} (hp : ell.Prime) (hc : ell.Coprime Q) (B d : ℕ) :
     meanTerm k (Q * ell) B d = meanTerm k Q B d +
         (if ell ∣ B then (ell : ℝ) - 1 else -1) * (if ell ∣ d then meanTerm k Q B d else 0) := by
-  simp only [meanTerm]
-  rw [hc.symm.gcd_mul, gcd_eq_prime_or_one hp]
-  by_cases hd : ell ∣ d
-  · simp only [hd, ↓reduceIte]
-    have hprod : Nat.gcd d Q * ell ∣ B ↔ Nat.gcd d Q ∣ B ∧ ell ∣ B := by
-      exact ⟨fun h => ⟨dvd_of_mul_right_dvd h, dvd_of_mul_left_dvd h⟩,
-        fun h => (hc.symm.gcd_left d).mul_dvd_of_dvd_of_dvd h.1 h.2⟩
-    by_cases hg : Nat.gcd d Q ∣ B <;> by_cases hB : ell ∣ B <;>
-      simp only [hg, hB, hprod, and_self, and_false, false_and, ↓reduceIte]
-    all_goals push_cast; ring
-  · simp only [hd, ↓reduceIte, Nat.mul_one, mul_zero, add_zero]
+  simp only [meanTerm, hc.symm.gcd_mul, gcd_eq_prime_or_one hp]
+  have hprod : Nat.gcd d Q * ell ∣ B ↔ Nat.gcd d Q ∣ B ∧ ell ∣ B :=
+    ⟨fun h => ⟨dvd_of_mul_right_dvd h, dvd_of_mul_left_dvd h⟩,
+      fun h => (hc.symm.gcd_left d).mul_dvd_of_dvd_of_dvd h.1 h.2⟩
+  split_ifs <;> simp_all
+  ring
 
 theorem progMean_congr (k : ℕ) {Q A B : ℕ} (hAB : Nat.ModEq Q B A) :
     progMean k Q B = progMean k Q A :=
@@ -788,6 +759,7 @@ theorem isolated_shift_not_tendsto_zero {k : ℕ} (hk : 0 < k)
     (hunique : ∀ i, r i = r i₀ → i = i₀) (hc : c i₀ ≠ 0) :
     ¬ Tendsto (fun n : ℕ => ∑ i, c i * phase k (Q * n + A + r i))
       atTop (𝓝 0) := by
+  classical
   obtain ⟨L, hp, hcop, v₀, v₁, hmiss, hhit⟩ := fresh_prime_residues r i₀ Q A hQ hrpos
   have hLR : (0 : ℝ) < L := by exact_mod_cast hp.pos
   intro hz
@@ -802,12 +774,12 @@ theorem isolated_shift_not_tendsto_zero {k : ℕ} (hk : 0 < k)
   have h₀ := heq v₀
   have h₁ := heq v₁
   simp only [hmiss, hhit, ↓reduceIte, add_zero] at h₀ h₁
-  have hdiff := mean_difference r c
-    (fun i => progMean k Q (A + r i)) i₀
-    (1 - 1 / (L : ℝ) ^ (k + 1)) (1 / (L : ℝ) ^ k) hunique
-  rw [h₀, h₁, sub_self] at hdiff
+  have hr (i : ι) : r i = r i₀ ↔ i = i₀ := ⟨hunique i, fun h => h ▸ rfl⟩
+  simp_rw [mul_add, Finset.sum_add_distrib, mul_ite, mul_zero, hr, h₀] at h₁
+  have hdiff : c i₀ * progMean k Q (A + r i₀) * (1 / (L : ℝ) ^ k) = 0 := by
+    simpa [mul_assoc] using h₁
   exact (mul_ne_zero (mul_ne_zero hc (lt_of_lt_of_le one_pos
-    (one_le_progMean hk hQ (A + r i₀))).ne') (by positivity)) hdiff.symm
+    (one_le_progMean hk hQ (A + r i₀))).ne') (by positivity)) hdiff
 
 /-!
 # The dilation grid, the final-order survivor, and the forced zero limit
@@ -838,39 +810,26 @@ theorem diffWeight_moment {order ell : ℕ} (hell : ell < order) (z d : ℝ) :
 def cubeWeight (order : ℕ) {n : ℕ} (e : Fin n → Fin (order + 1)) : ℤ :=
   ∏ j : Fin n, diffWeight order (e j)
 
-theorem cubeWeight_cons (order : ℕ) {n : ℕ} (a : Fin (order + 1)) (e : Fin n → Fin (order + 1)) :
-    cubeWeight order (Fin.cons a e) = diffWeight order a * cubeWeight order e := by
-  simp [cubeWeight, Fin.prod_univ_succ]
-
-private theorem sum_cube_succ (order : ℕ) {n : ℕ} (G : (Fin (n + 1) → Fin (order + 1)) → ℝ) :
-    (∑ e : Fin (n + 1) → Fin (order + 1), G e) =
-      ∑ a : Fin (order + 1), ∑ e : Fin n → Fin (order + 1), G (Fin.cons a e) := by
-  simpa only [Fintype.sum_prod_type, Fin.consEquiv, Equiv.coe_fn_mk] using
-    ((Fin.consEquiv (fun _ : Fin (n + 1) => Fin (order + 1))).sum_comp G).symm
-
 /-- A coordinate absent from the test argument kills every core of degree
 below the difference order. -/
 theorem cube_core {order ell : ℕ} (hell : ell < order) {n : ℕ}
     (d c : Fin n → ℝ) (i : Fin n) (hc : c i = 0) (g : ℝ → ℝ) (p q : ℝ) :
     (∑ e : Fin n → Fin (order + 1), (cubeWeight order e : ℝ) *
       ((p + ∑ a, d a * (e a : ℕ)) ^ ell * g (q + ∑ a, c a * (e a : ℕ)))) = 0 := by
-  induction n generalizing p q with
+  cases n with
   | zero => exact i.elim0
-  | succ n ih =>
-    rw [sum_cube_succ]
-    simp only [cubeWeight_cons, Int.cast_mul, Fin.sum_univ_succ (n := n),
-      Fin.cons_zero, Fin.cons_succ, ← add_assoc]
-    rcases Fin.eq_zero_or_eq_succ i with rfl | ⟨i, rfl⟩
-    · rw [Finset.sum_comm]
-      refine Finset.sum_eq_zero fun e _ => ?_
-      have hm := congrArg (fun x : ℝ => x * ((cubeWeight order e : ℝ) *
-          g (q + ∑ b : Fin n, c b.succ * (e b : ℕ))))
-        (diffWeight_moment hell (p + ∑ b : Fin n, d b.succ * (e b : ℕ)) (d 0))
-      simp only [hc, zero_mul, add_zero, Finset.sum_mul] at hm ⊢
-      exact (Finset.sum_congr rfl fun a _ => by ring).trans hm
-    · refine Finset.sum_eq_zero fun a _ => ?_
-      simp only [mul_assoc, ← Finset.mul_sum]
-      rw [ih (fun b => d b.succ) (fun b => c b.succ) i hc (p + d 0 * a) (q + c 0 * a), mul_zero]
+  | succ n =>
+    rw [← (Fin.insertNthEquiv (fun _ : Fin (n + 1) => Fin (order + 1)) i).sum_comp]
+    simp only [Fintype.sum_prod_type, Fin.insertNthEquiv, Equiv.coe_fn_mk, cubeWeight,
+      Fin.prod_univ_succAbove _ i, Fin.sum_univ_succAbove _ i,
+      Fin.insertNth_apply_same, Fin.insertNth_apply_succAbove, Int.cast_mul]
+    rw [Finset.sum_comm]
+    refine Finset.sum_eq_zero fun e _ => ?_
+    have hm := congrArg (fun x : ℝ => x * ((cubeWeight order e : ℝ) *
+        g (q + ∑ b : Fin n, c (i.succAbove b) * (e b : ℕ))))
+      (diffWeight_moment hell (p + ∑ b : Fin n, d (i.succAbove b) * (e b : ℕ)) (d i))
+    simp only [hc, zero_mul, zero_add, Finset.sum_mul, cubeWeight] at hm ⊢
+    exact (Finset.sum_congr rfl fun a _ => by ring).trans hm
 
 abbrev GridVertex (k : ℕ) := Fin k → Fin (k + 2)
 
@@ -1027,21 +986,17 @@ theorem gridShift_real_eq_cube (k : ℕ) (e : GridVertex k) (j : ℕ) :
   congr 1
   exact Finset.sum_congr rfl fun i _ => by ring
 
-/-- All lower-order shifted cores cancel on the actual symbolic grid. -/
-theorem grid_core_real_cancel {k j ell : ℕ} (hj : j < k) (hell : ell ≤ k) (g : ℝ → ℝ) :
-    (∑ e : GridVertex k, (gridWeight k e : ℝ) *
-      ((gridMult k e : ℝ) ^ ell * g (gridShift k e j))) = 0 := by
-  simp_rw [gridMult_real_eq_cube, gridShift_real_eq_cube]
-  exact cube_core (Nat.lt_succ_of_le hell)
-    (fun i : Fin k => (gridSpacing k : ℝ) * ((k : ℝ) + 2) ^ i.val)
-    (fun i : Fin k => ((j : ℝ) - i.val) * ((gridSpacing k : ℝ) * ((k : ℝ) + 2) ^ i.val))
-    ⟨j, hj⟩ (by simp) g _ _
-
 /-- Actual integer weights cancel every real-valued shifted core through degree `k`. -/
 theorem grid_core_cancel {k j ell : ℕ} (hj : j < k) (hell : ell ≤ k) (g : ℕ → ℝ) :
     (∑ e : GridVertex k, (gridWeight k e : ℝ) *
       ((gridMult k e : ℝ) ^ ell * g (gridShift k e j))) = 0 := by
-  simpa only [Nat.floor_natCast] using grid_core_real_cancel hj hell (fun z => g ⌊z⌋₊)
+  simpa only [← gridMult_real_eq_cube, ← gridShift_real_eq_cube, Nat.floor_natCast,
+    gridWeight] using
+    cube_core (Nat.lt_succ_of_le hell)
+      (fun i : Fin k => (gridSpacing k : ℝ) * ((k : ℝ) + 2) ^ i.val)
+      (fun i : Fin k => ((j : ℝ) - i.val) *
+        ((gridSpacing k : ℝ) * ((k : ℝ) + 2) ^ i.val))
+      ⟨j, hj⟩ (by simp) (fun z => g ⌊z⌋₊) (gridBase k) (((j : ℝ) + 1) * gridBase k)
 
 def gridCore (k N j i : ℕ) : ℝ := ∑ e : GridVertex k, (gridWeight k e : ℝ) *
     ((gridMult k e : ℝ) ^ (i + 1) * ((σ k (N + gridShift k e j) : ℝ) /
@@ -1061,10 +1016,15 @@ def survivor (k N : ℕ) : ℝ :=
 
 /-- Only the top denominator order survives: lower orders cancel on the grid,
 and orders below the shift carry no Stirling coefficient. -/
-theorem finiteMain_eq_final (k N : ℕ) : finiteMain k N =
-      ∑ j ∈ Finset.range (k + 1), (Nat.stirlingSecond k j : ℝ) * gridCore k N j k := by
+theorem finiteMain_eq_surviving (k N : ℕ) : finiteMain k N = survivingMain k N := by
   unfold finiteMain
   rw [Finset.sum_eq_single_of_mem k (by simp)]
+  · have hdiv (x : ℕ) : (σ k x : ℝ) / (x : ℝ) ^ (k + 1) =
+        phase k x / (x : ℝ) := by rw [phase, div_div, pow_succ]
+    unfold gridCore survivingMain gridCoeff
+    simp_rw [Finset.mul_sum, hdiv]
+    rw [Finset.sum_comm]
+    simp only [div_eq_mul_inv, mul_assoc, mul_comm, mul_left_comm]
   · intro i hi hne
     refine Finset.sum_eq_zero fun j hj => ?_
     have hik := Finset.mem_range.mp hi
@@ -1073,16 +1033,6 @@ theorem finiteMain_eq_final (k N : ℕ) : finiteMain k N =
     · rw [show gridCore k N j i = 0 from grid_core_cancel hlt (by omega)
         (fun s => (σ k (N + s) : ℝ) / ((N + s : ℕ) : ℝ) ^ (i + 1)), mul_zero]
     · rw [Nat.stirlingSecond_eq_zero_of_lt (by omega : i < j), Nat.cast_zero, zero_mul]
-
-/-- Exact expression of the surviving denominator order as raw phases. -/
-theorem finiteMain_eq_surviving (k N : ℕ) : finiteMain k N = survivingMain k N := by
-  have hdiv (x : ℕ) : (σ k x : ℝ) / (x : ℝ) ^ (k + 1) =
-      phase k x / (x : ℝ) := by rw [phase, div_div, pow_succ]
-  rw [finiteMain_eq_final]
-  unfold gridCore survivingMain gridCoeff
-  simp_rw [Finset.mul_sum, hdiv]
-  rw [Finset.sum_comm]
-  simp only [div_eq_mul_inv, mul_assoc, mul_comm, mul_left_comm]
 
 /-- Reordering the expanded vertex sums gives the same finite main term. -/
 theorem finiteMain_vertex (k N : ℕ) : finiteMain k N = ∑ e : GridVertex k, (gridWeight k e : ℝ) *
@@ -1102,7 +1052,8 @@ theorem gridCoeff_zero_ne_zero (k : ℕ) : gridCoeff k (gridZero k) k ≠ 0 := b
     (gridMult_pos k (gridZero k)).ne']
 
 /-- The raw divisor phase is sublinear even in degrees zero and one. -/
-theorem tendsto_phase_div_nat (k : ℕ) : Tendsto (fun n : ℕ => phase k n / (n : ℝ)) atTop (𝓝 0) := by
+theorem tendsto_phase_div_nat (k : ℕ) :
+    Tendsto (fun n : ℕ => phase k n / (n : ℝ)) atTop (𝓝 0) := by
   have hlim := tendsto_sqrt_div_nat.const_mul (64 : ℝ)
   simp only [mul_zero] at hlim
   refine squeeze_zero' (Eventually.of_forall fun n => by unfold phase; positivity) ?_ hlim
