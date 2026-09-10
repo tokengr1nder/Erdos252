@@ -20,13 +20,12 @@ noncomputable section
 /-- The raw divisor phase is sublinear even in degrees zero and one. -/
 theorem tendsto_rawPhase_div_nat (k : ℕ) :
     Tendsto (fun n : ℕ => rawPhase k n / (n : ℝ)) atTop (𝓝 0) := by
-  have hlim : Tendsto (fun n : ℕ => 64 * (Real.sqrt (n : ℝ) / (n : ℝ)))
-      atTop (𝓝 0) := by
-    simpa only [mul_zero] using tendsto_sqrt_nat_div_nat.const_mul (64 : ℝ)
-  refine squeeze_zero' (Eventually.of_forall fun n => by unfold rawPhase; positivity) ?_ hlim
-  filter_upwards [eventually_ge_atTop 1] with n hn
-  simpa only [rawPhase, mul_div_assoc] using div_le_div_of_nonneg_right
-    (sigma_normalized_le_sixty_four_sqrt k n (by omega)) (Nat.cast_nonneg n : (0 : ℝ) ≤ n)
+  refine squeeze_zero' (g := fun n : ℕ => 64 * (Real.sqrt (n : ℝ) / n))
+    (Eventually.of_forall fun n => by unfold rawPhase; positivity) ?_ ?_
+  · filter_upwards [eventually_ge_atTop 1] with n hn
+    simpa only [rawPhase, mul_div_assoc] using div_le_div_of_nonneg_right
+      (sigma_normalized_le_sixty_four_sqrt k n (by omega)) (Nat.cast_nonneg n : (0 : ℝ) ≤ n)
+  · simpa only [mul_zero] using tendsto_sqrt_nat_div_nat.const_mul (64 : ℝ)
 
 /-- Every fixed coefficient and shift preserves the vanishing ratio limit. -/
 theorem dilationGrid_main_term_tendsto_zero (k : ℕ) (e : DilationGridVertex k) (h : ℕ) :
@@ -70,8 +69,7 @@ theorem tendsto_dilationGridSurvivor_rescaling (k : ℕ) :
 
 theorem dilationGrid_affine_tendsto_atTop (Q A : ℕ) (hQ : 0 < Q) :
     Tendsto (fun t : ℕ => A + Q * t) atTop atTop := by
-  simpa only [Nat.add_comm, Function.comp_def, id_eq] using
-    (tendsto_add_atTop_nat A).comp (tendsto_id.const_mul_atTop' hQ)
+  exact tendsto_atTop_mono (fun _ => Nat.le_add_left _ _) (tendsto_id.const_mul_atTop' hQ)
 
 theorem tendsto_dilationGridSurvivingMain_progression (k Q A : ℕ) (hQ : 0 < Q) :
     Tendsto (fun t : ℕ => dilationGridSurvivingMain k (A + Q * t)) atTop (𝓝 0) :=

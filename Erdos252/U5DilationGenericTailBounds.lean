@@ -83,16 +83,13 @@ theorem genericDilationFiniteError5_bounds (k n : ℕ) (hn : k + 1 ≤ n) :
 theorem tendsto_genericDilationFiniteError5_mul (k : ℕ) :
     Tendsto (fun n : ℕ => ((n : ℝ) + 1) * genericDilationFiniteError5 k n)
       atTop (𝓝 0) := by
-  have hlim : Tendsto (fun n : ℕ => 128 * ((k : ℝ) + 1) ^ (k + 2) *
-      (Real.sqrt ((n : ℝ) + 1) / ((n : ℝ) + 1))) atTop (𝓝 0) := by
-    simpa only [Function.comp_apply, Nat.cast_add, Nat.cast_one, mul_zero] using
-      (tendsto_sqrt_nat_div_nat.comp (tendsto_add_atTop_nat 1)).const_mul
-        (128 * ((k : ℝ) + 1) ^ (k + 2))
-  apply squeeze_zero' _ _ hlim
-  · filter_upwards [eventually_ge_atTop (k + 1)] with n hn
-    exact mul_nonneg (by positivity) (genericDilationFiniteError5_bounds k n hn).1
-  · filter_upwards [eventually_ge_atTop (k + 1)] with n hn
-    exact (genericDilationFiniteError5_bounds k n hn).2
+  refine squeeze_zero'
+    ((eventually_ge_atTop (k + 1)).mono fun n hn =>
+      mul_nonneg (by positivity) (genericDilationFiniteError5_bounds k n hn).1)
+    ((eventually_ge_atTop (k + 1)).mono fun n hn => (genericDilationFiniteError5_bounds k n hn).2) ?_
+  simpa only [Function.comp_apply, Nat.cast_add, Nat.cast_one, mul_zero] using
+    (tendsto_sqrt_nat_div_nat.comp (tendsto_add_atTop_nat 1)).const_mul
+      (128 * ((k : ℝ) + 1) ^ (k + 2))
 
 /-- The actual omitted infinite tail vanishes even after multiplication by
 the base index plus one. -/
@@ -100,18 +97,13 @@ theorem tendsto_genericDilationOmittedTail5_mul (k : ℕ) :
     Tendsto (fun n : ℕ =>
       ((n : ℝ) + 1) * genericDilationOmittedTail5 k n (k + 1))
       atTop (𝓝 0) := by
-  have hlim : Tendsto (fun n : ℕ =>
-      128 * ((k + 1 : ℕ) : ℝ) ^ (k + 1) / Real.sqrt ((n : ℝ) + 1))
-      atTop (𝓝 0) := by
-    simpa only [Function.comp_apply, Nat.cast_add, Nat.cast_one,
-      Real.sqrt_div_self', mul_one_div, mul_zero] using
-      (tendsto_sqrt_nat_div_nat.comp (tendsto_add_atTop_nat 1)).const_mul
-        (128 * ((k + 1 : ℕ) : ℝ) ^ (k + 1))
-  apply squeeze_zero' _ _ hlim
-  · exact Filter.Eventually.of_forall (fun n =>
-      mul_nonneg (by positivity) (genericDilationOmittedTail5_nonneg k n (k + 1)))
-  · filter_upwards [eventually_ge_atTop 1] with n hn
-    exact genericDilationOmittedTail5_scaled_le k n (by omega)
+  refine squeeze_zero' (Eventually.of_forall fun n =>
+    mul_nonneg (by positivity) (genericDilationOmittedTail5_nonneg k n (k + 1)))
+    ((eventually_gt_atTop 0).mono fun n hn => genericDilationOmittedTail5_scaled_le k n hn) ?_
+  simpa only [Function.comp_apply, Nat.cast_add, Nat.cast_one,
+    Real.sqrt_div_self', mul_one_div, mul_zero] using
+    (tendsto_sqrt_nat_div_nat.comp (tendsto_add_atTop_nat 1)).const_mul
+      (128 * ((k + 1 : ℕ) : ℝ) ^ (k + 1))
 
 /-- The error in the expansion of the actual factorial-series tail is
 `o(1/(n+1))`, for every nonnegative divisor-sum exponent. -/

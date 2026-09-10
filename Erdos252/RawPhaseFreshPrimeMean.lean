@@ -34,19 +34,12 @@ theorem rawPhaseProgressionMean_multiples (k : ℕ) {Q ell : ℕ}
     (hell : 0 < ell) (hc : ell.Coprime Q) (A : ℕ) :
     (∑' d : ℕ, if ell ∣ d then rawPhaseProgressionMeanTerm k Q A d else 0) =
       rawPhaseProgressionMean k Q A / (ell : ℝ) ^ (k + 1) := by
-  have hinj : Function.Injective (fun d : ℕ => ell * d) :=
-    fun _ _ h => Nat.eq_of_mul_eq_mul_left hell h
   have hs : Function.support (fun d : ℕ =>
       if ell ∣ d then rawPhaseProgressionMeanTerm k Q A d else 0) ⊆
       Set.range (fun d : ℕ => ell * d) := by
-    intro d hd
-    obtain ⟨j, rfl⟩ : ell ∣ d := Classical.byContradiction (fun h => hd (by simp [h]))
-    exact ⟨j, rfl⟩
-  rw [← hinj.tsum_eq hs]
-  simp only [dvd_mul_right, ↓reduceIte]
-  simp_rw [rawPhaseProgressionMeanTerm_mul k hc]
-  rw [tsum_div_const]
-  rfl
+    simp [Set.mem_range, dvd_def, eq_comm]
+  simpa [rawPhaseProgressionMeanTerm_mul k hc, rawPhaseProgressionMean, tsum_div_const] using
+    ((mul_right_injective₀ hell.ne').tsum_eq hs).symm
 
 theorem rawPhaseProgressionMeanTerm_congr (k : ℕ) {Q A B : ℕ}
     (hAB : Nat.ModEq Q B A) (d : ℕ) :
