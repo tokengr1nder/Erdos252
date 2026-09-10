@@ -140,9 +140,7 @@ theorem divTerm_cesaro {k : ℕ} (hk : 0 < k) (Q A d : ℕ) :
       rw [Nat.cast_div hgd (Nat.cast_ne_zero.mpr hg.ne'), one_div_div, div_div, pow_succ,
         mul_comm ((d : ℝ) ^ k)]]
     exact (tendsto_count_modEq_div hr v).div_const ((d : ℝ) ^ k)
-  · have hzero (N : ℕ) : ((Finset.range N).filter (fun n => d ∣ Q * n + A)).card = 0 :=
-      Finset.card_eq_zero.mpr (Finset.filter_eq_empty_iff.mpr
-        fun n _ hn => hcompat (affine_gcd_dvd hn))
+  · have hzero (n : ℕ) : ¬ d ∣ Q * n + A := fun h => hcompat (affine_gcd_dvd h)
     simp [hzero, hcompat]
 
 /-- Positive affine values that are divisible by `d` inject into the multiples
@@ -238,9 +236,8 @@ theorem tendsto_weightedCesaro {ι : Type*} [Fintype ι] (f : ι → ℕ → ℝ
 theorem tendsto_cesaro_sub {f : ℕ → ℝ} {a : ℝ}
     (hf : Tendsto f atTop (𝓝 a)) {L : ℕ} (hL : 0 < L) (v : ℕ) :
     Tendsto (fun N : ℕ => (∑ n ∈ Finset.range N, f (L * n + v)) / (N : ℝ)) atTop (𝓝 a) := by
-  have hlin : Tendsto (fun n : ℕ => L * n + v) atTop atTop :=
-    (tendsto_add_atTop_nat v).comp (tendsto_id.const_mul_atTop' hL)
-  simpa only [div_eq_mul_inv, mul_comm, Function.comp_def] using (hf.comp hlin).cesaro
+  simpa only [div_eq_mul_inv, mul_comm, Function.comp_def, id_eq] using
+    (hf.comp ((tendsto_add_atTop_nat v).comp (tendsto_id.const_mul_atTop' hL))).cesaro
 
 /-- An isolated shift contributes exactly its own weighted change in mean. -/
 theorem mean_difference {ι : Type*} [Fintype ι] (r : ι → ℕ) (c μ : ι → ℝ) (i₀ : ι) (β κ : ℝ)
@@ -324,11 +321,8 @@ theorem tendsto_refined_mean {k Q : ℕ} (hk : 0 < k) (hQ : 0 < Q) (A L v : ℕ)
       (∑ n ∈ Finset.range N, phase k (Q * (L * n + v) + A)) / (N : ℝ)) atTop
       (𝓝 (progMean k Q A *
         (1 - 1 / (L : ℝ) ^ (k + 1) + if L ∣ Q * v + A then 1 / (L : ℝ) ^ k else 0))) := by
-  have hAB : Nat.ModEq Q (Q * v + A) A := by
-    unfold Nat.ModEq
-    simp
   have hh := tendsto_progMean hk (Nat.mul_pos hQ hp.pos) (by omega : 0 < Q * v + A)
-  rw [progMean_refine hk hQ hp hcop hAB] at hh
+  rw [progMean_refine (A := A) hk hQ hp hcop (by simp [Nat.ModEq])] at hh
   simpa only [Nat.mul_add, Nat.mul_assoc, Nat.add_assoc] using hh
 
 /-- Every positive degree has the unconditional isolated-shift obstruction.

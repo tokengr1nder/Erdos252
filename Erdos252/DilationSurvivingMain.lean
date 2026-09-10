@@ -39,10 +39,6 @@ theorem diffWeight_moment {order ell : ℕ} (hell : ell < order) (z d : ℝ) :
 def cubeWeight (order : ℕ) {n : ℕ} (e : Fin n → Fin (order + 1)) : ℤ :=
   ∏ j : Fin n, diffWeight order (e j)
 
-theorem cubeWeight_zero_ne_zero (order n : ℕ) :
-    cubeWeight order (fun _ : Fin n => (0 : Fin (order + 1))) ≠ 0 := by
-  simp [cubeWeight, diffWeight]
-
 theorem cubeWeight_cons (order : ℕ) {n : ℕ} (a : Fin (order + 1)) (e : Fin n → Fin (order + 1)) :
     cubeWeight order (Fin.cons a e) = diffWeight order a * cubeWeight order e := by
   simp [cubeWeight, Fin.prod_univ_succ]
@@ -219,8 +215,8 @@ theorem grid_exists_crt (k : ℕ) :
 
 def gridWeight (k : ℕ) (e : GridVertex k) : ℤ := cubeWeight (k + 1) e
 
-theorem gridWeight_zero_ne_zero (k : ℕ) : gridWeight k (gridZero k) ≠ 0 :=
-  cubeWeight_zero_ne_zero (k + 1) k
+theorem gridWeight_zero_ne_zero (k : ℕ) : gridWeight k (gridZero k) ≠ 0 := by
+  simp [gridWeight, gridZero, cubeWeight, diffWeight]
 
 theorem gridMult_real_eq_cube (k : ℕ) (e : GridVertex k) : (gridMult k e : ℝ) = (gridBase k : ℝ) +
       ∑ i : Fin k, (gridSpacing k : ℝ) * ((k : ℝ) + 2) ^ i.val * (e i).val := by
@@ -255,13 +251,6 @@ theorem grid_core_cancel {k j ell : ℕ} (hj : j < k) (hell : ell ≤ k) (g : �
       ((gridMult k e : ℝ) ^ ell * g (gridShift k e j))) = 0 := by
   simpa only [Nat.floor_natCast] using grid_core_real_cancel hj hell (fun z => g ⌊z⌋₊)
 
-/-- In particular, the actual divisor-power terms of every exponent cancel. -/
-theorem grid_sigma_core_cancel (N : ℕ) {k j ell : ℕ} (hj : j < k) (hell : ell ≤ k) :
-    (∑ e : GridVertex k, (gridWeight k e : ℝ) * ((gridMult k e : ℝ) ^ ell *
-        ((σ k (N + gridShift k e j) : ℝ) / ((N + gridShift k e j : ℕ) : ℝ) ^ ell))) = 0 :=
-  grid_core_cancel hj hell
-    (fun s => (σ k (N + s) : ℝ) / ((N + s : ℕ) : ℝ) ^ ell)
-
 def gridCore (k N j i : ℕ) : ℝ := ∑ e : GridVertex k, (gridWeight k e : ℝ) *
     ((gridMult k e : ℝ) ^ (i + 1) * ((σ k (N + gridShift k e j) : ℝ) /
         ((N + gridShift k e j : ℕ) : ℝ) ^ (i + 1)))
@@ -289,7 +278,8 @@ theorem finiteMain_eq_final (k N : ℕ) : finiteMain k N =
     have hik := Finset.mem_range.mp hi
     have hjk := Finset.mem_range.mp hj
     by_cases hlt : j < k
-    · rw [show gridCore k N j i = 0 from grid_sigma_core_cancel N hlt (by omega), mul_zero]
+    · rw [show gridCore k N j i = 0 from grid_core_cancel hlt (by omega)
+        (fun s => (σ k (N + s) : ℝ) / ((N + s : ℕ) : ℝ) ^ (i + 1)), mul_zero]
     · rw [Nat.stirlingSecond_eq_zero_of_lt (by omega : i < j), Nat.cast_zero, zero_mul]
 
 /-- Exact expression of the surviving denominator order as raw phases. -/
@@ -370,19 +360,8 @@ theorem tendsto_survivor_rescaling (k : ℕ) :
   ring
 
 theorem tendsto_affine_atTop (Q A : ℕ) (hQ : 0 < Q) :
-    Tendsto (fun t : ℕ => A + Q * t) atTop atTop := by
-  simpa only [Nat.add_comm, Function.comp_def, id_eq] using
-    (tendsto_add_atTop_nat A).comp (tendsto_id.const_mul_atTop' hQ)
-
-theorem tendsto_survivingMain_prog (k Q A : ℕ) (hQ : 0 < Q) :
-    Tendsto (fun t : ℕ => survivingMain k (A + Q * t)) atTop (𝓝 0) :=
-  (tendsto_survivingMain k).comp (tendsto_affine_atTop Q A hQ)
-
-theorem tendsto_rescaling_prog (k Q A : ℕ) (hQ : 0 < Q) :
-    Tendsto (fun t : ℕ => ((A + Q * t : ℕ) : ℝ) *
-      survivingMain k (A + Q * t) - survivor k (A + Q * t))
-      atTop (𝓝 0) :=
-  (tendsto_survivor_rescaling k).comp (tendsto_affine_atTop Q A hQ)
+    Tendsto (fun t : ℕ => A + Q * t) atTop atTop :=
+  tendsto_atTop_mono (fun _ => Nat.le_add_left _ _) (tendsto_id.const_mul_atTop' hQ)
 
 def tailIndex (k N : ℕ) (e : GridVertex k) : ℕ := (N - gridOffset k e) / gridMult k e
 
@@ -508,10 +487,9 @@ private theorem le_progression (k A t : ℕ) : t ≤ A + gridModulus k * t :=
 theorem tailIndex_common_le (k N : ℕ) (e : GridVertex k) (hN : gridOffset k e ≤ N)
     (hcong : N ≡ gridOffset k e [MOD (gridMult k e) ^ 2]) :
     (N : ℝ) ≤ (gridMult k e : ℝ) * ((tailIndex k N e : ℝ) + 1) := by
-  have hn : N ≤ gridMult k e * (tailIndex k N e + 1) := by
-    rw [tailIndex_factorization k N e hN hcong 0]
-    exact Nat.le_add_right _ _
-  exact_mod_cast hn
+  have h := Nat.le_add_right N (gridShift k e 0)
+  rw [← tailIndex_factorization k N e hN hcong 0] at h
+  exact_mod_cast h
 
 /-- The actual error at one CRT index stays negligible after multiplication
 by the common progression argument. -/
@@ -566,7 +544,8 @@ theorem eventually_main_eq_surviving {k : ℕ} (hk : 0 < k) (A : ℕ) (hA : Grid
 theorem tendsto_weightedTail {k : ℕ} (hk : 0 < k) (A : ℕ) (hA : GridCongruences k A) :
     Tendsto (fun t : ℕ => weightedTail k (A + gridModulus k * t))
       atTop (𝓝 0) := by
-  have hmain := (tendsto_survivingMain_prog k (gridModulus k) A (gridModulus_pos k)).congr'
+  have hmain := ((tendsto_survivingMain k).comp
+    (tendsto_affine_atTop _ A (gridModulus_pos k))).congr'
     (eventually_main_eq_surviving hk A hA).symm
   simpa only [← weightedTail_split, add_zero] using hmain.add (tendsto_weightedError k A hA)
 
@@ -583,8 +562,8 @@ theorem tendsto_survivor_of_rational {k : ℕ} (hk : 0 < k)
     refine (tendsto_weightedError_mul k A hA).neg.congr' ?_
     filter_upwards [hz, eventually_main_eq_surviving hk A hA] with t ht heq
     rw [← heq, eq_neg_of_add_eq_zero_left ((weightedTail_split k _).symm.trans ht), mul_neg]
-  simpa only [sub_sub_cancel, sub_zero] using hmain.sub
-    (tendsto_rescaling_prog k (gridModulus k) A (gridModulus_pos k))
+  simpa only [Function.comp_apply, sub_sub_cancel, sub_zero] using hmain.sub
+    ((tendsto_survivor_rescaling k).comp (tendsto_affine_atTop _ A (gridModulus_pos k)))
 
 end
 
