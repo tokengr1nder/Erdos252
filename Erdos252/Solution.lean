@@ -163,24 +163,19 @@ theorem stirlingErr_bounds (H L : ℕ) (x : ℝ) (hx : (H : ℝ) ≤ x) (j : ℕ
     · simp only [stirlingErr, Nat.zero_add, descRecip_one, stirlingPoly_one, sub_self]
       exact ⟨le_rfl, by positivity⟩
     obtain ⟨j, rfl⟩ := Nat.exists_eq_succ_of_ne_zero hj.ne'
-    have hdiff : 0 < x - ((j : ℝ) + 1) := by
-      have hjR : (j : ℝ) + 2 ≤ H := by exact_mod_cast hH
-      linarith
+    have hjR : (j : ℝ) + 2 ≤ H := by exact_mod_cast hH
     have hprev := ih j (by omega)
     have hcurr := ih (j + 1) hH
-    rw [stirlingErr_recurrence j L x hxpos.ne' hdiff.ne']
+    rw [stirlingErr_recurrence j L x hxpos.ne' (by linarith : x - ((j : ℝ) + 1) ≠ 0)]
     refine ⟨div_nonneg (add_nonneg hprev.1 (mul_nonneg (by positivity) hcurr.1)) hxpos.le, ?_⟩
     calc
-      _ ≤ ((H : ℝ) ^ L / x ^ (L + 1) + ((j : ℝ) + 1) * ((H : ℝ) ^ L / x ^ (L + 1))) / x :=
-        (div_le_div_iff_of_pos_right hxpos).mpr
-          (add_le_add hprev.2 (mul_le_mul_of_nonneg_left hcurr.2 (by positivity)))
-      _ = ((j : ℝ) + 2) * (H : ℝ) ^ L / x ^ (L + 2) := by
-        rw [pow_succ x (L + 1)]
-        ring
-      _ ≤ (H : ℝ) * (H : ℝ) ^ L / x ^ (L + 2) := by
-        gcongr
-        exact_mod_cast hH
-      _ = (H : ℝ) ^ (L + 1) / x ^ (L + 1 + 1) := by ring
+      _ ≤ (H : ℝ) * ((H : ℝ) ^ L / x ^ (L + 1)) / x :=
+        div_le_div_of_nonneg_right (by
+          nlinarith [hprev.2, mul_le_mul_of_nonneg_left hcurr.2
+            (by positivity : (0 : ℝ) ≤ (j : ℝ) + 1), mul_le_mul_of_nonneg_right hjR
+            (by positivity : 0 ≤ (H : ℝ) ^ L / x ^ (L + 1))])
+          hxpos.le
+      _ = _ := by rw [pow_succ x (L + 1), pow_succ]; ring
 
 /-- The generic descending product is exactly the actual ascending-factorial
 denominator when centered at its largest factor. -/
@@ -232,9 +227,9 @@ theorem seriesPrefix_integral (k n : ℕ) :
 
 /-- Rationality makes every sufficiently late actual scaled tail integral. -/
 theorem eventually_scaledTail_integral (k : ℕ) (hx : ¬ Irrational (alpha k)) :
-    ∃ N : ℕ, ∀ n : ℕ, N ≤ n → ∃ z : ℤ, scaledTail k n = z := by
+    ∀ᶠ n : ℕ in atTop, ∃ z : ℤ, scaledTail k n = z := by
   obtain ⟨r, hr⟩ := exists_rat_of_not_irrational hx
-  refine ⟨r.den + 1, fun n hn => ?_⟩
+  filter_upwards [eventually_ge_atTop (r.den + 1)] with n hn
   obtain ⟨c, hc⟩ := Nat.dvd_factorial r.pos (by omega : r.den ≤ n - 1)
   obtain ⟨zp, hzp⟩ := seriesPrefix_integral k n
   refine ⟨(c : ℤ) * r.num - zp, ?_⟩
@@ -270,27 +265,14 @@ theorem blockTerm_nonneg (k n j : ℕ) : 0 ≤ blockTerm k n j :=
 theorem omittedTail_nonneg (k n H : ℕ) : 0 ≤ omittedTail k n H :=
   tsum_nonneg (fun r => blockTerm_nonneg k (n + 1) (r + H))
 
-/-- Splitting the actual tail at any finite order. -/
-theorem scaledTail_split (k n H : ℕ) :
-    scaledTail k (n + 1) = (∑ j ∈ Finset.range H, blockTerm k (n + 1) j) + omittedTail k n H := by
-  rw [scaledTail_tsum k (n + 1) (by omega)]
-  exact ((summable_blockTerm k (n + 1) (by omega)).sum_add_tsum_nat_add H).symm
-
-/-- Each actual block summand has exactly the generic denominator error. -/
-theorem blockTerm_expansion (k n j L : ℕ) : blockTerm k (n + 1) j =
-      (σ k (n + (j + 1)) : ℝ) * stirlingPoly j L ((n + (j + 1) : ℕ) : ℝ) +
-      (σ k (n + (j + 1)) : ℝ) * stirlingErr j L ((n + (j + 1) : ℕ) : ℝ) := by
-  unfold blockTerm stirlingErr
-  rw [descRecip_centered, Nat.add_right_comm n 1 j]
-  ring_nf
-
 /-- Exact decomposition of the generic actual expansion error into the
 omitted infinite tail and the finite denominator remainders. -/
 theorem tailErr_eq (k n : ℕ) : tailErr k n = omittedTail k n (k + 1) + finiteErr k n := by
-  unfold tailErr tailMain finiteErr
-  rw [scaledTail_split k n (k + 1)]
-  simp_rw [blockTerm_expansion k n _ (k + 1)]
-  rw [Finset.sum_add_distrib]
+  unfold tailErr tailMain finiteErr omittedTail stirlingErr
+  rw [scaledTail_tsum k (n + 1) (by omega),
+    ← (summable_blockTerm k (n + 1) (by omega)).sum_add_tsum_nat_add (k + 1)]
+  simp_rw [descRecip_centered, mul_sub, Finset.sum_sub_distrib]
+  simp only [blockTerm, Nat.add_right_comm n 1, Nat.add_assoc, mul_one_div]
   ring
 
 theorem scaledTail_expansion (k n : ℕ) : scaledTail k (n + 1) = tailMain k n + tailErr k n :=
@@ -1172,12 +1154,13 @@ theorem tendsto_tailIndex (k Q A : ℕ) (hQ : 0 < Q) (e : GridVertex k) :
 theorem eventually_weightedTail_integral_prog (k : ℕ) (hx : ¬ Irrational (alpha k)) (A : ℕ) :
     ∀ᶠ t : ℕ in atTop, ∃ z : ℤ, weightedTail k (A + gridModulus k * t) = z := by
   classical
-  obtain ⟨K, hK⟩ := eventually_scaledTail_integral k hx
-  have hlarge : ∀ᶠ t : ℕ in atTop, ∀ e : GridVertex k, K ≤ tailIndex k (A + gridModulus k * t) e :=
-    eventually_all.mpr (fun e =>
-      (tendsto_tailIndex k _ A (gridModulus_pos k) e).eventually (eventually_ge_atTop K))
-  filter_upwards [hlarge] with t ht
-  choose z hz using fun e : GridVertex k => hK _ ((ht e).trans (Nat.le_succ _))
+  have hint := eventually_all.mpr fun e : GridVertex k =>
+    ((tendsto_add_atTop_nat 1).comp
+      (tendsto_tailIndex k _ A (gridModulus_pos k) e)).eventually
+      (eventually_scaledTail_integral k hx)
+  filter_upwards [hint] with t ht
+  choose z hz using ht
+  simp only [Function.comp_apply] at hz
   exact ⟨∑ e : GridVertex k, gridWeight k e * (σ k (gridMult k e) : ℤ) * z e,
     by simp only [weightedTail, hz, Int.cast_sum, Int.cast_mul, Int.cast_natCast]⟩
 
@@ -1231,15 +1214,6 @@ theorem tendsto_weightedError_mul (k A : ℕ) (hA : GridCongruences k A) :
       (tendsto_grid_vertex_error_mul k A hA e).const_mul
         ((gridWeight k e : ℝ) * (σ k (gridMult k e) : ℝ)))
 
-theorem tendsto_weightedError (k A : ℕ) (hA : GridCongruences k A) :
-    Tendsto (fun t : ℕ => weightedError k (A + gridModulus k * t))
-      atTop (𝓝 0) := by
-  have hN := (tendsto_natCast_atTop_atTop (R := ℝ)).comp
-    (tendsto_affine_atTop (gridModulus k) A (gridModulus_pos k))
-  refine ((tendsto_weightedError_mul k A hA).div_atTop hN).congr' ?_
-  filter_upwards [hN.eventually_ne_atTop 0] with t ht
-  exact mul_div_cancel_left₀ _ ht
-
 /-- Eventually, the weighted main term is the surviving main term
 along the whole CRT progression. -/
 theorem eventually_main_eq_surviving {k : ℕ} (hk : 0 < k) (A : ℕ) (hA : GridCongruences k A) :
@@ -1249,29 +1223,30 @@ theorem eventually_main_eq_surviving {k : ℕ} (hk : 0 < k) (A : ℕ) (hA : Grid
     (eventually_ge_atTop (gridBase k))] with t ht
   exact weightedMain_eq_surviving hk _ ht (gridCongruences_add_modulus_mul k A t hA)
 
-theorem tendsto_weightedTail {k : ℕ} (hk : 0 < k) (A : ℕ) (hA : GridCongruences k A) :
-    Tendsto (fun t : ℕ => weightedTail k (A + gridModulus k * t))
-      atTop (𝓝 0) := by
-  have hmain := ((tendsto_survivingMain k).comp
-    (tendsto_affine_atTop _ A (gridModulus_pos k))).congr'
-    (eventually_main_eq_surviving hk A hA).symm
-  simpa only [← weightedTail_split, add_zero] using hmain.add (tendsto_weightedError k A hA)
-
 /-- Rationality forces the actual generic survivor to vanish on a CRT progression. -/
 theorem tendsto_survivor_of_rational {k : ℕ} (hk : 0 < k)
     (hx : ¬ Irrational (alpha k)) (A : ℕ) (hA : GridCongruences k A) :
     Tendsto (fun t : ℕ => survivor k (A + gridModulus k * t))
       atTop (𝓝 0) := by
-  have hz := eventually_zero_of_int (tendsto_weightedTail hk A hA)
-    (eventually_weightedTail_integral_prog k hx A)
+  have hP := tendsto_affine_atTop _ A (gridModulus_pos k)
+  have heq := eventually_main_eq_surviving hk A hA
+  have hE : Tendsto (fun t : ℕ => weightedError k (A + gridModulus k * t)) atTop (𝓝 0) := by
+    simpa only [weightedError, Function.comp_apply, mul_zero, Finset.sum_const_zero] using
+      tendsto_finsetSum Finset.univ (fun e _ =>
+        ((tendsto_tailErr k).comp (tendsto_tailIndex k _ A (gridModulus_pos k) e)).const_mul
+          ((gridWeight k e : ℝ) * (σ k (gridMult k e) : ℝ)))
+  have hT : Tendsto (fun t : ℕ => weightedTail k (A + gridModulus k * t)) atTop (𝓝 0) := by
+    simpa only [← weightedTail_split, add_zero] using
+      (((tendsto_survivingMain k).comp hP).congr' heq.symm).add hE
+  have hz := eventually_zero_of_int hT (eventually_weightedTail_integral_prog k hx A)
   have hmain : Tendsto (fun t : ℕ => ((A + gridModulus k * t : ℕ) : ℝ) *
       survivingMain k (A + gridModulus k * t)) atTop (𝓝 0) := by
     rw [← neg_zero]
     refine (tendsto_weightedError_mul k A hA).neg.congr' ?_
-    filter_upwards [hz, eventually_main_eq_surviving hk A hA] with t ht heq
+    filter_upwards [hz, heq] with t ht heq
     rw [← heq, eq_neg_of_add_eq_zero_left ((weightedTail_split k _).symm.trans ht), mul_neg]
-  simpa only [Function.comp_apply, sub_sub_cancel, sub_zero] using hmain.sub
-    ((tendsto_survivor_rescaling k).comp (tendsto_affine_atTop _ A (gridModulus_pos k)))
+  simpa only [Function.comp_apply, sub_sub_cancel, sub_zero] using
+    hmain.sub ((tendsto_survivor_rescaling k).comp hP)
 
 /-!
 # Irrationality of the divisor-sum factorial series in every positive degree
@@ -1330,8 +1305,7 @@ theorem tendsto_scaledTail_zero : Tendsto (scaledTail 0) atTop (𝓝 0) := by
 /-- The factorial divisor-count series is irrational. -/
 theorem irrational_alpha_zero : Irrational (alpha 0) := by
   by_contra hx
-  obtain ⟨N, hN⟩ := eventually_scaledTail_integral 0 hx
-  have hz := eventually_zero_of_int tendsto_scaledTail_zero ((eventually_ge_atTop N).mono hN)
+  have hz := eventually_zero_of_int tendsto_scaledTail_zero (eventually_scaledTail_integral 0 hx)
   obtain ⟨n, hn, hnpos⟩ := (hz.and (eventually_ge_atTop 1)).exists
   exact (scaledTail_pos_of_pos 0 n (by omega)).ne' hn
 

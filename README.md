@@ -10,9 +10,11 @@ theorem Erdos252.erdos_252 (k : ℕ) :
       (ArithmeticFunction.sigma k n : ℝ) / (n.factorial : ℝ))
 ```
 
-See [the proof outline](PROOF.md), the [typeset PDF](PROOF.pdf)
+See [the proof outline](PROOF.md), the [complete typeset proof](PROOF.pdf)
 ([LaTeX source](PROOF.tex)), and [verification details](VERIFICATION.md).
 The complete Lean proof is in [Erdos252/Solution.lean](Erdos252/Solution.lean).
+The PDF includes statements and proofs of every named lemma and theorem in
+that module, including private lemmas, plus its definitions and the statement audit.
 
 ## Reproduce
 
@@ -50,7 +52,7 @@ The development contains no incomplete proof placeholders.
 but do not verify the proof.
 Hashes refer to the exact file contents stored in Git (LF-normalized for text files).
 
-To typeset the proof outline locally, install Tectonic and run from the repository root:
+To typeset the complete proof locally, install Tectonic and run from the repository root:
 
 ```sh
 tectonic PROOF.tex

@@ -62,9 +62,8 @@ Divisor pairing and a geometric estimate give $0<T_n=O(n^{-1/2})$. Such tails ca
 
 ## Formal entrypoints
 
-- [Solution.lean](Erdos252/Solution.lean): the complete theorem.
-- [DilationIrrationality.lean](Erdos252/DilationIrrationality.lean): positive exponents.
-- [DilationZeroCase.lean](Erdos252/DilationZeroCase.lean): exponent zero.
+- [Solution.lean](Erdos252/Solution.lean): the complete proof, including positive exponents and exponent zero.
+- [Complete typeset proof](PROOF.pdf): every named theorem, lemma, and definition, with proofs and Lean identifiers.
 - [Statement.lean](audit/Statement.lean): the published statement, expanded divisor sum, summability, and reindexing from one.
 
 No prime-pattern conjecture, distribution assumption, or finite computational surrogate is used.
