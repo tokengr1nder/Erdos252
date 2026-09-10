@@ -20,18 +20,6 @@ namespace Erdos252
 open Filter
 open scoped Nat BigOperators Topology ArithmeticFunction.sigma
 
-/-- If a real number is rational, then all sufficiently late factorial
-multiples of it are integers. -/
-theorem factorial_mul_eventually_int {x : ℝ} (hx : ¬ Irrational x) :
-    ∃ N : ℕ, ∀ n : ℕ, N ≤ n → ∃ z : ℤ, (n.factorial : ℝ) * x = z := by
-  obtain ⟨r, rfl⟩ := exists_rat_of_not_irrational hx
-  refine ⟨r.den, fun n hn ↦ ?_⟩
-  obtain ⟨c, hc⟩ := Nat.dvd_factorial r.pos hn
-  refine ⟨(c : ℤ) * r.num, ?_⟩
-  rw [Rat.cast_def, hc]
-  push_cast
-  field_simp
-
 /-- Every fixed polynomial divided by `n!` is summable. -/
 theorem summable_natPow_div_factorial (d : ℕ) : Summable (fun n : ℕ ↦ (n : ℝ) ^ d / (n ! : ℝ)) := by
   refine .of_nonneg_of_le (fun n ↦ by positivity) (fun n ↦ ?_)
@@ -116,9 +104,6 @@ theorem descRecip_succ (h : ℕ) (x : ℝ) : descRecip (h + 1) x = descRecip h x
 theorem descRecip_one (x : ℝ) : descRecip 1 x = 1 / x := by
   simp [descRecip]
 
-theorem stirlingPoly_zero (j : ℕ) (x : ℝ) : stirlingPoly j 0 x = 0 := by
-  simp [stirlingPoly]
-
 theorem stirlingPoly_one (L : ℕ) (x : ℝ) : stirlingPoly 0 (L + 1) x = 1 / x := by
   simp [stirlingPoly, Finset.sum_range_succ', Nat.stirlingSecond]
 
@@ -139,16 +124,11 @@ theorem stirlingPoly_recurrence (j L : ℕ) (x : ℝ) : stirlingPoly (j + 1) (L 
 theorem stirlingErr_recurrence (j L : ℕ) (x : ℝ) (hx : x ≠ 0) (hxj : x - ((j : ℝ) + 1) ≠ 0) :
     stirlingErr (j + 1) (L + 1) x =
       (stirlingErr j L x + ((j : ℝ) + 1) * stirlingErr (j + 1) L x) / x := by
-  have h : x * descRecip (j + 2) x = descRecip (j + 1) x + ((j : ℝ) + 1) * descRecip (j + 2) x := by
-    rw [show j + 2 = (j + 1) + 1 from rfl, descRecip_succ]
-    push_cast
-    field_simp
-    ring
   unfold stirlingErr
-  rw [stirlingPoly_recurrence j L x]
-  apply (eq_div_iff hx).mpr
+  rw [stirlingPoly_recurrence, descRecip_succ (j + 1)]
+  push_cast
   field_simp
-  nlinarith
+  ring
 
 /-- A centered descending product is positive and its reciprocal is at most
 `1/x` once all its factors other than `x` are at least one. -/
@@ -174,9 +154,8 @@ theorem stirlingErr_bounds (H L : ℕ) (x : ℝ) (hx : (H : ℝ) ≤ x) (j : ℕ
   have hxpos : 0 < x := lt_of_lt_of_le (by exact_mod_cast (show 0 < H by omega)) hx
   induction L generalizing j with
   | zero =>
-    simp only [stirlingErr, stirlingPoly_zero, sub_zero, pow_zero, zero_add, pow_one]
-    exact ⟨(descRecip_bounds (j + 1) H x j.succ_pos hH hx).1.le,
-      (descRecip_bounds (j + 1) H x j.succ_pos hH hx).2⟩
+    have h := descRecip_bounds (j + 1) H x j.succ_pos hH hx
+    simpa [stirlingErr, stirlingPoly] using And.intro h.1.le h.2
   | succ L ih =>
     rcases Nat.eq_zero_or_pos j with rfl | hj
     · simp only [stirlingErr, Nat.zero_add, descRecip_one, stirlingPoly_one, sub_self]
@@ -256,11 +235,14 @@ theorem seriesPrefix_integral (k n : ℕ) :
 /-- Rationality makes every sufficiently late actual scaled tail integral. -/
 theorem eventually_scaledTail_integral (k : ℕ) (hx : ¬ Irrational (alpha k)) :
     ∃ N : ℕ, ∀ n : ℕ, N ≤ n → ∃ z : ℤ, scaledTail k n = z := by
-  obtain ⟨N, hN⟩ := factorial_mul_eventually_int hx
-  refine ⟨N + 1, fun n hn => ?_⟩
-  obtain ⟨za, hza⟩ := hN (n - 1) (by omega)
+  obtain ⟨r, hr⟩ := exists_rat_of_not_irrational hx
+  refine ⟨r.den + 1, fun n hn => ?_⟩
+  obtain ⟨c, hc⟩ := Nat.dvd_factorial r.pos (by omega : r.den ≤ n - 1)
   obtain ⟨zp, hzp⟩ := seriesPrefix_integral k n
-  exact ⟨za - zp, by rw [scaledTail, mul_sub, hza, hzp, Int.cast_sub]⟩
+  refine ⟨(c : ℤ) * r.num - zp, ?_⟩
+  rw [scaledTail, mul_sub, hzp, hr, Rat.cast_def, hc]
+  push_cast
+  field_simp
 
 private theorem factorial_ratio (n j : ℕ) (hn : 0 < n) :
     ((n - 1).factorial : ℝ) / ((n + j).factorial : ℝ) = 1 / (n.ascFactorial (j + 1) : ℝ) := by
@@ -320,14 +302,6 @@ theorem tailErr_eq (k n : ℕ) : tailErr k n = omittedTail k n (k + 1) + finiteE
 theorem scaledTail_expansion (k n : ℕ) : scaledTail k (n + 1) = tailMain k n + tailErr k n := by
   unfold tailErr
   ring
-
-theorem tailErr_nonneg (k n : ℕ) (hn : k + 1 ≤ n) : 0 ≤ tailErr k n := by
-  rw [tailErr_eq]
-  refine add_nonneg (omittedTail_nonneg k n (k + 1))
-    (Finset.sum_nonneg (fun j hj => mul_nonneg (Nat.cast_nonneg _) ?_))
-  exact (stirlingErr_bounds (k + 1) (k + 1) ((n + (j + 1) : ℕ) : ℝ)
-    (by exact_mod_cast (show k + 1 ≤ n + (j + 1) by omega)) j
-    (by have := Finset.mem_range.mp hj; omega)).1
 
 /-- The finite main term with both indices in the zero-based convention. -/
 theorem tailMain_eq_range (k n : ℕ) : tailMain k n =
@@ -467,6 +441,10 @@ theorem finiteErr_bounds (k n : ℕ) (hn : k + 1 ≤ n) : 0 ≤ finiteErr k n �
   simp only [Finset.sum_const, Finset.card_range, nsmul_eq_mul, Nat.cast_add, Nat.cast_one]
   rw [show k + 2 = (k + 1) + 1 by omega, pow_succ]
   field_simp
+
+theorem tailErr_nonneg (k n : ℕ) (hn : k + 1 ≤ n) : 0 ≤ tailErr k n := by
+  rw [tailErr_eq]
+  exact add_nonneg (omittedTail_nonneg k n _) (finiteErr_bounds k n hn).1
 
 theorem tendsto_finiteErr_mul (k : ℕ) :
     Tendsto (fun n : ℕ => ((n : ℝ) + 1) * finiteErr k n)

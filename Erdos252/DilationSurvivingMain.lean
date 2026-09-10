@@ -215,9 +215,6 @@ theorem grid_exists_crt (k : ℕ) :
 
 def gridWeight (k : ℕ) (e : GridVertex k) : ℤ := cubeWeight (k + 1) e
 
-theorem gridWeight_zero_ne_zero (k : ℕ) : gridWeight k (gridZero k) ≠ 0 := by
-  simp [gridWeight, gridZero, cubeWeight, diffWeight]
-
 theorem gridMult_real_eq_cube (k : ℕ) (e : GridVertex k) : (gridMult k e : ℝ) = (gridBase k : ℝ) +
       ∑ i : Fin k, (gridSpacing k : ℝ) * ((k : ℝ) + 2) ^ i.val * (e i).val := by
   unfold gridMult gridIndex
@@ -306,10 +303,8 @@ theorem finiteMain_vertex (k N : ℕ) : finiteMain k N = ∑ e : GridVertex k, (
 
 /-- The isolated final-order coefficient never vanishes. -/
 theorem gridCoeff_zero_ne_zero (k : ℕ) : gridCoeff k (gridZero k) k ≠ 0 := by
-  simp only [gridCoeff, gridMult, gridIndex_zero, mul_zero, add_zero,
-    Nat.stirlingSecond_self, Nat.cast_one, mul_one]
-  exact mul_ne_zero (by exact_mod_cast gridWeight_zero_ne_zero k)
-    (pow_ne_zero _ (by exact_mod_cast (gridBase_pos k).ne'))
+  simp [gridCoeff, Nat.stirlingSecond_self, gridWeight, gridZero, cubeWeight, diffWeight,
+    (gridMult_pos k (gridZero k)).ne']
 
 /-- The raw divisor phase is sublinear even in degrees zero and one. -/
 theorem tendsto_phase_div_nat (k : ℕ) :
