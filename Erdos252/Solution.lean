@@ -21,7 +21,6 @@ theorem erdos_252 (k : ℕ) :
     Irrational (∑' n : ℕ, (ArithmeticFunction.sigma k n : ℝ) / (n.factorial : ℝ)) :=
   irrational_alpha k
 
-#print axioms irrational_alpha
 #print axioms erdos_252
 
 end Erdos252

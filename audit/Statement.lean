@@ -17,7 +17,7 @@ theorem zero_term (k : ℕ) :
 
 theorem actual_series_summable (k : ℕ) :
     Summable (fun n : ℕ => (ArithmeticFunction.sigma k n : ℝ) / (n.factorial : ℝ)) :=
-  Erdos252.Tail.summable_sigma_div_factorial k
+  Erdos252.summable_sigma_factorial k
 
 theorem expanded_divisor_statement (k : ℕ) :
     Irrational (∑' n : ℕ, ((∑ d ∈ n.divisors, d ^ k : ℕ) : ℝ) /
