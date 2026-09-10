@@ -12,6 +12,7 @@ theorem Erdos252.erdos_252 (k : ℕ) :
 
 See [the proof outline](PROOF.md), the [typeset PDF](PROOF.pdf)
 ([LaTeX source](PROOF.tex)), and [verification details](VERIFICATION.md).
+The complete Lean proof is in [Erdos252/Solution.lean](Erdos252/Solution.lean).
 
 ## Reproduce
 
