@@ -1,5 +1,4 @@
 import Erdos252.DilationWeightedTail
-import Erdos252.DilationSurvivorBounds
 import Erdos252.U5DilationGenericTailBounds
 import Erdos252.EventuallyIntegral
 

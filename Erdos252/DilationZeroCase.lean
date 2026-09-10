@@ -1,4 +1,5 @@
 import Erdos252.U5DilationGenericTailBounds
+import Erdos252.DilationSurvivorBounds
 import Erdos252.EventuallyIntegral
 
 /-!
@@ -28,21 +29,9 @@ theorem genericScaledFullTail5_pos_of_pos (k n : ℕ) (hn : 0 < n) :
 term to tend to zero. -/
 theorem tendsto_genericDilationTailMain5_zero :
     Tendsto (genericDilationTailMain5 0) atTop (𝓝 0) := by
-  have hmain (n : ℕ) : genericDilationTailMain5 0 n =
-      (ArithmeticFunction.sigma 0 (n + 1) : ℝ) / ((n + 1 : ℕ) : ℝ) := by
-    simp [genericDilationTailMain5_eq_Icc]
-  have hupper : Tendsto (fun n : ℕ =>
-      64 * (Real.sqrt ((n + 1 : ℕ) : ℝ) / ((n + 1 : ℕ) : ℝ))) atTop (𝓝 0) := by
-    simpa only [Function.comp_def, mul_zero] using
-      (tendsto_sqrt_nat_div_nat.comp (tendsto_add_atTop_nat 1)).const_mul 64
-  refine tendsto_of_tendsto_of_tendsto_of_le_of_le tendsto_const_nhds hupper
-    (fun n => ?_) (fun n => ?_)
-  · rw [hmain]
-    positivity
-  · rw [hmain]
-    have hs := sigma_real_le_sixty_four_pow_sqrt 0 (n + 1) (Nat.succ_pos n)
-    simp only [pow_zero, mul_one] at hs
-    simpa only [mul_div_assoc] using div_le_div_of_nonneg_right hs (by positivity)
+  change Tendsto (fun n => genericDilationTailMain5 0 n) atTop (𝓝 0)
+  simpa [genericDilationTailMain5_eq_Icc, rawPhase, Function.comp_def] using
+    (tendsto_rawPhase_div_nat 0).comp (tendsto_add_atTop_nat 1)
 
 /-- The actual zero-degree scaled factorial tail tends to zero. -/
 theorem tendsto_genericScaledFullTail5_zero :

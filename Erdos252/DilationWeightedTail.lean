@@ -1,5 +1,5 @@
 import Erdos252.DilationGridTailIndex
-import Erdos252.DilationSurvivingMain
+import Erdos252.DilationSurvivorBounds
 import Erdos252.U5DilationGenericTail
 
 /-!
@@ -54,18 +54,16 @@ theorem eventually_dilationGridWeightedTail_integral_on_progression (k : ℕ)
     ∀ᶠ t : ℕ in atTop, ∃ z : ℤ,
       dilationGridWeightedTail k (A + dilationGridModulus k * t) = z := by
   obtain ⟨T, hT⟩ := eventually_dilationGridWeightedTail_integral k hx
-  have hlin : Tendsto (fun t : ℕ => A + dilationGridModulus k * t) atTop atTop :=
-    tendsto_atTop_mono (fun _ => Nat.le_add_left _ _)
-      (tendsto_id.const_mul_atTop' (dilationGridModulus_pos k))
-  exact hlin.eventually ((eventually_ge_atTop T).mono hT)
+  exact (dilationGrid_affine_tendsto_atTop _ A (dilationGridModulus_pos k)).eventually
+    ((eventually_ge_atTop T).mono hT)
 
 /-- Every actual quotient index tends to infinity on a positive-step progression. -/
 theorem tendsto_dilationGridTailIndex (k Q A : ℕ) (hQ : 0 < Q)
     (e : DilationGridVertex k) :
-    Tendsto (fun t : ℕ => dilationGridTailIndex k (A + Q * t) e) atTop atTop := by
-  exact (Nat.tendsto_div_const_atTop (dilationGridMultiplier_pos k e).ne').comp
+    Tendsto (fun t : ℕ => dilationGridTailIndex k (A + Q * t) e) atTop atTop :=
+  (Nat.tendsto_div_const_atTop (dilationGridMultiplier_pos k e).ne').comp
     ((tendsto_sub_atTop_nat (dilationGridOffset k e)).comp
-      (tendsto_atTop_mono (fun _ => Nat.le_add_left _ _) (tendsto_id.const_mul_atTop' hQ)))
+      (dilationGrid_affine_tendsto_atTop Q A hQ))
 
 /-- Exact rescaling of the generic finite main term at one actual grid vertex. -/
 theorem dilationGridTailMain_rescale {k : ℕ} (hk : 0 < k) (N : ℕ)
