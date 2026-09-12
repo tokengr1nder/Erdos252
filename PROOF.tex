@@ -140,13 +140,6 @@ $\lfloor\sqrt n\rfloor\leq\sqrt n$ give $2n^k\sqrt n$.
 The weaker constant $64$ is retained throughout the formalization.
 \end{proof}
 
-\begin{result}{sigma_div_le_sqrt}{The normalized divisor bound}
-For $n>0$, $\sigma_k(n)/n^k\leq64\sqrt n$.
-\end{result}
-\begin{proof}
-Divide the preceding inequality by the positive number $n^k$.
-\end{proof}
-
 \begin{result}{tendsto_sqrt_div_nat}{Sublinear square-root growth}
 $\sqrt n/n\longrightarrow0$.
 \end{result}
@@ -178,13 +171,6 @@ $D_1(x)=1/x$.
 \end{result}
 \begin{proof}
 The defining product consists of the single factor $x$.
-\end{proof}
-
-\begin{result}{stirlingPoly_one}{The first Stirling polynomial}
-$P_{0,L+1}(x)=1/x$ for every $L$ and $x\in\R$.
-\end{result}
-\begin{proof}
-Use $\stirling{0}{0}=1$ and $\stirling{i+1}{0}=0$.
 \end{proof}
 
 \begin{result}{stirlingPoly_recurrence}{Finite coefficient recurrence}
@@ -228,7 +214,8 @@ $0\leq E_{j,L}(x)\leq H^L/x^{L+1}$.
 \begin{proof}
 Here $x>0$. Induct on $L$, simultaneously for all admissible $j$.
 At $L=0$ the polynomial is empty, so use the preceding bound.
-At the next order, $j=0$ gives zero error. For the index $j+1$ put
+At the next order, $j=0$ gives zero error, because $\stirling{0}{0}=1$
+and $\stirling{i+1}{0}=0$ make $P_{0,L+1}(x)=1/x$. For the index $j+1$ put
 $u=H^L/x^{L+1}\geq0$. The two errors in the recurrence lie in $[0,u]$,
 and $j+2\leq H$. Their nonnegative weighted sum is at most
 $u+(j+1)u=(j+2)u\leq Hu$.
@@ -282,20 +269,13 @@ then $b\mid(n-1)!$, so $(n-1)!\alpha_k$ is integral.
 Subtract the integral scaled prefix.
 \end{proof}
 
-\begin{result}{factorial_ratio}{The factorial ratio}
-For $n>0$ and every $j$,
-$\displaystyle\frac{(n-1)!}{(n+j)!}=\frac1{\asc{n}{j+1}}$.
-\end{result}
-\begin{proof}
-Use $(n+j)!=(n-1)!\asc{n}{j+1}$ and cancel the nonzero factorial.
-\end{proof}
-
 \begin{result}{scaled_summand_eq_blockTerm}{The actual block summand}
 For $n>0$,
 $\displaystyle(n-1)!\frac{\sigma_k(j+n)}{(j+n)!}=B_k(n,j)$.
 \end{result}
 \begin{proof}
-Commute $j+n$ and apply the factorial-ratio identity.
+Commute $j+n$, use $(n+j)!=(n-1)!\,\asc{n}{j+1}$, and cancel the nonzero
+factorial $(n-1)!$.
 \end{proof}
 
 \begin{result}{scaledTail_tsum}{The actual infinite block tail}
@@ -446,50 +426,37 @@ For $n>0$,
 Multiply the preceding bound by $n+1$ and use $(n+1)/n\leq2$.
 \end{proof}
 
-\begin{result}{sqrt_shift_bound}{A bounded shift of the square root}
-If $h\leq n+1$, then $\sqrt{n+h}\leq2\sqrt{n+1}$.
-\end{result}
-\begin{proof}
-Both sides are nonnegative. Squaring reduces the claim to
-$n+h\leq4(n+1)$, which follows from the hypothesis.
-\end{proof}
-
 \begin{result}{finiteErr_term_bound}{One finite denominator remainder}
 If $n\geq k+1$ and $0\leq j\leq k$, then
 \[
  0\leq \sigma_k(n+j+1)E_{j,k+1}(n+j+1)
- \leq \frac{128(k+1)^{k+1}\sqrt{n+1}}{(n+1)^2}.
+ \leq \frac{64(k+1)^{k+1}\sqrt{n+1}}{(n+1)^2}.
 \]
 \end{result}
 \begin{proof}
 Put $x=n+j+1$. Then $x\geq n+1>0$ and $x\geq k+1$.
-The Stirling error bound with $H=L=k+1$ and the divisor bound give
+Reuse the numerator estimate from the omitted-tail argument and the
+Stirling error bound with $H=L=k+1$:
 \[
  0\leq\sigma_k(x)E_{j,k+1}(x)
- \leq (64x^k\sqrt x)\frac{(k+1)^{k+1}}{x^{k+2}}
- =\frac{64(k+1)^{k+1}\sqrt x}{x^2}.
+ \leq \frac{64x^{k+1}}{\sqrt{n+1}}
+       \frac{(k+1)^{k+1}}{x^{k+2}}
+ =\frac{64(k+1)^{k+1}}{x\sqrt{n+1}}.
 \]
-Since $j+1\leq n+1$, the square-root shift bound applies. Replace
-$\sqrt x$ by $2\sqrt{n+1}$ and $x^2$ by the smaller $(n+1)^2$.
+Since $x\geq n+1$, replace $x$ in the denominator by $n+1$ and use
+$1/\sqrt{n+1}=\sqrt{n+1}/(n+1)$. No upper bound on $\sqrt x$ is needed.
 \end{proof}
 
 \begin{result}{finiteErr_bounds}{The complete finite error}
 If $n\geq k+1$, then $F_k(n)\geq0$ and
 \[
  (n+1)F_k(n)\leq
- 128(k+1)^{k+2}\frac{\sqrt{n+1}}{n+1}.
+ 64(k+1)^{k+2}\frac{\sqrt{n+1}}{n+1}.
 \]
 \end{result}
 \begin{proof}
 Sum the preceding nonnegative bounds over the $k+1$ indices
 $j=0,\ldots,k$, then multiply by $n+1$ and cancel one power.
-\end{proof}
-
-\begin{result}{tailErr_nonneg}{Eventual nonnegativity of the exact error}
-If $n\geq k+1$, then $R_k(n)\geq0$.
-\end{result}
-\begin{proof}
-Use $R_k(n)=O_k(n,k+1)+F_k(n)$ and the nonnegativity of both terms.
 \end{proof}
 
 \begin{result}{tendsto_tailErr_mul}{The exact error is \(o(1/n)\)}
@@ -534,27 +501,6 @@ the congruence by $Q$ and adding $A$. This formulation also permits
 $d=0$, where congruence means equality.
 \end{proof}
 
-\begin{result}{affine_reduced_residue}{Reduction by the gcd}
-Let $d>0$, $g=\gcd(d,Q)$, and suppose $g\mid A$.
-There exists $v<d/g$ such that, for every $j$,
-\[
- d\mid Qj+A \quad\Longleftrightarrow\quad j\equiv v\pmod{d/g}.
-\]
-\end{result}
-\begin{proof}
-Here $g>0$ and $\gcd(Q/g,d/g)=1$.
-Solve the reduced affine congruence with offset $A/g$ by the two
-preceding lemmas. Multiplying the reduced divisibility condition by
-$g$ gives the original condition, since $g$ divides $d,Q,A$.
-\end{proof}
-
-\begin{result}{affine_gcd_dvd}{Necessary compatibility}
-If $d\mid Qj+A$, then $\gcd(d,Q)\mid A$.
-\end{result}
-\begin{proof}
-The gcd divides both $Qj$ and $Qj+A$; it therefore divides $A$.
-\end{proof}
-
 Define \defined{phase}, \defined{divTerm}, \defined{meanTerm}, and
 \defined{progMean} by
 \begin{align*}
@@ -591,15 +537,6 @@ Every selected index contributes the same number $1/d^k$.
 Sum this constant over the filtered finite set, then divide by $N$.
 \end{proof}
 
-\begin{result}{tendsto_natDiv_ratio}{Normalized integer quotient}
-For $d>0$, $\lfloor N/d\rfloor/N\longrightarrow1/d$.
-\end{result}
-\begin{proof}
-The difference between $N/d$ and $\lfloor N/d\rfloor$ lies in $[0,1)$.
-After division by $N>0$ it tends to zero. Lean uses the corresponding
-Mathlib limit for a normalized floor.
-\end{proof}
-
 \begin{result}{tendsto_count_modEq_div}{Density of one residue class}
 For $r>0$ and every $v$,
 \[
@@ -609,8 +546,10 @@ For $r>0$ and every $v$,
 \begin{proof}
 The count is
 $\lfloor N/r\rfloor+\ind{v\bmod r<N\bmod r}$.
-The normalized first term has the preceding limit; the second is
-between zero and $1/N$ and tends to zero.
+The first term divided by $N$ tends to $1/r$: the difference between
+$N/r$ and $\lfloor N/r\rfloor$ lies in $[0,1)$, and Lean uses the
+corresponding Mathlib limit for a normalized floor. The second term
+divided by $N$ is between zero and $1/N$ and tends to zero.
 \end{proof}
 
 \begin{result}{divTerm_cesaro}{The mean of one divisor term}
@@ -621,8 +560,12 @@ For $k>0$ and all $Q,A,d$,
 \end{result}
 \begin{proof}
 For $d=0$ both sides vanish. Otherwise let $g=\gcd(d,Q)>0$.
-If $g\nmid A$, there are no affine solutions by compatibility.
-If $g\mid A$, the solutions form one residue class modulo $d/g$.
+If $g\nmid A$, there are no affine solutions: $g$ divides $d$ and $Qj$,
+so $d\mid Qj+A$ would force $g\mid A$.
+If $g\mid A$, then $\gcd(Q/g,d/g)=1$, and the two affine congruence
+lemmas solve the reduced congruence with offset $A/g$; multiplying by
+$g$, which divides $d$, $Q$ and $A$, shows that the solutions form one
+residue class modulo $d/g$.
 Its density is $g/d$; multiply by $d^{-k}$ to obtain $g/d^{k+1}$.
 \end{proof}
 
@@ -668,14 +611,6 @@ For $k,Q>0$ and every $A$, $d\mapsto m_k(Q,A,d)$ is summable.
 \begin{proof}
 The preceding comparison is dominated by the convergent $p$-series
 $Q/d^{k+1}$, since $k+1>1$.
-\end{proof}
-
-\begin{result}{one_le_progMean}{Strict positivity of the mean}
-For $k,Q>0$ and every $A$, $\mu_k(Q,A)\geq1$.
-\end{result}
-\begin{proof}
-The $d=1$ term is exactly one, and all other terms are nonnegative.
-The sum is summable by the preceding lemma.
 \end{proof}
 
 \begin{result}{tendsto_progMean}{The actual progression mean}
@@ -729,17 +664,6 @@ If $N^{-1}\sum_{n<N}f_i(n)\to\mu_i$ for every $i$, then
 \begin{proof}
 Commute the finite sums and move the fixed coefficients outside.
 A finite sum of convergent sequences converges to the sum of its limits.
-\end{proof}
-
-\begin{result}{tendsto_cesaro_sub}{Cesaro limits on subprogressions}
-If $f(n)\to a\in\R$, $L>0$, and $v\in\N$, then
-\[
- \frac1N\sum_{n<N}f(Ln+v)\longrightarrow a.
-\]
-\end{result}
-\begin{proof}
-The indices $Ln+v$ tend to infinity, so the subsequence tends to $a$.
-Apply the Cesaro convergence theorem.
 \end{proof}
 
 \begin{result}{gcd_eq_prime_or_one}{The prime gcd dichotomy}
@@ -797,15 +721,6 @@ $L\mid B$. Thus the refined term is $L$ times the original term
 when $L\mid B$, and zero otherwise. These cases give the formula.
 \end{proof}
 
-\begin{result}{progMean_congr}{Invariance under the offset congruence}
-For all $k,Q,A,B$, if $B\equiv A\pmod Q$, then
-$\mu_k(Q,B)=\mu_k(Q,A)$.
-\end{result}
-\begin{proof}
-For each $d$, $\gcd(d,Q)$ divides $Q$, so it divides $B$ if and only
-if it divides $A$. The defining summands are equal term by term.
-\end{proof}
-
 \begin{result}{progMean_refine}{The exact prime-refinement factor}
 If $k,Q>0$, $L$ is prime, $\gcd(L,Q)=1$, and $B\equiv A\pmod Q$, then
 \[
@@ -816,25 +731,11 @@ If $k,Q>0$, $L$ is prime, $\gcd(L,Q)=1$, and $B\equiv A\pmod Q$, then
 \begin{proof}
 The local-mean family and its restriction to multiples of $L$ are
 summable. Sum the local refinement identity, substitute the
-multiples formula, and use offset-congruence invariance.
+multiples formula, and use $\mu_k(Q,B)=\mu_k(Q,A)$, which holds because
+each $\gcd(d,Q)$ divides $Q$, so it divides $B$ if and only if it divides $A$.
 When $L\mid B$, the multiplier is
 $1+(L-1)L^{-(k+1)}$; otherwise it is $1-L^{-(k+1)}$.
 Both are exactly the displayed expression.
-\end{proof}
-
-\begin{result}{tendsto_refined_mean}{An actual refined phase average}
-If $k,Q,A>0$, $L$ is prime, $\gcd(L,Q)=1$, and $v\in\N$, then
-\[
- \frac1N\sum_{n<N}\rho_k\bigl(Q(Ln+v)+A\bigr)
- \longrightarrow
- \mu_k(Q,A)\left(1-L^{-(k+1)}
-       +\ind{L\mid Qv+A}L^{-k}\right).
-\]
-\end{result}
-\begin{proof}
-Apply the progression-mean theorem with step $QL$ and positive offset
-$Qv+A$. Its offset is congruent to $A$ modulo $Q$, so the preceding
-refinement formula identifies the limit. Expand the affine argument.
 \end{proof}
 
 \begin{result}{isolated_shift_not_tendsto_zero}{The isolated-shift obstruction}
@@ -848,9 +749,11 @@ Other shifts are allowed to coincide with one another.
 \end{result}
 \begin{proof}
 Suppose this sum tends to zero. Choose $L,v_0,v_1$ by the separating
-residue lemma. For any $v$, its average on indices $Ln+v$ must tend
-to zero by the subprogression Cesaro lemma. On the other hand,
-the refined mean formula and finite weighted averaging give the limit
+residue lemma. For any $v$, the subsequence on the indices $Ln+v$ tends
+to zero, hence so does its Cesaro average. On the other hand, the
+progression-mean theorem with step $QL$ and offset $Qv+A+r_i$, which is
+congruent to $A+r_i$ modulo $Q$, the prime-refinement factor, and finite
+weighted averaging give the limit
 \[
  \sum_i c_i\mu_k(Q,A+r_i)
  \left(1-L^{-(k+1)}
@@ -861,7 +764,7 @@ Subtract the two equalities. The first indicator misses every shift;
 the second selects exactly $i_0$. We obtain
 $c_{i_0}\mu_k(Q,A+r_{i_0})L^{-k}=0$.
 This is impossible: the first factor is nonzero, the mean is at least
-one, and $L^{-k}>0$.
+one (its $d=1$ term is one and the others are nonnegative), and $L^{-k}>0$.
 \end{proof}
 
 \section{Finite differences and the dilation grid}
@@ -923,13 +826,6 @@ The definitions \defined{gridIndex}, \defined{gridWeightedIndex},
 The zero vertex \defined{gridZero} is $\boldsymbol0=(0,\ldots,0)$.
 The modulus \defined{gridModulus} is $Q_k=\prod_{e\in\mathcal V_k}p_e^2$.
 These definitions also apply at $k=0$, when the vertex type has one element.
-
-\begin{result}{gridBound_succ_le}{The radix bound contains the shift orders}
-If $k\geq1$, then $k+1\leq F$.
-\end{result}
-\begin{proof}
-$b^k\geq b=k+2$, so $b^k-1\geq k+1$.
-\end{proof}
 
 \begin{result}{gridIndex_le}{The radix index bound}
 For every vertex, $I_e\leq F$.
@@ -1042,15 +938,6 @@ $Q_k>0$.
 It is a finite product of the positive squares $p_e^2$.
 \end{proof}
 
-\begin{result}{grid_exists_crt}{Simultaneous squared congruences}
-For every $k$, there exists $A\in\N$ such that
-$A\equiv t_e\pmod{p_e^2}$ for every vertex $e$.
-\end{result}
-\begin{proof}
-The squares are positive and pairwise coprime. Apply the finite Chinese
-remainder theorem with residues $t_e$ and moduli $p_e^2$.
-\end{proof}
-
 \section{Cancellation and the final-order survivor}
 
 The integer weights \defined{gridWeight} are
@@ -1147,7 +1034,8 @@ Their finite product, including the empty product at $k=0$, is nonzero.
 For every $k$, $\rho_k(n)/n\longrightarrow0$.
 \end{result}
 \begin{proof}
-For $n>0$ the ratio is between zero and $64\sqrt n/n$.
+For $n>0$, dividing the divisor bound by $n^k$ gives $\rho_k(n)\leq64\sqrt n$,
+so the ratio is between zero and $64\sqrt n/n$.
 The latter tends to zero by the square-root limit.
 \end{proof}
 
@@ -1212,19 +1100,6 @@ $p_en_e(N)+t_e=N$. Add the exact shift identity
 $s_{e,j}+t_e=(j+1)p_e$ and rearrange.
 \end{proof}
 
-\begin{result}{index_coprime}{Coprimality at every retained index}
-If $k>0$, $j\leq k$, and $N\equiv t_e\pmod{p_e^2}$, then
-$\gcd(p_e,n_e(N)+j+1)=1$.
-\end{result}
-\begin{proof}
-The squared congruence gives $p_e^2\mid N\mathbin{\dotminus}t_e$,
-hence $p_e\mid n_e(N)$. This is also true when $N<t_e$, since the
-truncated difference is zero.
-Also $1\leq j+1\leq k+1\leq F$, so $j+1\mid F!=D$.
-As $p_e$ is coprime to $D$, it is coprime to $j+1$.
-Adding the multiple $n_e(N)$ of $p_e$ preserves that coprimality.
-\end{proof}
-
 \begin{result}{tailIndex_term_rescale}{Exact numerator and denominator rescaling}
 If $k>0$, $j\leq k$, $N\geq t_e$, and
 $N\equiv t_e\pmod{p_e^2}$, then for every $i$,
@@ -1234,7 +1109,10 @@ $N\equiv t_e\pmod{p_e^2}$, then for every $i$,
 \]
 \end{result}
 \begin{proof}
-The preceding coprimality permits applying multiplicativity of
+The squared congruence gives $p_e^2\mid N\mathbin{\dotminus}t_e$, hence
+$p_e\mid n_e(N)$. Also $j+1\leq k+1\leq F$, since $b^k\geq b=k+2$, so
+$j+1\mid F!=D$; as $p_e$ is coprime to $D$, it is coprime to $j+1$ and
+hence to $n_e(N)+j+1$. This permits applying multiplicativity of
 $\sigma_k$ to $p_e(n_e(N)+j+1)=N+s_{e,j}$.
 Replace the denominator by the same product, distribute its power,
 and cancel $p_e^{i+1}\ne0$.
@@ -1297,15 +1175,6 @@ term-rescaling lemma to each $i,j$. The regrouped expression is
 $H_k(N)$ by the vertex identity, and $H_k(N)=S_k(N)$ by cancellation.
 \end{proof}
 
-\begin{result}{tailIndex_common_le}{Comparing the common and quotient indices}
-If $N\geq t_e$ and $N\equiv t_e\pmod{p_e^2}$, then, in $\R$,
-$N\leq p_e(n_e(N)+1)$.
-\end{result}
-\begin{proof}
-The factorization at $j=0$ is
-$p_e(n_e(N)+1)=N+s_{e,0}\geq N$.
-\end{proof}
-
 \begin{result}{tendsto_grid_vertex_error_mul}{A rescaled vertex error}
 If $\mathcal C_k(A)$, then for every $e$, along $N=A+Q_kt$,
 \[
@@ -1313,15 +1182,15 @@ If $\mathcal C_k(A)$, then for every $e$, along $N=A+Q_kt$,
 \]
 \end{result}
 \begin{proof}
-Eventually $n_e(N)\geq k+1$ and $N\geq t_e$. The error is then
-nonnegative, and persistence of the CRT congruences gives
+Eventually $N\geq t_e$, and the CRT factorization at $j=0$ gives
+$N=p_e(n_e(N)+1)-s_{e,0}$. Thus
 \[
- 0\leq NR_k(n_e(N))
- \leq p_e(n_e(N)+1)R_k(n_e(N)).
+ NR_k(n_e(N))
+ =p_e(n_e(N)+1)R_k(n_e(N))-s_{e,0}R_k(n_e(N)).
 \]
-The right side tends to zero by the scaled-tail-error limit, composed
-with the diverging quotient index and multiplied by the fixed $p_e$.
-Apply the squeeze theorem.
+Both terms on the right tend to zero: use the scaled and unscaled error
+limits at the diverging quotient index, with fixed coefficients
+$p_e$ and $s_{e,0}$. This exact identity avoids a separate comparison bound.
 \end{proof}
 
 \begin{result}{tendsto_weightedError_mul}{The rescaled weighted error}
@@ -1335,15 +1204,6 @@ real coefficient $w_e\sigma_k(p_e)$. Signed coefficients cause no
 problem for a finite sum of convergent sequences.
 \end{proof}
 
-\begin{result}{eventually_main_eq_surviving}{Eventual equality on the progression}
-If $k>0$ and $\mathcal C_k(A)$, then along $N=A+Q_kt$,
-$W_M(N)=S_k(N)$ eventually.
-\end{result}
-\begin{proof}
-The common index eventually satisfies $N\geq B$, and all its CRT
-congruences persist. Apply the weighted-main identification.
-\end{proof}
-
 \begin{result}{tendsto_survivor_of_rational}{Rationality forces a zero survivor limit}
 If $k>0$, $\alpha_k\in\Q$, and $\mathcal C_k(A)$, then
 $V_k(A+Q_kt)\longrightarrow0$.
@@ -1351,7 +1211,8 @@ $V_k(A+Q_kt)\longrightarrow0$.
 \begin{proof}
 Write $N=A+Q_kt$. First, $W_R(N)\to0$ directly: each $R_k(n_e(N))$
 tends to zero, and the weights form a fixed finite family.
-Also $W_M(N)=S_k(N)$ eventually and $S_k(N)\to0$.
+Also $W_M(N)=S_k(N)$ eventually, since eventually $N\geq B$ while all
+CRT congruences persist along the progression, and $S_k(N)\to0$.
 The weighted decomposition therefore gives $W_T(N)\to0$.
 It is eventually an integer by rationality, so it is eventually zero.
 
@@ -1386,7 +1247,9 @@ Regrouping the product-type sum is exactly the definition of $V_k$.
 For $k>0$, $\alpha_k$ is irrational.
 \end{result}
 \begin{proof}
-Suppose it were rational. Choose $A$ by the finite CRT lemma.
+Suppose it were rational. The squares $p_e^2$ are positive and pairwise
+coprime, so the finite Chinese remainder theorem gives $A$ with
+$A\equiv t_e\pmod{p_e^2}$ for every vertex $e$.
 The forced-zero lemma would give $V_k(A+Q_kt)\to0$.
 Since $Q_k>0$, this contradicts the preceding obstruction,
 after commuting $A+Q_kt=Q_kt+A$.
@@ -1422,14 +1285,6 @@ would make it eventually zero. This contradicts positivity for every
 $n>0$.
 \end{proof}
 
-\begin{result}{irrational_alpha}{All natural degrees}
-For every $k\in\N$, $\alpha_k$ is irrational.
-\end{result}
-\begin{proof}
-For $k=0$ use the preceding lemma. For $k=m+1>0$ use the
-positive-degree irrationality theorem.
-\end{proof}
-
 \begin{result}{erdos_252}{The main theorem}
 For every $k\in\N$,
 \[
@@ -1447,7 +1302,8 @@ theorem erdos\_252 (k : $\N$) :\\
 \end{result}
 \begin{proof}
 The displayed real number is the definition of $\alpha_k$.
-Apply the preceding theorem for this $k$.
+For $k=0$ use the degree-zero theorem; for $k>0$ use the
+positive-degree theorem.
 \end{proof}
 
 \section{Statement audit and verification}
@@ -1529,11 +1385,11 @@ contains reproduction commands, and the
 {statement audit} records the six checks above.
 See also the \href{https://www.erdosproblems.com/252}{original problem statement}.
 
-This edition covers all 112 named results and 40 definitions or abbreviations
+This edition covers all 94 named results and 40 definitions or abbreviations
 in the proof module, plus the six audit results and their one definition.
 The proof-module SHA-256 (UTF-8, LF line endings) is
 \begin{center}\footnotesize
-\texttt{da0e208c10e104218c87b501c9467bb7c65631f4e843f84b6dcfb85a0d7c694b}
+\texttt{601c377d7a063ef7b5360ef7caca7216ae982406d194571be463dd589b8b53c5}
 \end{center}
 
 \end{document}

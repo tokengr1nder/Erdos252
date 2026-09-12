@@ -36,8 +36,7 @@ theorem summable_sigma_factorial (k : ℕ) : Summable (fun n : ℕ ↦ (σ k n :
     ((Nat.pow_le_pow_left Nat.lt_two_pow_self.le (k + 1)).trans_eq (pow_right_comm 2 n (k + 1)))
 
 theorem eventually_zero_of_int {f : ℕ → ℝ} (hf : Tendsto f atTop (𝓝 0))
-    (hint : ∀ᶠ n in atTop, ∃ z : ℤ, f n = z) :
-    ∀ᶠ n in atTop, f n = 0 := by
+    (hint : ∀ᶠ n in atTop, ∃ z : ℤ, f n = z) : ∀ᶠ n in atTop, f n = 0 := by
   filter_upwards [hint, hf.eventually (Metric.ball_mem_nhds 0 one_pos)] with n ⟨z, hz⟩ hs
   rw [hz, dist_zero_right, Real.norm_eq_abs] at hs
   simp [hz, Int.abs_lt_one_iff.mp (by exact_mod_cast hs)]
@@ -59,17 +58,12 @@ private theorem card_divisors_le_sqrt (n : ℕ) (hn : 0 < n) : n.divisors.card �
 theorem sigma_le_pow_sqrt (k n : ℕ) (hn : 0 < n) : (σ k n : ℝ) ≤ 64 * (n : ℝ) ^ k * √(n : ℝ) := by
   have hnat : σ k n ≤ n.divisors.card * n ^ k := by
     simpa only [ArithmeticFunction.sigma_apply, Finset.sum_const, nsmul_eq_mul, Nat.cast_id] using
-      Finset.sum_le_sum (s := n.divisors)
-        (fun d hd => Nat.pow_le_pow_left (Nat.divisor_le hd) k)
+      Finset.sum_le_sum (s := n.divisors) (fun d hd => Nat.pow_le_pow_left (Nat.divisor_le hd) k)
   have hcard : (n.divisors.card : ℝ) ≤ 64 * √(n : ℝ) :=
     (by exact_mod_cast card_divisors_le_sqrt n hn : (n.divisors.card : ℝ) ≤ 2 * Nat.sqrt n).trans
       (by nlinarith [Real.nat_sqrt_le_real_sqrt (a := n), Real.sqrt_nonneg (n : ℝ)])
   calc (σ k n : ℝ) ≤ n.divisors.card * (n : ℝ) ^ k := by exact_mod_cast hnat
     _ ≤ _ := by nlinarith [mul_le_mul_of_nonneg_right hcard (pow_nonneg (Nat.cast_nonneg n) k)]
-
-theorem sigma_div_le_sqrt (k n : ℕ) (hn : 0 < n) : (σ k n : ℝ) / (n : ℝ) ^ k ≤ 64 * √(n : ℝ) :=
-  (div_le_iff₀ (by positivity)).mpr
-    (by simpa only [mul_assoc, mul_comm, mul_left_comm] using sigma_le_pow_sqrt k n hn)
 
 /-- The square-root growth majorant is still sublinear. -/
 theorem tendsto_sqrt_div_nat : Tendsto (fun n : ℕ => √(n : ℝ) / (n : ℝ)) atTop (𝓝 0) := by
@@ -90,9 +84,6 @@ theorem descRecip_succ (h : ℕ) (x : ℝ) : descRecip (h + 1) x = descRecip h x
   simp only [descRecip, Finset.prod_range_succ, div_div]
 
 theorem descRecip_one (x : ℝ) : descRecip 1 x = 1 / x := by simp [descRecip]
-
-theorem stirlingPoly_one (L : ℕ) (x : ℝ) : stirlingPoly 0 (L + 1) x = 1 / x := by
-  simp [stirlingPoly, Finset.sum_range_succ', Nat.stirlingSecond]
 
 /-- The finite coefficient recurrence holds at every truncation order. -/
 theorem stirlingPoly_recurrence (j L : ℕ) (x : ℝ) : stirlingPoly (j + 1) (L + 1) x =
@@ -118,9 +109,8 @@ theorem stirlingErr_recurrence (j L : ℕ) (x : ℝ) (hx : x ≠ 0) (hxj : x - (
 theorem descRecip_bounds (h H : ℕ) (x : ℝ) (hh : 1 ≤ h) (hH : h ≤ H) (hx : (H : ℝ) ≤ x) :
     0 < descRecip h x ∧ descRecip h x ≤ 1 / x := by
   induction h, hh using Nat.le_induction with
-  | base =>
-    rw [descRecip_one]
-    exact ⟨one_div_pos.mpr (lt_of_lt_of_le one_pos ((Nat.one_le_cast.mpr hH).trans hx)), le_rfl⟩
+  | base => rw [descRecip_one]; exact
+    ⟨one_div_pos.mpr (lt_of_lt_of_le one_pos ((Nat.one_le_cast.mpr hH).trans hx)), le_rfl⟩
   | succ h hh ih =>
     have hdiff : (1 : ℝ) ≤ x - h := by linarith [(by exact_mod_cast hH : (h : ℝ) + 1 ≤ H)]
     have hb := ih (by omega)
@@ -138,8 +128,8 @@ theorem stirlingErr_bounds (H L : ℕ) (x : ℝ) (hx : (H : ℝ) ≤ x) (j : ℕ
     simpa [stirlingErr, stirlingPoly] using And.intro h.1.le h.2
   | succ L ih =>
     obtain _ | j := j
-    · simp only [stirlingErr, Nat.zero_add, descRecip_one, stirlingPoly_one, sub_self]
-      exact ⟨le_rfl, by positivity⟩
+    · simp [stirlingErr, descRecip_one, stirlingPoly, Finset.sum_range_succ', Nat.stirlingSecond]
+      positivity
     have hjR : (j : ℝ) + 2 ≤ H := by exact_mod_cast hH
     have hprev := ih j (by omega)
     have hcurr := ih (j + 1) hH
@@ -191,8 +181,7 @@ def finiteErr (k n : ℕ) : ℝ := ∑ j ∈ Finset.range (k + 1),
 theorem seriesPrefix_integral (k n : ℕ) :
     ∃ z : ℤ, ((n - 1).factorial : ℝ) * seriesPrefix k n = z := by
   refine ⟨((∑ m ∈ Finset.range n, ((n - 1).factorial / m.factorial) * σ k m : ℕ) : ℤ), ?_⟩
-  rw [seriesPrefix, Finset.mul_sum]
-  push_cast
+  push_cast [seriesPrefix, Finset.mul_sum]
   refine Finset.sum_congr rfl fun m hm => ?_
   push_cast [Nat.factorial_dvd_factorial (Nat.le_sub_one_of_lt (Finset.mem_range.mp hm))]
   field
@@ -209,15 +198,11 @@ theorem eventually_scaledTail_integral (k : ℕ) (hx : ¬ Irrational (alpha k)) 
   push_cast
   field_simp
 
-private theorem factorial_ratio (n j : ℕ) (hn : 0 < n) :
-    ((n - 1).factorial : ℝ) / ((n + j).factorial : ℝ) = 1 / (n.ascFactorial (j + 1) : ℝ) := by
-  rw [show n + j = n + (j + 1) - 1 by omega,
-    ← Nat.factorial_mul_ascFactorial' n (j + 1) hn,
-    Nat.cast_mul, div_mul_eq_div_div, div_self (by positivity)]
-
 private theorem scaled_summand_eq_blockTerm (k n j : ℕ) (hn : 0 < n) :
     ((n - 1).factorial : ℝ) * ((σ k (j + n) : ℝ) / ((j + n).factorial : ℝ)) = blockTerm k n j := by
-  rw [Nat.add_comm j n, blockTerm, mul_div_left_comm, factorial_ratio n j hn, mul_one_div]
+  rw [Nat.add_comm j n, blockTerm, mul_div_left_comm, show n + j = n + (j + 1) - 1 by omega,
+    ← Nat.factorial_mul_ascFactorial' n (j + 1) hn, Nat.cast_mul, div_mul_eq_div_div,
+    div_self (by positivity), mul_one_div]
 
 theorem scaledTail_tsum (k n : ℕ) (hn : 0 < n) : scaledTail k n = ∑' j : ℕ, blockTerm k n j := by
   unfold scaledTail alpha seriesPrefix
@@ -294,8 +279,7 @@ theorem hasSum_geometric_recip (C : ℝ) (n : ℕ) (hn : 0 < n) :
   have hq : (1 : ℝ) / ((n : ℝ) + 1) < 1 := (div_lt_one (by positivity)).mpr (by linarith)
   convert! HasSum.mul_left (C / ((n : ℝ) + 1))
     (hasSum_geometric_of_lt_one (by positivity) hq) using 1
-  · funext r
-    simp only [pow_succ, div_eq_mul_inv, mul_inv_rev]; ring
+  · ext r; simp only [pow_succ, div_eq_mul_inv, mul_inv_rev]; ring
   · field_simp [hnR.ne']; ring
 
 theorem omittedTail_le (k n : ℕ) (hn : 0 < n) : omittedTail k n (k + 1) ≤
@@ -315,44 +299,31 @@ theorem omittedTail_scaled_le (k n : ℕ) (hn : 0 < n) : ((n : ℝ) + 1) * omitt
     √((n : ℝ) + 1) = 2 * (64 / √((n : ℝ) + 1) * ((k + 1 : ℕ) : ℝ) ^ (k + 1)) by ring]
   exact mul_le_mul_of_nonneg_right hratio (by positivity)
 
-private theorem sqrt_shift_bound (n h : ℕ) (hh : h ≤ n + 1) :
-    √((n + h : ℕ) : ℝ) ≤ 2 * √((n : ℝ) + 1) := by
-  refine Real.sqrt_le_iff.mpr ⟨by positivity, ?_⟩
-  rw [mul_pow, Real.sq_sqrt (by positivity)]
-  push_cast
-  linarith [(by exact_mod_cast hh : (h : ℝ) ≤ (n : ℝ) + 1), (Nat.cast_nonneg n : (0 : ℝ) ≤ (n : ℝ))]
-
 /-- Every finite denominator remainder has a square-root numerator and two
 full denominator powers remaining. -/
 theorem finiteErr_term_bound (k n j : ℕ) (hn : k + 1 ≤ n) (hj : j < k + 1) :
     0 ≤ (σ k (n + (j + 1)) : ℝ) * stirlingErr j (k + 1) ((n + (j + 1) : ℕ) : ℝ) ∧
       (σ k (n + (j + 1)) : ℝ) * stirlingErr j (k + 1) ((n + (j + 1) : ℕ) : ℝ) ≤
-          128 * ((k : ℝ) + 1) ^ (k + 1) * √((n : ℝ) + 1) / ((n : ℝ) + 1) ^ 2 := by
+          64 * ((k : ℝ) + 1) ^ (k + 1) * √((n : ℝ) + 1) / ((n : ℝ) + 1) ^ 2 := by
   have hx : (0 : ℝ) < ((n + (j + 1) : ℕ) : ℝ) := by positivity
-  have hXx : (n : ℝ) + 1 ≤ ((n + (j + 1) : ℕ) : ℝ) := by
-    exact_mod_cast (show n + 1 ≤ n + (j + 1) by omega)
   have he := stirlingErr_bounds (k + 1) (k + 1) ((n + (j + 1) : ℕ) : ℝ)
     (by exact_mod_cast (show k + 1 ≤ n + (j + 1) by omega)) j (by omega)
-  have hs := sigma_le_pow_sqrt k (n + (j + 1)) (by omega)
-  have hroot := sqrt_shift_bound n (j + 1) (by omega)
   refine ⟨mul_nonneg (Nat.cast_nonneg _) he.1, ?_⟩
   calc
-    _ ≤ (64 * ((n + (j + 1) : ℕ) : ℝ) ^ k * √((n + (j + 1) : ℕ) : ℝ)) *
+    _ ≤ (64 / √((n : ℝ) + 1) * ((n + (j + 1) : ℕ) : ℝ) ^ (k + 1)) *
         (((k + 1 : ℕ) : ℝ) ^ (k + 1) / ((n + (j + 1) : ℕ) : ℝ) ^ (k + 1 + 1)) :=
-      mul_le_mul hs he.2 he.1 (by positivity)
-    _ = 64 * ((k : ℝ) + 1) ^ (k + 1) * √((n + (j + 1) : ℕ) : ℝ) / ((n + (j + 1) : ℕ) : ℝ) ^ 2 := by
-      push_cast
-      field_simp
-      ring
-    _ ≤ 64 * ((k : ℝ) + 1) ^ (k + 1) * (2 * √((n : ℝ) + 1)) / ((n : ℝ) + 1) ^ 2 := by gcongr
-    _ = _ := by ring
+      mul_le_mul (sigma_le_pow_succ_div_sqrt k n _ (by omega)) he.2 he.1 (by positivity)
+    _ = 64 * ((k : ℝ) + 1) ^ (k + 1) / √((n : ℝ) + 1) /
+        ((n + (j + 1) : ℕ) : ℝ) := by push_cast; field_simp; ring
+    _ ≤ 64 * ((k : ℝ) + 1) ^ (k + 1) / √((n : ℝ) + 1) / ((n : ℝ) + 1) := by
+      gcongr; norm_cast; omega
+    _ = _ := by rw [div_eq_mul_inv _ (√((n : ℝ) + 1)), ← Real.sqrt_div_self]; field
 
 /-- The whole finite error, multiplied by the actual index plus one, is
 bounded by a fixed multiple of `sqrt(n+1)/(n+1)`. -/
 theorem finiteErr_bounds (k n : ℕ) (hn : k + 1 ≤ n) : 0 ≤ finiteErr k n ∧
       ((n : ℝ) + 1) * finiteErr k n ≤
-        128 * ((k : ℝ) + 1) ^ (k + 2) * (√((n : ℝ) + 1) / ((n : ℝ) + 1)) := by
-  have hX : (n : ℝ) + 1 ≠ 0 := by positivity
+        64 * ((k : ℝ) + 1) ^ (k + 2) * (√((n : ℝ) + 1) / ((n : ℝ) + 1)) := by
   unfold finiteErr
   have hb := Finset.sum_le_sum (s := Finset.range (k + 1)) (fun j hj =>
     (finiteErr_term_bound k n j hn (Finset.mem_range.mp hj)).2)
@@ -363,9 +334,6 @@ theorem finiteErr_bounds (k n : ℕ) (hn : k + 1 ≤ n) : 0 ≤ finiteErr k n �
   rw [show k + 2 = (k + 1) + 1 by omega, pow_succ]
   field_simp
 
-theorem tailErr_nonneg (k n : ℕ) (hn : k + 1 ≤ n) : 0 ≤ tailErr k n :=
-  tailErr_eq k n ▸ add_nonneg (omittedTail_nonneg k n _) (finiteErr_bounds k n hn).1
-
 /-- Both exact error parts are squeezed by multiples of `sqrt(n+1)/(n+1)`. -/
 theorem tendsto_tailErr_mul (k : ℕ) :
     Tendsto (fun n : ℕ => ((n : ℝ) + 1) * tailErr k n) atTop (𝓝 0) := by
@@ -374,7 +342,7 @@ theorem tendsto_tailErr_mul (k : ℕ) :
     (hb.mono fun _ hn => hn.2)
     (by simpa only [Function.comp_apply, Nat.cast_add, Nat.cast_one, mul_zero] using
           (tendsto_sqrt_div_nat.comp (tendsto_add_atTop_nat 1)).const_mul
-            (128 * ((k : ℝ) + 1) ^ (k + 2)))
+            (64 * ((k : ℝ) + 1) ^ (k + 2)))
   have ho := squeeze_zero'
     (Eventually.of_forall fun n : ℕ =>
       mul_nonneg (by positivity : 0 ≤ (n : ℝ) + 1) (omittedTail_nonneg k n (k + 1)))
@@ -415,25 +383,6 @@ theorem affine_iff_modEq {d Q A v : ℕ} (hcop : Nat.Coprime Q d) (hv : d ∣ Q 
       (Nat.ModEq.add_right_cancel' A (hj.modEq_zero_nat.trans hv.modEq_zero_nat.symm)),
     fun hj => Nat.modEq_zero_iff_dvd.mp (((hj.mul_left Q).add_right A).trans hv.modEq_zero_nat)⟩
 
-/-- Compatibility with the gcd reduces the original congruence to one class modulo `d/gcd`. -/
-theorem affine_reduced_residue {d Q A : ℕ} (hd : 0 < d) (hcompat : Nat.gcd d Q ∣ A) :
-    ∃ v < d / Nat.gcd d Q, ∀ j : ℕ, d ∣ Q * j + A ↔ j ≡ v [MOD d / Nat.gcd d Q] := by
-  have hg : 0 < Nat.gcd d Q := Nat.gcd_pos_of_pos_left Q hd
-  have hgd : Nat.gcd d Q ∣ d := Nat.gcd_dvd_left d Q
-  have hcop : Nat.Coprime (Q / Nat.gcd d Q) (d / Nat.gcd d Q) :=
-    (Nat.coprime_div_gcd_div_gcd hg).symm
-  obtain ⟨v, hvlt, hv⟩ := affine_exists_residue (A := A / Nat.gcd d Q)
-    (Nat.div_pos (Nat.le_of_dvd hd hgd) hg) hcop
-  refine ⟨v, hvlt, fun j => ?_⟩
-  rw [← affine_iff_modEq hcop hv j, Nat.div_dvd_iff_dvd_mul hgd hg,
-    Nat.mul_add, ← Nat.mul_assoc, Nat.mul_div_cancel' (Nat.gcd_dvd_right d Q),
-    Nat.mul_div_cancel' hcompat]
-
-/-- A solution necessarily satisfies the elementary gcd compatibility condition. -/
-theorem affine_gcd_dvd {d Q A j : ℕ} (hj : d ∣ Q * j + A) : Nat.gcd d Q ∣ A :=
-  (Nat.dvd_add_iff_right (dvd_mul_of_dvd_left (Nat.gcd_dvd_right d Q) j)).mpr
-    ((Nat.gcd_dvd_left d Q).trans hj)
-
 def phase (k n : ℕ) : ℝ := (σ k n : ℝ) / (n : ℝ) ^ k
 
 def divTerm (k d n : ℕ) : ℝ := if d ∣ n then 1 / (d : ℝ) ^ k else 0
@@ -464,13 +413,6 @@ theorem divTerm_sum_eq_count (k Q A d N : ℕ) :
   simp only [divTerm, ← Finset.sum_filter, Finset.sum_const, nsmul_eq_mul]
   ring
 
-/-- The floor quotient has the expected normalized limit. -/
-private theorem tendsto_natDiv_ratio {d : ℕ} (hd : 0 < d) :
-    Tendsto (fun N : ℕ => ((N / d : ℕ) : ℝ) / (N : ℝ)) atTop (𝓝 (1 / (d : ℝ))) := by
-  simpa only [Function.comp_def, one_div_mul_eq_div, Nat.floor_div_eq_div] using
-    (tendsto_nat_floor_mul_div_atTop (a := (1 : ℝ) / (d : ℝ))
-      (div_pos zero_lt_one (Nat.cast_pos.mpr hd)).le).comp tendsto_natCast_atTop_atTop
-
 /-- One residue class has exactly its reciprocal density. -/
 private theorem tendsto_count_modEq_div {r : ℕ} (hr : 0 < r) (v : ℕ) :
     Tendsto (fun N : ℕ => (Nat.count (· ≡ v [MOD r]) N : ℝ) / (N : ℝ))
@@ -482,12 +424,13 @@ private theorem tendsto_count_modEq_div {r : ℕ} (hr : 0 < r) (v : ℕ) :
       ((N / r : ℕ) : ℝ) / (N : ℝ) + (if v % r < N % r then (1 : ℝ) else 0) / (N : ℝ) := by
     rw [Nat.count_modEq_card N hr v]
     split_ifs <;> push_cast <;> ring
-  simpa only [key, add_zero] using (tendsto_natDiv_ratio hr).add hε
+  simpa only [key, add_zero, Function.comp_def, one_div_mul_eq_div, Nat.floor_div_eq_div] using
+    ((tendsto_nat_floor_mul_div_atTop (a := (1 : ℝ) / (r : ℝ))
+      (div_pos zero_lt_one (Nat.cast_pos.mpr hr)).le).comp tendsto_natCast_atTop_atTop).add hε
 
 /-- Each reciprocal-divisor term has the exact local gcd mean. -/
 theorem divTerm_cesaro {k : ℕ} (hk : 0 < k) (Q A d : ℕ) :
-    Tendsto (fun N : ℕ =>
-      (∑ n ∈ Finset.range N, divTerm k d (Q * n + A)) / (N : ℝ)) atTop
+    Tendsto (fun N : ℕ => (∑ n ∈ Finset.range N, divTerm k d (Q * n + A)) / (N : ℝ)) atTop
       (𝓝 (meanTerm k Q A d)) := by
   simp_rw [divTerm_sum_eq_count, meanTerm]
   rcases Nat.eq_zero_or_pos d with rfl | hd
@@ -496,12 +439,19 @@ theorem divTerm_cesaro {k : ℕ} (hk : 0 < k) (Q A d : ℕ) :
   · have hg : 0 < Nat.gcd d Q := Nat.gcd_pos_of_pos_left Q hd
     have hgd : Nat.gcd d Q ∣ d := Nat.gcd_dvd_left d Q
     have hr : 0 < d / Nat.gcd d Q := Nat.div_pos (Nat.le_of_dvd hd hgd) hg
-    obtain ⟨v, -, hv⟩ := affine_reduced_residue hd hcompat
-    simp_rw [hv, ← Nat.count_eq_card_filter_range, if_pos hcompat]
+    have hcop : Nat.Coprime (Q / Nat.gcd d Q) (d / Nat.gcd d Q) :=
+      (Nat.coprime_div_gcd_div_gcd hg).symm
+    obtain ⟨v, -, hv⟩ := affine_exists_residue (A := A / Nat.gcd d Q) hr hcop
+    have hv' (j : ℕ) : d ∣ Q * j + A ↔ j ≡ v [MOD d / Nat.gcd d Q] := by
+      rw [← affine_iff_modEq hcop hv j, Nat.div_dvd_iff_dvd_mul hgd hg, Nat.mul_add,
+        ← Nat.mul_assoc, Nat.mul_div_cancel' (Nat.gcd_dvd_right d Q), Nat.mul_div_cancel' hcompat]
+    simp_rw [hv', ← Nat.count_eq_card_filter_range, if_pos hcompat]
     convert (tendsto_count_modEq_div hr v).div_const ((d : ℝ) ^ k) using 2
     rw [Nat.cast_div hgd (Nat.cast_ne_zero.mpr hg.ne'), one_div_div, div_div, pow_succ,
       mul_comm ((d : ℝ) ^ k)]
-  · have hzero (n : ℕ) : ¬ d ∣ Q * n + A := fun h => hcompat (affine_gcd_dvd h)
+  · have hzero (n : ℕ) : ¬ d ∣ Q * n + A := fun h => hcompat
+      ((Nat.dvd_add_iff_right (dvd_mul_of_dvd_left (Nat.gcd_dvd_right d Q) n)).mpr
+        ((Nat.gcd_dvd_left d Q).trans h))
     simp [hzero, hcompat]
 
 /-- Positive affine values that are divisible by `d` inject into the multiples
@@ -536,24 +486,17 @@ theorem divTerm_cesaro_bound {k Q A : ℕ} (hk : 0 < k) (hQ : 0 < Q) (hA : 0 < A
 theorem meanTerm_bounds {k Q : ℕ} (hQ : 0 < Q) (A d : ℕ) :
     0 ≤ meanTerm k Q A d ∧ meanTerm k Q A d ≤ (Q : ℝ) / (d : ℝ) ^ (k + 1) := by
   unfold meanTerm
-  split_ifs <;> refine ⟨by positivity, ?_⟩
-  · exact div_le_div_of_nonneg_right (by exact_mod_cast Nat.gcd_le_right d hQ) (by positivity)
-  · positivity
+  split_ifs <;> refine ⟨by positivity, ?_⟩ <;>
+    first | positivity | (gcongr; exact_mod_cast Nat.gcd_le_right d hQ)
 
 theorem summable_meanTerm {k Q : ℕ} (hk : 0 < k) (hQ : 0 < Q) (A : ℕ) : Summable (meanTerm k Q A) :=
-  Summable.of_nonneg_of_le (fun d => (meanTerm_bounds hQ A d).1)
-    (fun d => (meanTerm_bounds hQ A d).2)
+  .of_nonneg_of_le (fun d => (meanTerm_bounds hQ A d).1) (fun d => (meanTerm_bounds hQ A d).2)
     (by simpa only [mul_one_div] using
       (Real.summable_one_div_nat_pow.mpr (by omega : 1 < k + 1)).mul_left (Q : ℝ))
 
-theorem one_le_progMean {k Q : ℕ} (hk : 0 < k) (hQ : 0 < Q) (A : ℕ) : 1 ≤ progMean k Q A := by
-  simpa [progMean, meanTerm] using
-    (summable_meanTerm hk hQ A).le_tsum 1 fun d _ => (meanTerm_bounds hQ A d).1
-
 /-- The actual phase averages along any positive arithmetic progression. -/
 theorem tendsto_progMean {k Q A : ℕ} (hk : 0 < k) (hQ : 0 < Q) (hA : 0 < A) :
-    Tendsto (fun N : ℕ =>
-      (∑ n ∈ Finset.range N, phase k (Q * n + A)) / (N : ℝ)) atTop
+    Tendsto (fun N : ℕ => (∑ n ∈ Finset.range N, phase k (Q * n + A)) / (N : ℝ)) atTop
       (𝓝 (progMean k Q A)) := by
   have hs : Summable (fun d : ℕ => ((Q + A : ℕ) : ℝ) / (d : ℝ) ^ (k + 1)) := by
     simpa only [mul_one_div] using
@@ -582,18 +525,10 @@ theorem fresh_prime_residues {ι : Type*} [Fintype ι]
 /-- Finite weighted sums commute with limits of their Cesaro averages. -/
 theorem tendsto_weightedCesaro {ι : Type*} [Fintype ι] (f : ι → ℕ → ℝ) (c μ : ι → ℝ)
     (hμ : ∀ i, Tendsto (fun N : ℕ => (∑ n ∈ Finset.range N, f i n) / (N : ℝ)) atTop (𝓝 (μ i))) :
-    Tendsto (fun N : ℕ =>
-      (∑ n ∈ Finset.range N, ∑ i, c i * f i n) / (N : ℝ)) atTop
+    Tendsto (fun N : ℕ => (∑ n ∈ Finset.range N, ∑ i, c i * f i n) / (N : ℝ)) atTop
       (𝓝 (∑ i, c i * μ i)) := by
   simpa only [Finset.sum_comm, div_eq_mul_inv, Finset.sum_mul, ← Finset.mul_sum, mul_assoc] using
     tendsto_finsetSum Finset.univ (fun i _ => (hμ i).const_mul (c i))
-
-/-- A positive-step subprogression preserves a sequence limit and its Cesaro limit. -/
-theorem tendsto_cesaro_sub {f : ℕ → ℝ} {a : ℝ}
-    (hf : Tendsto f atTop (𝓝 a)) {L : ℕ} (hL : 0 < L) (v : ℕ) :
-    Tendsto (fun N : ℕ => (∑ n ∈ Finset.range N, f (L * n + v)) / (N : ℝ)) atTop (𝓝 a) := by
-  simpa only [div_eq_mul_inv, mul_comm, Function.comp_def, id_eq] using
-    (hf.comp ((tendsto_add_atTop_nat v).comp (tendsto_id.const_mul_atTop' hL))).cesaro
 
 /-- The prime's local gcd is either the prime or one. -/
 theorem gcd_eq_prime_or_one {ell : ℕ} (hp : ell.Prime) (d : ℕ) :
@@ -622,10 +557,6 @@ theorem meanTerm_refine (k : ℕ) {Q ell : ℕ} (hp : ell.Prime) (hc : ell.Copri
       fun h => (hc.symm.gcd_left d).mul_dvd_of_dvd_of_dvd h.1 h.2⟩
   split_ifs <;> simp_all; ring
 
-theorem progMean_congr (k : ℕ) {Q A B : ℕ} (hAB : Nat.ModEq Q B A) :
-    progMean k Q B = progMean k Q A :=
-  tsum_congr fun d => by simp only [meanTerm, hAB.dvd_iff (Nat.gcd_dvd_right d Q)]
-
 /-- The exact fresh-prime refinement factor holds in every positive degree. -/
 theorem progMean_refine {k Q A B ell : ℕ} (hk : 0 < k) (hQ : 0 < Q)
     (hp : ell.Prime) (hc : ell.Coprime Q) (hAB : Nat.ModEq Q B A) :
@@ -634,24 +565,14 @@ theorem progMean_refine {k Q A B ell : ℕ} (hk : 0 < k) (hQ : 0 < Q)
   have hs := summable_meanTerm hk hQ B
   have hm : Summable (fun d => if ell ∣ d then meanTerm k Q B d else 0) :=
     hs.summable_of_eq_zero_or_self (fun d => by by_cases h : ell ∣ d <;> simp [h])
-  rw [← progMean_congr k hAB]
+  rw [← (show progMean k Q B = progMean k Q A from
+    tsum_congr fun d => by simp only [meanTerm, hAB.dvd_iff (Nat.gcd_dvd_right d Q)])]
   change (∑' d, meanTerm k (Q * ell) B d) = _
   simp_rw [meanTerm_refine k hp hc B]
   rw [hs.tsum_add (hm.mul_left _), tsum_mul_left, progMean_multiples k hp.pos hc]
   change progMean k Q B + _ = _
   have he : (ell : ℝ) ≠ 0 := by exact_mod_cast hp.ne_zero
   split_ifs <;> simp only [pow_succ] <;> field_simp <;> ring
-
-/-- Actual phase averages on a fresh-prime subprogression. -/
-theorem tendsto_refined_mean {k Q : ℕ} (hk : 0 < k) (hQ : 0 < Q) (A L v : ℕ)
-    (hp : L.Prime) (hcop : L.Coprime Q) (hA : 0 < A) :
-    Tendsto (fun N : ℕ =>
-      (∑ n ∈ Finset.range N, phase k (Q * (L * n + v) + A)) / (N : ℝ)) atTop
-      (𝓝 (progMean k Q A *
-        (1 - 1 / (L : ℝ) ^ (k + 1) + if L ∣ Q * v + A then 1 / (L : ℝ) ^ k else 0))) := by
-  have hh := tendsto_progMean hk (Nat.mul_pos hQ hp.pos) (by omega : 0 < Q * v + A)
-  rw [progMean_refine (A := A) hk hQ hp hcop (by simp [Nat.ModEq])] at hh
-  simpa only [Nat.mul_add, Nat.mul_assoc, Nat.add_assoc] using hh
 
 /-- Every positive degree has the unconditional isolated-shift obstruction.
 A fresh prime supplies two refined subprogressions, one missing every shift
@@ -661,8 +582,7 @@ theorem isolated_shift_not_tendsto_zero {k : ℕ} (hk : 0 < k)
     {ι : Type*} [Fintype ι] (r : ι → ℕ) (c : ι → ℝ) (i₀ : ι) (Q A : ℕ)
     (hQ : 0 < Q) (hrpos : ∀ i, 0 < r i)
     (hunique : ∀ i, r i = r i₀ → i = i₀) (hc : c i₀ ≠ 0) :
-    ¬ Tendsto (fun n : ℕ => ∑ i, c i * phase k (Q * n + A + r i))
-      atTop (𝓝 0) := by
+    ¬ Tendsto (fun n : ℕ => ∑ i, c i * phase k (Q * n + A + r i)) atTop (𝓝 0) := by
   classical
   obtain ⟨L, hp, hcop, v₀, v₁, hmiss, hhit⟩ := fresh_prime_residues r i₀ Q A hQ hrpos
   have hLR : (0 : ℝ) < L := by exact_mod_cast hp.pos
@@ -671,10 +591,13 @@ theorem isolated_shift_not_tendsto_zero {k : ℕ} (hk : 0 < k)
       (∑ n ∈ Finset.range N, phase k (Q * (L * n + v) + A + r i)) / (N : ℝ)) atTop
       (𝓝 (progMean k Q (A + r i) *
         (1 - 1 / (L : ℝ) ^ (k + 1) + if L ∣ Q * v + A + r i then 1 / (L : ℝ) ^ k else 0))) := by
-    simpa only [Nat.add_assoc] using tendsto_refined_mean hk hQ (A + r i) L v hp
-      hcop.symm (by have := hrpos i; omega)
+    have hh := tendsto_progMean hk (Nat.mul_pos hQ hp.pos)
+      (by have := hrpos i; omega : 0 < Q * v + (A + r i))
+    rw [progMean_refine (A := A + r i) hk hQ hp hcop.symm (by simp [Nat.ModEq])] at hh
+    simpa only [Nat.mul_add, Nat.mul_assoc, Nat.add_assoc] using hh
   have heq (v : ℕ) := tendsto_nhds_unique (tendsto_weightedCesaro _ c _ (hmean v))
-    (tendsto_cesaro_sub hz hp.pos v)
+    (by simpa only [div_eq_mul_inv, mul_comm, Function.comp_def, id_eq] using
+      (hz.comp ((tendsto_add_atTop_nat v).comp (tendsto_id.const_mul_atTop' hp.pos))).cesaro)
   have h₀ := heq v₀
   have h₁ := heq v₁
   simp only [hmiss, hhit, ↓reduceIte, add_zero] at h₀ h₁
@@ -682,8 +605,9 @@ theorem isolated_shift_not_tendsto_zero {k : ℕ} (hk : 0 < k)
   simp_rw [mul_add, Finset.sum_add_distrib, mul_ite, mul_zero, hr, h₀] at h₁
   have hdiff : c i₀ * progMean k Q (A + r i₀) * (1 / (L : ℝ) ^ k) = 0 := by
     simpa [mul_assoc] using h₁
-  exact (mul_ne_zero (mul_ne_zero hc (lt_of_lt_of_le one_pos
-    (one_le_progMean hk hQ (A + r i₀))).ne') (by positivity)) hdiff
+  refine (mul_ne_zero (mul_ne_zero hc (lt_of_lt_of_le one_pos ?_).ne') (by positivity)) hdiff
+  simpa [progMean, meanTerm] using
+    (summable_meanTerm hk hQ (A + r i₀)).le_tsum 1 fun d _ => (meanTerm_bounds hQ _ d).1
 
 /-!
 # The dilation grid, the final-order survivor, and the forced zero limit
@@ -758,9 +682,6 @@ def gridZero (k : ℕ) : GridVertex k := fun _ => 0
 
 def gridModulus (k : ℕ) : ℕ := ∏ e : GridVertex k, (gridMult k e) ^ 2
 
-theorem gridBound_succ_le {k : ℕ} (hk : 1 ≤ k) : k + 1 ≤ gridBound k :=
-  Nat.le_sub_one_of_lt (le_self_pow (by omega : 1 ≤ k + 2) (by omega : k ≠ 0))
-
 /-- Every symbolic radix index lies in the prescribed finite interval. -/
 theorem gridIndex_le (k : ℕ) (e : GridVertex k) : gridIndex k e ≤ gridBound k :=
   Nat.le_sub_one_of_lt (finFunctionFinEquiv e).isLt
@@ -788,8 +709,7 @@ theorem gridMult_coprime_spacing (k : ℕ) (e : GridVertex k) :
     Nat.mul_right_comm k (gridSpacing k) (gridBound k), Nat.coprime_one_left_eq_true]
 
 private theorem multipliers_coprime_of_index_lt {k : ℕ} {e f : GridVertex k}
-    (hef : gridIndex k e < gridIndex k f) :
-    Nat.Coprime (gridMult k e) (gridMult k f) := by
+    (hef : gridIndex k e < gridIndex k f) : Nat.Coprime (gridMult k e) (gridMult k f) := by
   apply Nat.coprime_of_dvd
   intro l hl hle hlf
   have hlD : Nat.Coprime l (gridSpacing k) := (gridMult_coprime_spacing k e).coprime_dvd_left hle
@@ -835,10 +755,9 @@ theorem gridShift_eq_succ_base_iff {k : ℕ} (e : GridVertex k) {j : ℕ} (hj : 
     unfold gridOffset gridMult gridBase at hs
     have hjk : j = k := by
       by_contra hne
-      have hlt : j + 1 ≤ k := by omega
-      have hmul := Nat.mul_le_mul_right
-        (1 + k * gridSpacing k * gridBound k + gridSpacing k * gridIndex k e) hlt
-      nlinarith
+      nlinarith [Nat.mul_le_mul_right
+        (1 + k * gridSpacing k * gridBound k + gridSpacing k * gridIndex k e)
+        (by omega : j + 1 ≤ k)]
     rw [hjk] at hs
     refine ⟨gridIndex_injective k (.trans ?_ (gridIndex_zero k).symm), hjk⟩
     exact (Nat.mul_eq_zero.mp
@@ -848,15 +767,6 @@ theorem gridShift_eq_succ_base_iff {k : ℕ} (e : GridVertex k) {j : ℕ} (hj : 
 
 theorem gridModulus_pos (k : ℕ) : 0 < gridModulus k :=
   Finset.prod_pos (fun e _ => pow_pos (gridMult_pos k e) 2)
-
-/-- All prescribed offset congruences have a simultaneous squared-modulus solution. -/
-theorem grid_exists_crt (k : ℕ) :
-    ∃ N0 : ℕ, ∀ e : GridVertex k, N0 ≡ gridOffset k e [MOD (gridMult k e) ^ 2] := by
-  classical
-  exact ⟨_, fun e => (Nat.chineseRemainderOfFinset (gridOffset k) (fun e => (gridMult k e) ^ 2)
-    Finset.univ (fun e _ => (pow_pos (gridMult_pos k e) 2).ne')
-    (fun e _ f _ hef => ((gridMult_pairwise_coprime k hef).pow_left 2).pow_right 2)).property e
-    (Finset.mem_univ e)⟩
 
 def gridWeight (k : ℕ) (e : GridVertex k) : ℤ := cubeWeight (k + 1) e
 
@@ -947,13 +857,14 @@ theorem tendsto_phase_div_nat (k : ℕ) :
   simp only [mul_zero] at hlim
   refine squeeze_zero' (Eventually.of_forall fun n => by unfold phase; positivity) ?_ hlim
   filter_upwards [eventually_ge_atTop 1] with n hn
-  simpa only [phase, mul_div_assoc] using div_le_div_of_nonneg_right
-    (sigma_div_le_sqrt k n (by omega)) (Nat.cast_nonneg n : (0 : ℝ) ≤ n)
+  have hs : (σ k n : ℝ) / (n : ℝ) ^ k ≤ 64 * √(n : ℝ) := (div_le_iff₀ (by positivity)).mpr
+    (by simpa only [mul_assoc, mul_comm, mul_left_comm] using sigma_le_pow_sqrt k n (by omega))
+  simpa only [phase, mul_div_assoc] using
+    div_le_div_of_nonneg_right hs (Nat.cast_nonneg n : (0 : ℝ) ≤ n)
 
 /-- Every fixed coefficient and shift preserves the vanishing ratio limit. -/
 theorem grid_main_term_tendsto_zero (k : ℕ) (e : GridVertex k) (h : ℕ) :
-    Tendsto (fun N : ℕ =>
-      gridCoeff k e h * phase k (N + gridShift k e h) /
+    Tendsto (fun N : ℕ => gridCoeff k e h * phase k (N + gridShift k e h) /
         ((N + gridShift k e h : ℕ) : ℝ)) atTop (𝓝 0) := by
   simpa only [mul_zero, mul_div_assoc, Function.comp_apply] using ((tendsto_phase_div_nat k).comp
       (tendsto_add_atTop_nat (gridShift k e h))).const_mul (gridCoeff k e h)
@@ -961,20 +872,15 @@ theorem grid_main_term_tendsto_zero (k : ℕ) (e : GridVertex k) (h : ℕ) :
 /-- The complete actual surviving main term tends to zero. -/
 theorem tendsto_survivingMain (k : ℕ) : Tendsto (survivingMain k) atTop (𝓝 0) := by
   unfold survivingMain
-  simpa only [Finset.sum_const_zero] using tendsto_finsetSum (Finset.univ : Finset (GridVertex k))
-      (fun e _ => tendsto_finsetSum (Finset.range (k + 1))
-        (fun h _ => grid_main_term_tendsto_zero k e h))
+  simpa only [Finset.sum_const_zero] using tendsto_finsetSum Finset.univ fun e _ =>
+    tendsto_finsetSum (Finset.range (k + 1)) fun h _ => grid_main_term_tendsto_zero k e h
 
 /-- Multiplying the main expression by `N` differs from the survivor by a
 finite sum of vanishing terms. -/
 theorem tendsto_survivor_rescaling (k : ℕ) :
-    Tendsto (fun N : ℕ =>
-      (N : ℝ) * survivingMain k N - survivor k N)
-      atTop (𝓝 0) := by
-  have hh := tendsto_finsetSum (Finset.univ : Finset (GridVertex k))
-    (fun e _ => tendsto_finsetSum (Finset.range (k + 1))
-      (fun h _ => (grid_main_term_tendsto_zero k e h).neg.mul_const
-        (gridShift k e h : ℝ)))
+    Tendsto (fun N : ℕ => (N : ℝ) * survivingMain k N - survivor k N) atTop (𝓝 0) := by
+  have hh := tendsto_finsetSum Finset.univ fun e _ => tendsto_finsetSum (Finset.range (k + 1))
+    fun h _ => (grid_main_term_tendsto_zero k e h).neg.mul_const (gridShift k e h : ℝ)
   simp only [neg_zero, zero_mul, Finset.sum_const_zero] at hh
   refine hh.congr fun N => ?_
   unfold survivingMain survivor
@@ -1004,15 +910,6 @@ theorem tailIndex_factorization (k N : ℕ) (e : GridVertex k) (hN : gridOffset 
   have hshift := gridShift_add_offset k e j
   nlinarith
 
-/-- Every retained actual shift is coprime to the grid multiplier. -/
-theorem index_coprime {k : ℕ} (hk : 0 < k) (N : ℕ) (e : GridVertex k)
-    (hcong : N ≡ gridOffset k e [MOD (gridMult k e) ^ 2]) {j : ℕ} (hj : j ≤ k) :
-    Nat.Coprime (gridMult k e) (tailIndex k N e + (j + 1)) := by
-  rw [Nat.coprime_add_iff_right (show gridMult k e ∣ tailIndex k N e from
-    Nat.dvd_div_of_mul_dvd (by simpa only [pow_two] using hcong.symm.dvd'))]
-  exact (gridMult_coprime_spacing k e).coprime_dvd_right
-    (Nat.dvd_factorial j.succ_pos ((by omega : j + 1 ≤ k + 1).trans (gridBound_succ_le hk)))
-
 /-- Exact numerator and denominator rescaling for every denominator exponent. -/
 theorem tailIndex_term_rescale {k : ℕ} (hk : 0 < k) (N : ℕ) (e : GridVertex k)
     (hN : gridOffset k e ≤ N) (hcong : N ≡ gridOffset k e [MOD (gridMult k e) ^ 2])
@@ -1022,8 +919,14 @@ theorem tailIndex_term_rescale {k : ℕ} (hk : 0 < k) (N : ℕ) (e : GridVertex 
       (gridMult k e : ℝ) ^ (i + 1) * (σ k (N + gridShift k e j) : ℝ) /
           ((N + gridShift k e j : ℕ) : ℝ) ^ (i + 1) := by
   have hp : (gridMult k e : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr (gridMult_pos k e).ne'
+  have hcop : Nat.Coprime (gridMult k e) (tailIndex k N e + (j + 1)) := by
+    rw [Nat.coprime_add_iff_right (show gridMult k e ∣ tailIndex k N e from
+      Nat.dvd_div_of_mul_dvd (by simpa only [pow_two] using hcong.symm.dvd'))]
+    exact (gridMult_coprime_spacing k e).coprime_dvd_right (Nat.dvd_factorial j.succ_pos
+      ((by omega : j + 1 ≤ k + 1).trans (Nat.le_sub_one_of_lt
+        (le_self_pow (by omega : 1 ≤ k + 2) (by omega : k ≠ 0)))))
   rw [← tailIndex_factorization k N e hN hcong j,
-    ArithmeticFunction.isMultiplicative_sigma.map_mul_of_coprime (index_coprime hk N e hcong hj)]
+    ArithmeticFunction.isMultiplicative_sigma.map_mul_of_coprime hcop]
   push_cast
   rw [mul_pow, mul_div_mul_left _ _ (pow_ne_zero (i + 1) hp), mul_div_assoc]
 
@@ -1059,8 +962,7 @@ theorem eventually_weightedTail_integral_prog (k : ℕ) (hx : ¬ Irrational (alp
     ∀ᶠ t : ℕ in atTop, ∃ z : ℤ, weightedTail k (A + gridModulus k * t) = z := by
   classical
   have hint := eventually_all.mpr fun e : GridVertex k =>
-    ((tendsto_add_atTop_nat 1).comp
-      (tendsto_tailIndex k _ A (gridModulus_pos k) e)).eventually
+    ((tendsto_add_atTop_nat 1).comp (tendsto_tailIndex k _ A (gridModulus_pos k) e)).eventually
       (eventually_scaledTail_integral k hx)
   filter_upwards [hint] with t ht
   choose z hz using ht
@@ -1083,30 +985,22 @@ theorem weightedMain_eq_surviving {k : ℕ} (hk : 0 < k) (N : ℕ)
     congrArg ((Nat.stirlingSecond i j : ℝ) * ·) (tailIndex_term_rescale hk N e
       ((gridOffset_lt_base k e).le.trans hN) (hcong e) (by have := Finset.mem_range.mp hj; omega) i)
 
-/-- The common argument is bounded by one multiplier times its index plus one. -/
-theorem tailIndex_common_le (k N : ℕ) (e : GridVertex k) (hN : gridOffset k e ≤ N)
-    (hcong : N ≡ gridOffset k e [MOD (gridMult k e) ^ 2]) :
-    (N : ℝ) ≤ (gridMult k e : ℝ) * ((tailIndex k N e : ℝ) + 1) := by
-  have h := Nat.le_add_right N (gridShift k e 0)
-  rw [← tailIndex_factorization k N e hN hcong 0] at h
-  exact_mod_cast h
-
 /-- The actual error at one CRT index stays negligible after multiplication
 by the common progression argument. -/
 theorem tendsto_grid_vertex_error_mul (k A : ℕ) (hA : GridCongruences k A) (e : GridVertex k) :
     Tendsto (fun t : ℕ => ((A + gridModulus k * t : ℕ) : ℝ) *
-      tailErr k (tailIndex k (A + gridModulus k * t) e))
-      atTop (𝓝 0) := by
+      tailErr k (tailIndex k (A + gridModulus k * t) e)) atTop (𝓝 0) := by
   have hindex := tendsto_tailIndex k (gridModulus k) A (gridModulus_pos k) e
-  have hlim := ((tendsto_tailErr_mul k).comp hindex).const_mul (gridMult k e : ℝ)
-  simp only [Function.comp_apply, mul_zero] at hlim
-  have hnonneg := (hindex.eventually (eventually_ge_atTop (k + 1))).mono
-    fun t ht => tailErr_nonneg k _ ht
-  refine squeeze_zero' (hnonneg.mono fun t ht => mul_nonneg (Nat.cast_nonneg _) ht) ?_ hlim
-  filter_upwards [hnonneg, (tendsto_affine_atTop _ A (gridModulus_pos k)).eventually
-    (eventually_ge_atTop (gridOffset k e))] with t ht hN
-  simpa only [mul_assoc] using mul_le_mul_of_nonneg_right
-    (tailIndex_common_le k _ e hN (gridCongruences_add_modulus_mul k A t hA e)) ht
+  have hlim := (((tendsto_tailErr_mul k).comp hindex).const_mul (gridMult k e : ℝ)).sub
+    (((tendsto_tailErr k).comp hindex).const_mul (gridShift k e 0 : ℝ))
+  simp only [mul_zero, sub_zero, Function.comp_apply] at hlim
+  refine hlim.congr' ?_
+  filter_upwards [(tendsto_affine_atTop _ A (gridModulus_pos k)).eventually
+    (eventually_ge_atTop (gridOffset k e))] with t hN
+  have h : (gridMult k e : ℝ) * ((tailIndex k (A + gridModulus k * t) e : ℝ) + 1) =
+      ((A + gridModulus k * t : ℕ) : ℝ) + gridShift k e 0 := by
+    exact_mod_cast tailIndex_factorization k _ e hN (gridCongruences_add_modulus_mul k A t hA e) 0
+  rw [← mul_assoc, h]; ring
 
 /-- Fixed signed weights preserve the vanishing scaled-error limit. -/
 theorem tendsto_weightedError_mul (k A : ℕ) (hA : GridCongruences k A) :
@@ -1114,26 +1008,16 @@ theorem tendsto_weightedError_mul (k A : ℕ) (hA : GridCongruences k A) :
       weightedError k (A + gridModulus k * t)) atTop (𝓝 0) := by
   simpa only [weightedError, Finset.mul_sum,
     mul_left_comm, mul_assoc, mul_zero, Finset.sum_const_zero] using
-    tendsto_finsetSum (Finset.univ : Finset (GridVertex k)) (fun e _ =>
-      (tendsto_grid_vertex_error_mul k A hA e).const_mul
-        ((gridWeight k e : ℝ) * (σ k (gridMult k e) : ℝ)))
-
-/-- Eventually, the weighted main term is the surviving main term
-along the whole CRT progression. -/
-theorem eventually_main_eq_surviving {k : ℕ} (hk : 0 < k) (A : ℕ) (hA : GridCongruences k A) :
-    (fun t : ℕ => weightedMain k (A + gridModulus k * t)) =ᶠ[atTop]
-      fun t : ℕ => survivingMain k (A + gridModulus k * t) := by
-  filter_upwards [(tendsto_affine_atTop _ A (gridModulus_pos k)).eventually
-    (eventually_ge_atTop (gridBase k))] with t ht
-  exact weightedMain_eq_surviving hk _ ht (gridCongruences_add_modulus_mul k A t hA)
+    tendsto_finsetSum Finset.univ fun e _ => (tendsto_grid_vertex_error_mul k A hA e).const_mul
+      ((gridWeight k e : ℝ) * (σ k (gridMult k e) : ℝ))
 
 /-- Rationality forces the actual generic survivor to vanish on a CRT progression. -/
 theorem tendsto_survivor_of_rational {k : ℕ} (hk : 0 < k)
     (hx : ¬ Irrational (alpha k)) (A : ℕ) (hA : GridCongruences k A) :
-    Tendsto (fun t : ℕ => survivor k (A + gridModulus k * t))
-      atTop (𝓝 0) := by
+    Tendsto (fun t : ℕ => survivor k (A + gridModulus k * t)) atTop (𝓝 0) := by
   have hP := tendsto_affine_atTop _ A (gridModulus_pos k)
-  have heq := eventually_main_eq_surviving hk A hA
+  have heq := (hP.eventually (eventually_ge_atTop (gridBase k))).mono fun t ht =>
+    weightedMain_eq_surviving hk _ ht (gridCongruences_add_modulus_mul k A t hA)
   have hE : Tendsto (fun t : ℕ => weightedError k (A + gridModulus k * t)) atTop (𝓝 0) := by
     simpa only [weightedError, Function.comp_apply, mul_zero, Finset.sum_const_zero] using
       tendsto_finsetSum Finset.univ (fun e _ =>
@@ -1141,7 +1025,7 @@ theorem tendsto_survivor_of_rational {k : ℕ} (hk : 0 < k)
           ((gridWeight k e : ℝ) * (σ k (gridMult k e) : ℝ)))
   have hT : Tendsto (fun t : ℕ => weightedTail k (A + gridModulus k * t)) atTop (𝓝 0) := by
     simpa only [← weightedTail_split, add_zero] using
-      (((tendsto_survivingMain k).comp hP).congr' heq.symm).add hE
+      (((tendsto_survivingMain k).comp hP).congr' (EventuallyEq.symm heq)).add hE
   have hz := eventually_zero_of_int hT (eventually_weightedTail_integral_prog k hx A)
   have hmain : Tendsto (fun t : ℕ => ((A + gridModulus k * t : ℕ) : ℝ) *
       survivingMain k (A + gridModulus k * t)) atTop (𝓝 0) := by
@@ -1177,8 +1061,13 @@ theorem survivor_not_tendsto_zero {k : ℕ} (hk : 0 < k) (Q A : ℕ) (hQ : 0 < Q
     i₀ Q A hQ (fun i => gridShift_pos k i.1 i.2) hunique (gridCoeff_zero_ne_zero k)
 
 theorem irrational_alpha_pos {k : ℕ} (hk : 0 < k) : Irrational (alpha k) := by
+  classical
   by_contra hx
-  obtain ⟨A, hA⟩ := grid_exists_crt k
+  obtain ⟨A, hA⟩ : ∃ N0, GridCongruences k N0 := ⟨_, fun e =>
+    (Nat.chineseRemainderOfFinset (gridOffset k) (fun e => (gridMult k e) ^ 2) Finset.univ
+      (fun e _ => (pow_pos (gridMult_pos k e) 2).ne')
+      (fun e _ f _ hef => ((gridMult_pairwise_coprime k hef).pow_left 2).pow_right 2)).property e
+      (Finset.mem_univ e)⟩
   exact survivor_not_tendsto_zero hk _ A (gridModulus_pos k)
     (by simpa only [Nat.add_comm] using tendsto_survivor_of_rational hk hx A hA)
 
@@ -1192,8 +1081,7 @@ factorial tail. No progression-mean assertion at degree zero is used.
 /-- Every positive-index actual scaled tail has a positive first term. -/
 theorem scaledTail_pos_of_pos (k n : ℕ) (hn : 0 < n) : 0 < scaledTail k n := by
   rw [scaledTail_tsum k n hn]
-  refine lt_of_lt_of_le ?_ ((summable_blockTerm k n hn).le_tsum 0
-    (fun j _ => blockTerm_nonneg k n j))
+  refine lt_of_lt_of_le ?_ ((summable_blockTerm k n hn).le_tsum 0 fun j _ => blockTerm_nonneg k n j)
   simp only [blockTerm, Nat.ascFactorial_zero, Nat.ascFactorial_succ, Nat.add_zero, Nat.mul_one]
   exact div_pos (Nat.cast_pos.mpr (ArithmeticFunction.sigma_pos k n hn.ne')) (Nat.cast_pos.mpr hn)
 
@@ -1220,14 +1108,10 @@ shift. Degree zero uses a direct positive factorial-tail estimate.
 Both arguments concern the original infinite divisor-sum series.
 -/
 
-theorem irrational_alpha : ∀ k : ℕ, Irrational (alpha k)
-  | 0 => irrational_alpha_zero
-  | k + 1 => irrational_alpha_pos (Nat.succ_pos k)
-
 /-- The complete factorial divisor-sum irrationality statement. -/
 theorem erdos_252 (k : ℕ) :
     Irrational (∑' n : ℕ, (ArithmeticFunction.sigma k n : ℝ) / (n.factorial : ℝ)) :=
-  irrational_alpha k
+  (Nat.eq_zero_or_pos k).elim (fun h => h ▸ irrational_alpha_zero) irrational_alpha_pos
 
 #print axioms erdos_252
 
