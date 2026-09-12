@@ -299,59 +299,41 @@ theorem omittedTail_scaled_le (k n : ℕ) (hn : 0 < n) : ((n : ℝ) + 1) * omitt
     √((n : ℝ) + 1) = 2 * (64 / √((n : ℝ) + 1) * ((k + 1 : ℕ) : ℝ) ^ (k + 1)) by ring]
   exact mul_le_mul_of_nonneg_right hratio (by positivity)
 
-/-- Every finite denominator remainder has a square-root numerator and two
-full denominator powers remaining. -/
+/-- Each scaled finite remainder is bounded by the same vanishing square-root majorant. -/
 theorem finiteErr_term_bound (k n j : ℕ) (hn : k + 1 ≤ n) (hj : j < k + 1) :
-    0 ≤ (σ k (n + (j + 1)) : ℝ) * stirlingErr j (k + 1) ((n + (j + 1) : ℕ) : ℝ) ∧
-      (σ k (n + (j + 1)) : ℝ) * stirlingErr j (k + 1) ((n + (j + 1) : ℕ) : ℝ) ≤
-          64 * ((k : ℝ) + 1) ^ (k + 1) * √((n : ℝ) + 1) / ((n : ℝ) + 1) ^ 2 := by
+    ‖((n : ℝ) + 1) * (σ k (n + (j + 1)) : ℝ) *
+      stirlingErr j (k + 1) ((n + (j + 1) : ℕ) : ℝ)‖ ≤
+        (64 * ((k : ℝ) + 1) ^ (k + 1)) / √((n : ℝ) + 1) := by
   have hx : (0 : ℝ) < ((n + (j + 1) : ℕ) : ℝ) := by positivity
   have he := stirlingErr_bounds (k + 1) (k + 1) ((n + (j + 1) : ℕ) : ℝ)
     (by exact_mod_cast (show k + 1 ≤ n + (j + 1) by omega)) j (by omega)
-  refine ⟨mul_nonneg (Nat.cast_nonneg _) he.1, ?_⟩
+  rw [Real.norm_eq_abs, abs_of_nonneg (mul_nonneg (by positivity) he.1)]
   calc
-    _ ≤ (64 / √((n : ℝ) + 1) * ((n + (j + 1) : ℕ) : ℝ) ^ (k + 1)) *
-        (((k + 1 : ℕ) : ℝ) ^ (k + 1) / ((n + (j + 1) : ℕ) : ℝ) ^ (k + 1 + 1)) :=
-      mul_le_mul (sigma_le_pow_succ_div_sqrt k n _ (by omega)) he.2 he.1 (by positivity)
-    _ = 64 * ((k : ℝ) + 1) ^ (k + 1) / √((n : ℝ) + 1) /
-        ((n + (j + 1) : ℕ) : ℝ) := by push_cast; field_simp; ring
-    _ ≤ 64 * ((k : ℝ) + 1) ^ (k + 1) / √((n : ℝ) + 1) / ((n : ℝ) + 1) := by
-      gcongr; norm_cast; omega
-    _ = _ := by rw [div_eq_mul_inv _ (√((n : ℝ) + 1)), ← Real.sqrt_div_self]; field
+    _ ≤ ((n + (j + 1) : ℕ) : ℝ) *
+        ((64 / √((n : ℝ) + 1)) * ((n + (j + 1) : ℕ) : ℝ) ^ (k + 1)) *
+        (((k + 1 : ℕ) : ℝ) ^ (k + 1) / ((n + (j + 1) : ℕ) : ℝ) ^ (k + 1 + 1)) := by
+      exact mul_le_mul (mul_le_mul (by norm_cast; omega)
+        (sigma_le_pow_succ_div_sqrt k n _ (by omega)) (by positivity) hx.le)
+        he.2 he.1 (by positivity)
+    _ = _ := by push_cast; field_simp; ring
 
-/-- The whole finite error, multiplied by the actual index plus one, is
-bounded by a fixed multiple of `sqrt(n+1)/(n+1)`. -/
-theorem finiteErr_bounds (k n : ℕ) (hn : k + 1 ≤ n) : 0 ≤ finiteErr k n ∧
-      ((n : ℝ) + 1) * finiteErr k n ≤
-        64 * ((k : ℝ) + 1) ^ (k + 2) * (√((n : ℝ) + 1) / ((n : ℝ) + 1)) := by
-  unfold finiteErr
-  have hb := Finset.sum_le_sum (s := Finset.range (k + 1)) (fun j hj =>
-    (finiteErr_term_bound k n j hn (Finset.mem_range.mp hj)).2)
-  refine ⟨Finset.sum_nonneg (fun j hj =>
-    (finiteErr_term_bound k n j hn (Finset.mem_range.mp hj)).1), ?_⟩
-  convert! mul_le_mul_of_nonneg_left hb (by positivity : 0 ≤ (n : ℝ) + 1) using 1
-  simp only [Finset.sum_const, Finset.card_range, nsmul_eq_mul, Nat.cast_add, Nat.cast_one]
-  rw [show k + 2 = (k + 1) + 1 by omega, pow_succ]
-  field_simp
-
-/-- Both exact error parts are squeezed by multiples of `sqrt(n+1)/(n+1)`. -/
+/-- The finite sum of scaled remainders and the omitted tail both tend to zero. -/
 theorem tendsto_tailErr_mul (k : ℕ) :
     Tendsto (fun n : ℕ => ((n : ℝ) + 1) * tailErr k n) atTop (𝓝 0) := by
-  have hb := (eventually_ge_atTop (k + 1)).mono fun n hn => finiteErr_bounds k n hn
-  have hf := squeeze_zero' (hb.mono fun n hn => mul_nonneg (by positivity : 0 ≤ (n : ℝ) + 1) hn.1)
-    (hb.mono fun _ hn => hn.2)
-    (by simpa only [Function.comp_apply, Nat.cast_add, Nat.cast_one, mul_zero] using
-          (tendsto_sqrt_div_nat.comp (tendsto_add_atTop_nat 1)).const_mul
-            (64 * ((k : ℝ) + 1) ^ (k + 2)))
+  have hlim (C : ℝ) :
+      Tendsto (fun n : ℕ => C / √((n : ℝ) + 1)) atTop (𝓝 0) := by
+    simpa only [Nat.cast_add, Nat.cast_one, Function.comp_apply, Real.sqrt_div_self',
+      mul_one_div, mul_zero] using
+        (tendsto_sqrt_div_nat.comp (tendsto_add_atTop_nat 1)).const_mul C
+  have hf := tendsto_finsetSum (Finset.range (k + 1)) fun j hj =>
+    squeeze_zero_norm' ((eventually_ge_atTop (k + 1)).mono fun n hn =>
+      finiteErr_term_bound k n j hn (Finset.mem_range.mp hj)) (hlim _)
   have ho := squeeze_zero'
     (Eventually.of_forall fun n : ℕ =>
       mul_nonneg (by positivity : 0 ≤ (n : ℝ) + 1) (omittedTail_nonneg k n (k + 1)))
-    ((eventually_ge_atTop 1).mono fun n hn => omittedTail_scaled_le k n hn)
-    (by simpa only [Function.comp_apply, Nat.cast_add, Nat.cast_one,
-        Real.sqrt_div_self', mul_one_div, mul_zero] using
-          (tendsto_sqrt_div_nat.comp (tendsto_add_atTop_nat 1)).const_mul
-            (128 * ((k + 1 : ℕ) : ℝ) ^ (k + 1)))
-  simpa only [← mul_add, ← tailErr_eq, add_zero] using ho.add hf
+    ((eventually_ge_atTop 1).mono fun n hn => omittedTail_scaled_le k n hn) (hlim _)
+  simpa only [tailErr_eq, finiteErr, Finset.mul_sum, mul_add, mul_assoc,
+    Finset.sum_const_zero, add_zero] using ho.add hf
 
 theorem tendsto_tailErr (k : ℕ) : Tendsto (tailErr k) atTop (𝓝 0) := by
   simpa only [mul_div_cancel_left₀ _ (Nat.cast_add_one_ne_zero (R := ℝ) _)] using
@@ -797,12 +779,6 @@ theorem grid_core_cancel {k j ell : ℕ} (hj : j < k) (hell : ell ≤ k) (g : �
         ((gridSpacing k : ℝ) * ((k : ℝ) + 2) ^ i.val))
       ⟨j, hj⟩ (by simp) (fun z => g ⌊z⌋₊) (gridBase k) (((j : ℝ) + 1) * gridBase k)
 
-def gridCore (k N j i : ℕ) : ℝ := ∑ e : GridVertex k, (gridWeight k e : ℝ) *
-    ((gridMult k e : ℝ) ^ (i + 1) * ((σ k (N + gridShift k e j) : ℝ) /
-        ((N + gridShift k e j : ℕ) : ℝ) ^ (i + 1)))
-
-def finiteMain (k N : ℕ) : ℝ := ∑ i ∈ Finset.range (k + 1), ∑ j ∈ Finset.range (k + 1),
-    (Nat.stirlingSecond i j : ℝ) * gridCore k N j i
 
 def gridCoeff (k : ℕ) (e : GridVertex k) (j : ℕ) : ℝ :=
   (gridWeight k e : ℝ) * (gridMult k e : ℝ) ^ (k + 1) * (Nat.stirlingSecond k j : ℝ)
@@ -813,37 +789,31 @@ def survivingMain (k N : ℕ) : ℝ := ∑ e : GridVertex k, ∑ j ∈ Finset.ra
 def survivor (k N : ℕ) : ℝ :=
   ∑ e : GridVertex k, ∑ j ∈ Finset.range (k + 1), gridCoeff k e j * phase k (N + gridShift k e j)
 
-/-- Only the top denominator order survives: lower orders cancel on the grid,
-and orders below the shift carry no Stirling coefficient. -/
-theorem finiteMain_eq_surviving (k N : ℕ) : finiteMain k N = survivingMain k N := by
-  unfold finiteMain
-  rw [Finset.sum_eq_single_of_mem k (by simp)]
-  · have hdiv (x : ℕ) : (σ k x : ℝ) / (x : ℝ) ^ (k + 1) =
-        phase k x / (x : ℝ) := by rw [phase, div_div, pow_succ]
-    unfold gridCore survivingMain gridCoeff
-    simp_rw [Finset.mul_sum, hdiv]
-    rw [Finset.sum_comm]
-    simp only [div_eq_mul_inv, mul_assoc, mul_comm, mul_left_comm]
+/-- Direct cancellation of the expanded vertex sum leaves only the top denominator order. -/
+theorem grid_expansion_eq_surviving (k N : ℕ) :
+    (∑ e : GridVertex k, (gridWeight k e : ℝ) *
+      (∑ j ∈ Finset.range (k + 1), ∑ i ∈ Finset.range (k + 1),
+        (Nat.stirlingSecond i j : ℝ) * (gridMult k e : ℝ) ^ (i + 1) *
+          (σ k (N + gridShift k e j) : ℝ) / ((N + gridShift k e j : ℕ) : ℝ) ^ (i + 1))) =
+      survivingMain k N := by
+  simp_rw [Finset.mul_sum]
+  rw [Finset.sum_comm]
+  conv_lhs => arg 2; ext j; rw [Finset.sum_comm]
+  rw [Finset.sum_comm, Finset.sum_eq_single_of_mem k (by simp)]
+  · rw [Finset.sum_comm]
+    simp only [survivingMain, gridCoeff, phase, pow_succ, div_eq_mul_inv,
+      mul_inv_rev, mul_assoc, mul_comm, mul_left_comm]
   · intro i hi hne
     refine Finset.sum_eq_zero fun j hj => ?_
     have hik := Finset.mem_range.mp hi
     have hjk := Finset.mem_range.mp hj
     by_cases hlt : j < k
-    · rw [show gridCore k N j i = 0 from grid_core_cancel hlt (by omega)
-        (fun s => (σ k (N + s) : ℝ) / ((N + s : ℕ) : ℝ) ^ (i + 1)), mul_zero]
-    · rw [Nat.stirlingSecond_eq_zero_of_lt (by omega : i < j), Nat.cast_zero, zero_mul]
-
-/-- Reordering the expanded vertex sums gives the same finite main term. -/
-theorem finiteMain_vertex (k N : ℕ) : finiteMain k N = ∑ e : GridVertex k, (gridWeight k e : ℝ) *
-        (∑ j ∈ Finset.range (k + 1), ∑ i ∈ Finset.range (k + 1),
-          (Nat.stirlingSecond i j : ℝ) * (gridMult k e : ℝ) ^ (i + 1) *
-              (σ k (N + gridShift k e j) : ℝ) / ((N + gridShift k e j : ℕ) : ℝ) ^ (i + 1)) := by
-  unfold finiteMain gridCore
-  simp_rw [Finset.mul_sum]
-  rw [Finset.sum_comm]
-  conv_lhs => arg 2; ext j; rw [Finset.sum_comm]
-  rw [Finset.sum_comm]
-  simp only [div_eq_mul_inv, mul_assoc, mul_comm, mul_left_comm]
+    · have hc := congrArg ((Nat.stirlingSecond i j : ℝ) * ·)
+        (grid_core_cancel hlt (by omega : i + 1 ≤ k)
+          (fun s => (σ k (N + s) : ℝ) / ((N + s : ℕ) : ℝ) ^ (i + 1)))
+      simpa only [mul_zero, Finset.mul_sum, div_eq_mul_inv,
+        mul_assoc, mul_comm, mul_left_comm] using hc
+    · simp [Nat.stirlingSecond_eq_zero_of_lt (by omega : i < j)]
 
 /-- The isolated final-order coefficient never vanishes. -/
 theorem gridCoeff_zero_ne_zero (k : ℕ) : gridCoeff k (gridZero k) k ≠ 0 := by
@@ -974,7 +944,7 @@ theorem eventually_weightedTail_integral_prog (k : ℕ) (hx : ¬ Irrational (alp
 theorem weightedMain_eq_surviving {k : ℕ} (hk : 0 < k) (N : ℕ)
     (hN : gridBase k ≤ N) (hcong : GridCongruences k N) :
     weightedMain k N = survivingMain k N := by
-  rw [← finiteMain_eq_surviving, finiteMain_vertex]
+  rw [← grid_expansion_eq_surviving]
   unfold weightedMain
   refine Finset.sum_congr rfl fun e _ => ?_
   rw [mul_assoc, tailMain_eq_range]

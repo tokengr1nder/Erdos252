@@ -94,7 +94,7 @@ directly.
 
 The central estimates are Lemmas~\ref{lean:tailErr_eq} and
 \ref{lean:tendsto_tailErr_mul}. The cancellation step is
-Lemma~\ref{lean:finiteMain_eq_surviving}; the incompatible limits are
+Lemma~\ref{lean:grid_expansion_eq_surviving}; the incompatible limits are
 Lemmas~\ref{lean:tendsto_survivor_of_rational} and
 \ref{lean:survivor_not_tendsto_zero}. The complete conclusion is
 Lemma~\ref{lean:erdos_252}.
@@ -426,48 +426,36 @@ For $n>0$,
 Multiply the preceding bound by $n+1$ and use $(n+1)/n\leq2$.
 \end{proof}
 
-\begin{result}{finiteErr_term_bound}{One finite denominator remainder}
+\begin{result}{finiteErr_term_bound}{One scaled finite denominator remainder}
 If $n\geq k+1$ and $0\leq j\leq k$, then
 \[
- 0\leq \sigma_k(n+j+1)E_{j,k+1}(n+j+1)
- \leq \frac{64(k+1)^{k+1}\sqrt{n+1}}{(n+1)^2}.
+ \left|(n+1)\sigma_k(n+j+1)E_{j,k+1}(n+j+1)\right|
+ \leq \frac{64(k+1)^{k+1}}{\sqrt{n+1}}.
 \]
 \end{result}
 \begin{proof}
-Put $x=n+j+1$. Then $x\geq n+1>0$ and $x\geq k+1$.
-Reuse the numerator estimate from the omitted-tail argument and the
-Stirling error bound with $H=L=k+1$:
+Put $x=n+j+1$. The error is nonnegative by the Stirling bound, so
+the absolute value may be removed. Since $n+1\leq x$ and $x\geq k+1$,
+the same numerator estimate used for the omitted tail gives
 \[
- 0\leq\sigma_k(x)E_{j,k+1}(x)
- \leq \frac{64x^{k+1}}{\sqrt{n+1}}
+ (n+1)\sigma_k(x)E_{j,k+1}(x)
+ \leq x\frac{64x^{k+1}}{\sqrt{n+1}}
        \frac{(k+1)^{k+1}}{x^{k+2}}
- =\frac{64(k+1)^{k+1}}{x\sqrt{n+1}}.
+ =\frac{64(k+1)^{k+1}}{\sqrt{n+1}}.
 \]
-Since $x\geq n+1$, replace $x$ in the denominator by $n+1$ and use
-$1/\sqrt{n+1}=\sqrt{n+1}/(n+1)$. No upper bound on $\sqrt x$ is needed.
-\end{proof}
-
-\begin{result}{finiteErr_bounds}{The complete finite error}
-If $n\geq k+1$, then $F_k(n)\geq0$ and
-\[
- (n+1)F_k(n)\leq
- 64(k+1)^{k+2}\frac{\sqrt{n+1}}{n+1}.
-\]
-\end{result}
-\begin{proof}
-Sum the preceding nonnegative bounds over the $k+1$ indices
-$j=0,\ldots,k$, then multiply by $n+1$ and cancel one power.
+All denominator factors are positive, so the cancellation is valid.
 \end{proof}
 
 \begin{result}{tendsto_tailErr_mul}{The exact error is \(o(1/n)\)}
 For every $k$, $(n+1)R_k(n)\longrightarrow0$.
 \end{result}
 \begin{proof}
-The scaled finite error is eventually squeezed between zero and a fixed
-multiple of $\sqrt{n+1}/(n+1)\to0$. The scaled omitted tail is squeezed
-between zero and a fixed multiple of
-$1/\sqrt{n+1}=\sqrt{n+1}/(n+1)\to0$.
-Add these two limits using the exact decomposition of $R_k$.
+For each of the finitely many retained indices, the preceding absolute-value
+bound tends to zero. Sum these null sequences to obtain
+$(n+1)F_k(n)\to0$ directly. The scaled omitted tail is squeezed between
+zero and $128(k+1)^{k+1}/\sqrt{n+1}\to0$.
+Both limits use $1/\sqrt{n+1}=\sqrt{n+1}/(n+1)\to0$.
+Add them using the exact decomposition of $R_k$.
 \end{proof}
 
 \begin{result}{tendsto_tailErr}{Decay of the unscaled error}
@@ -978,14 +966,7 @@ $x\mapsto g(\max(\lfloor x\rfloor,0))$. All actual shifts are natural
 numbers, so this extension agrees with $g$ on every required argument.
 \end{proof}
 
-Define \defined{gridCore}, \defined{finiteMain}, and
-\defined{gridCoeff} by
-\begin{align*}
- C_{k,N}(j,i)&=\sum_{e\in\mathcal V_k}
-   w_ep_e^{i+1}\frac{\sigma_k(N+s_{e,j})}{(N+s_{e,j})^{i+1}},\\
- H_k(N)&=\sum_{i=0}^k\sum_{j=0}^k\stirling{i}{j}C_{k,N}(j,i),\\
- c_{e,j}&=w_ep_e^{k+1}\stirling{k}{j}.
-\end{align*}
+Define \defined{gridCoeff} by $c_{e,j}=w_ep_e^{k+1}\stirling{k}{j}$.
 The definitions \defined{survivingMain} and \defined{survivor} are
 \[
  S_k(N)=\sum_e\sum_{j=0}^k
@@ -994,31 +975,24 @@ The definitions \defined{survivingMain} and \defined{survivor} are
  V_k(N)=\sum_e\sum_{j=0}^k c_{e,j}\rho_k(N+s_{e,j}).
 \]
 
-\begin{result}{finiteMain_eq_surviving}{Only the top denominator order survives}
-For every $k,N$, $H_k(N)=S_k(N)$.
+\begin{result}{grid_expansion_eq_surviving}{Direct cancellation of the expanded vertex sum}
+For every $k,N$,
+\[
+ \sum_e w_e\sum_{j=0}^k\sum_{i=0}^k
+ \stirling{i}{j}p_e^{i+1}
+ \frac{\sigma_k(N+s_{e,j})}{(N+s_{e,j})^{i+1}}=S_k(N).
+\]
 \end{result}
 \begin{proof}
-For an index $i<k$, if $j<k$, apply grid cancellation with
+Distribute each vertex weight and commute the three finite sums to
+put the denominator order $i$ first. For $i<k$ and $j<k$, apply grid cancellation with
 $\ell=i+1\leq k$ and
 $g(s)=\sigma_k(N+s)/(N+s)^{i+1}$.
 The only other possible index is $j=k>i$, whose Stirling coefficient
 $\stirling{i}{j}$ is zero. Thus only $i=k$ remains.
 In that row use
 $\sigma_k(x)/x^{k+1}=\rho_k(x)/x$ and reorder the finite sums;
-the result is precisely $S_k(N)$.
-\end{proof}
-
-\begin{result}{finiteMain_vertex}{Regrouping the finite main term by vertices}
-For every $k,N$,
-\[
- H_k(N)=\sum_e w_e\sum_{j=0}^k\sum_{i=0}^k
- \stirling{i}{j}p_e^{i+1}
- \frac{\sigma_k(N+s_{e,j})}{(N+s_{e,j})^{i+1}}.
-\]
-\end{result}
-\begin{proof}
-Expand the core definition, distribute its coefficient, and commute the
-three finite sums. No convergence issue arises.
+the result is precisely $S_k(N)$. All rearrangements are finite.
 \end{proof}
 
 \begin{result}{gridCoeff_zero_ne_zero}{The distinguished coefficient is nonzero}
@@ -1171,8 +1145,8 @@ If $k>0$, $N\geq B$, and $\mathcal C_k(N)$, then $W_M(N)=S_k(N)$.
 \begin{proof}
 For every $e$, $t_e<B\leq N$.
 Expand $M_k(n_e(N))$ by its double Stirling sum and apply the exact
-term-rescaling lemma to each $i,j$. The regrouped expression is
-$H_k(N)$ by the vertex identity, and $H_k(N)=S_k(N)$ by cancellation.
+term-rescaling lemma to each $i,j$. Apply the preceding direct
+grid-expansion identity to obtain $S_k(N)$.
 \end{proof}
 
 \begin{result}{tendsto_grid_vertex_error_mul}{A rescaled vertex error}
@@ -1385,11 +1359,11 @@ contains reproduction commands, and the
 {statement audit} records the six checks above.
 See also the \href{https://www.erdosproblems.com/252}{original problem statement}.
 
-This edition covers all 94 named results and 40 definitions or abbreviations
+This edition covers all 92 named results and 38 definitions or abbreviations
 in the proof module, plus the six audit results and their one definition.
 The proof-module SHA-256 (UTF-8, LF line endings) is
 \begin{center}\footnotesize
-\texttt{601c377d7a063ef7b5360ef7caca7216ae982406d194571be463dd589b8b53c5}
+\texttt{ec0891d37e7f842f999a558d0ff79ba42c7caf8f2d36b248151bcc0b19d3b6b3}
 \end{center}
 
 \end{document}

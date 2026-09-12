@@ -675,16 +675,16 @@ divisor sum, summability, and the equivalent series starting at $n=1$.
 \item Statement and axiom audits; fresh replay using Lean's kernel.
 \item Exactly \lean{propext}, \lean{Classical.choice}, and \lean{Quot.sound}.
 \end{itemize}
-Proof module: \textbf{834 substantive lines; 1,120 total lines}.
+Proof module: \textbf{812 substantive lines; 1,090 total lines}.
 The one-line root import adds one to each count.
 \source{https://github.com/tokengr1nder/Erdos252}{Lean source and reproduction commands}
 
 \note{[Sources] Local proof: theorem erdos_252; audit/Statement.lean;
-publication verification receipts review-final-0912 in the local build directory.
+publication verification receipts compression-next-final-0912 in the local build directory.
 [/Sources] These slides are explanatory prose, not kernel input. A fresh replay uses
 Lean's own kernel, not an independently implemented kernel. The theorem statement was
 compared byte-for-byte with the frozen original statement. Source SHA-256:
-601c377d7a063ef7b5360ef7caca7216ae982406d194571be463dd589b8b53c5.}
+ec0891d37e7f842f999a558d0ff79ba42c7caf8f2d36b248151bcc0b19d3b6b3.}
 \end{frame}
 
 % ----------------------------------------------------------------------
@@ -737,7 +737,7 @@ The $j=0$ error is zero after the first order.
 
 % ----------------------------------------------------------------------
 
-\begin{frame}{Appendix: one numerator bound controls both errors}
+\begin{frame}{Appendix: scale each remainder before taking limits}
 
 \small
 For $x\ge n+1$, the divisor bound gives
@@ -745,21 +745,20 @@ For $x\ge n+1$, the divisor bound gives
  \sigma_k(x)\le64x^k\sqrt x
  \le\frac{64x^{k+1}}{\sqrt{n+1}}.
 \]
-For a retained term, multiply by the Stirling remainder:
+For a retained term, take $x=n+j+1$ and $n\ge k+1$. Scale first:
 \[
- 0\le\sigma_k(x)F_{j,k+1}(x)
- \le\frac{64(k+1)^{k+1}}{x\sqrt{n+1}}
- \le\frac{64(k+1)^{k+1}}{(n+1)^{3/2}}.
+ \begin{aligned}
+ 0\le(n+1)\sigma_k(x)F_{j,k+1}(x)
+ &\le x\frac{64x^{k+1}}{\sqrt{n+1}}\frac{(k+1)^{k+1}}{x^{k+2}}\\
+ &=\frac{64(k+1)^{k+1}}{\sqrt{n+1}}\longrightarrow0.
+ \end{aligned}
 \]
-For the omitted terms, factorial denominators yield a geometric majorant;
-their total is at most $64(k+1)^{k+1}/(n\sqrt{n+1})$ for $n>0$.
-There are $k+1$ retained errors. Hence, for sufficiently large $n$,
+There are only $k+1$ retained terms, so their scaled errors sum to a null sequence.
+For the omitted tail $O_n$, factorial denominators give
 \[
- E_n\le
- \frac{64(k+1)^{k+1}}{n\sqrt{n+1}}+
- \frac{64(k+1)^{k+2}}{(n+1)^{3/2}}.
+ 0\le(n+1)O_n\le\frac{128(k+1)^{k+1}}{\sqrt{n+1}}\longrightarrow0.
 \]
-This is the explicit $O_k(n^{-3/2})$ estimate.
+Adding the two limits proves $(n+1)E_n\to0$ directly.
 
 \note{[Sources] Local proof: Erdos252/Solution.lean and PROOF.tex. [/Sources]}
 \end{frame}
@@ -828,8 +827,8 @@ The last implication uses $NS-R\to0$, not the false identity $NS=R$.
 \item \textbf{Formal proof and full mathematical exposition}\\
 Tokengrinder, \emph{Erd\H{o}s 252} (2026).
 \href{https://github.com/tokengr1nder/Erdos252}{github.com/tokengr1nder/Erdos252}\\
-\lean{PROOF.pdf} contains all 94 named proof results and their proofs,
-40 definitions, and the six statement-audit results.
+\lean{PROOF.pdf} contains all 92 named proof results and their proofs,
+38 definitions, and the six statement-audit results.
 \item \textbf{Historical context}\\
 K. Pratt, \emph{The irrationality of a divisor function series of
 Erd\H{o}s and Kac} (2022), introduction.\\
