@@ -1,33 +1,41 @@
-# Compression paused
+# Compression status
 
-Paused on 2026-09-13. No new compression pass was started after the stop request.
+A further pass was reviewed on 2026-09-13: the two block-term lemmas became one
+`HasSum` statement, `meanTerm_mul` and `gridCoeff_zero_ne_zero` were folded into
+their callers, and several proof bodies were shortened. Review restored two
+layout-only line savings, which are not counted as proof simplification.
 
 ## Current state
 
-- Proof baseline: `dc5e877ef910e3e83bbdb26afb938acd138b67d8` on `main`.
-- `Erdos252/Solution.lean`: **812 substantive lines**, **1,090 total lines**.
+- Proof source: `Erdos252/Solution.lean` in this revision, reduced from the
+  812-substantive-line baseline at `dc5e877`.
+- `Erdos252/Solution.lean`: **801 substantive lines**, **1,074 total lines**.
   Substantive excludes blank and comment-only lines. Including the root import,
-  the proof requires **813 substantive lines**, **1,091 total lines**.
+  the proof requires **802 substantive lines**, **1,075 total lines**.
+  Total counts exclude the artificial empty entry after the final newline.
 - No Lean proof lines exceed 100 columns.
 - The main theorem statement is unchanged; its axiom list is exactly
   `propext`, `Classical.choice`, and `Quot.sound`.
-- The full build, fresh trust-zero build, statement and axiom audits, and fresh
-  kernel replay passed again at this stopping point. No Lean or PDF files changed.
-- The last completed simplification bounds each scaled finite remainder directly,
-  takes a finite sum of termwise limits, and cancels the expanded vertex sum
+- Review found all 126 retained declaration statements and definitions unchanged;
+  the complete main theorem source is identical to the published baseline.
+- The full build, fresh trust-zero build, statement and axiom audits, and a
+  fresh kernel replay passed for the exact proof and artifacts in this revision.
+- The preceding baseline pass bounded each scaled finite remainder directly,
+  took a finite sum of termwise limits, and cancelled the expanded vertex sum
   directly, removing the intermediate `gridCore` and `finiteMain` layer.
-- The complete proof PDF and corrected LaTeX presentation are published.
-  GitHub's contents API returned `PROOF.pdf` at the baseline commit above:
-  150,823 bytes, byte-identical to the local file, with SHA-256
-  `a928efb8015a79a3bca697ad56bc37fb4319f85dade97c01f6ac34a4a5bc17e9`.
+- The complete proof PDF covers all 89 named proof results and 38 definitions,
+  plus the six statement-audit results and their definition. The presentation
+  has 34 slides. `SHA256SUMS` records the current source and artifact hashes.
+- The review keeps the distinction between sublinear growth and boundedness,
+  exact cancellation and limiting rescaling, and eventual zero and a zero limit.
+  The worked degree-one example uses the explicit progression
+  `N = 47875 + 99225 u`.
 
-## Proposed next step (not attempted)
+## Proposed next step
 
-Try replacing the separate `scaledTail_tsum` and `summable_blockTerm` proofs
-with one `HasSum` proof, deriving the current conclusions from `.tsum_eq` and
-`.summable`. They currently repeat the same scaled-tail summand conversion.
-This is only a candidate: keep it only if the complete dependency-adjusted proof
-is genuinely shorter, without buying lines through reflow or wider columns.
+The proposed `HasSum` merge is done. A possible next candidate is a shorter
+formulation of the arithmetic-progression counting argument. No additional gain
+has been established, and no further compression pass is part of this review.
 
 Do not resume until requested. Preserve the exact main theorem statement and
 the three-axiom list. Before any later publication, pass the full build, fresh

@@ -278,20 +278,13 @@ Commute $j+n$, use $(n+j)!=(n-1)!\,\asc{n}{j+1}$, and cancel the nonzero
 factorial $(n-1)!$.
 \end{proof}
 
-\begin{result}{scaledTail_tsum}{The actual infinite block tail}
-For $n>0$, $T_k(n)=\tsum_{j\in\N}B_k(n,j)$.
+\begin{result}{hasSum_blockTerm}{The actual infinite block tail}
+For $n>0$, the family $j\mapsto B_k(n,j)$ is summable with sum $T_k(n)$.
 \end{result}
 \begin{proof}
 Split the summable original series at $n$, subtract its finite prefix,
-and distribute $(n-1)!$ through the tail. Identify each summand by
-the preceding lemma.
-\end{proof}
-
-\begin{result}{summable_blockTerm}{Summability of block terms}
-For $n>0$, the family $j\mapsto B_k(n,j)$ is summable.
-\end{result}
-\begin{proof}
-It is the shifted original series multiplied by $(n-1)!$.
+and distribute $(n-1)!$ through the summable tail. Identify each
+summand by the preceding lemma.
 \end{proof}
 
 \begin{result}{blockTerm_nonneg}{Nonnegative block terms}
@@ -663,18 +656,6 @@ In the first case the gcd is $L$. In the second, primality implies
 $d$ and $L$ are coprime.
 \end{proof}
 
-\begin{result}{meanTerm_mul}{Multiplying the divisor index}
-For all $k,Q,A,d,L$ with $\gcd(L,Q)=1$,
-\[
- m_k(Q,A,Ld)=\frac{m_k(Q,A,d)}{L^{k+1}}.
-\]
-\end{result}
-\begin{proof}
-Coprime cancellation gives $\gcd(Ld,Q)=\gcd(d,Q)$.
-The divisibility indicator is unchanged, and
-$(Ld)^{k+1}=L^{k+1}d^{k+1}$. If $L=0$, both sides are zero.
-\end{proof}
-
 \begin{result}{progMean_multiples}{The mean supported on multiples}
 For all $k,Q,A$ and $L>0$ with $\gcd(L,Q)=1$,
 \[
@@ -685,7 +666,9 @@ Here $L$ need not be prime.
 \end{result}
 \begin{proof}
 The summand is supported on multiples of $L$. Reindex them injectively
-as $d=Le$, then use the preceding identity and pull the fixed scalar
+as $d=Le$. Coprime cancellation gives $\gcd(Le,Q)=\gcd(e,Q)$, so the
+divisibility indicator is unchanged, and $(Le)^{k+1}=L^{k+1}e^{k+1}$;
+hence each summand is $m_k(Q,A,e)/L^{k+1}$. Pull the fixed scalar
 outside the sum. The equality is also valid for nonsummable families
 with the totalized-sum convention: reindexing and multiplication by the
 nonzero scalar $L^{-(k+1)}$ preserve summability or nonsummability.
@@ -995,15 +978,6 @@ $\sigma_k(x)/x^{k+1}=\rho_k(x)/x$ and reorder the finite sums;
 the result is precisely $S_k(N)$. All rearrangements are finite.
 \end{proof}
 
-\begin{result}{gridCoeff_zero_ne_zero}{The distinguished coefficient is nonzero}
-For every $k$, $c_{\boldsymbol0,k}\ne0$.
-\end{result}
-\begin{proof}
-$\stirling{k}{k}=1$, $p_{\boldsymbol0}=B>0$, and each coordinate
-weight at zero is $(-1)^{k+1}$, hence nonzero.
-Their finite product, including the empty product at $k=0$, is nonzero.
-\end{proof}
-
 \begin{result}{tendsto_phase_div_nat}{The raw phase is sublinear}
 For every $k$, $\rho_k(n)/n\longrightarrow0$.
 \end{result}
@@ -1011,6 +985,7 @@ For every $k$, $\rho_k(n)/n\longrightarrow0$.
 For $n>0$, dividing the divisor bound by $n^k$ gives $\rho_k(n)\leq64\sqrt n$,
 so the ratio is between zero and $64\sqrt n/n$.
 The latter tends to zero by the square-root limit.
+Only this sublinear growth is used; no uniform bound on $\rho_k$ is assumed.
 \end{proof}
 
 \begin{result}{grid_main_term_tendsto_zero}{Decay of each shifted main term}
@@ -1213,7 +1188,9 @@ Apply the isolated-shift obstruction to the finite type $\mathcal I_k$,
 shifts $s_{e,j}$, and coefficients $c_{e,j}$.
 Every shift is positive. The distinguished shift is $(k+1)B$,
 occurs exactly once by the unique-shift lemma, and has nonzero
-coefficient by the distinguished-coefficient lemma.
+coefficient $c_{\boldsymbol0,k}$: here $\stirling{k}{k}=1$,
+$p_{\boldsymbol0}=B>0$, and each coordinate weight at zero is
+$(-1)^{k+1}$, so their finite product (empty at $k=0$) is nonzero.
 Regrouping the product-type sum is exactly the definition of $V_k$.
 \end{proof}
 
@@ -1359,11 +1336,11 @@ contains reproduction commands, and the
 {statement audit} records the six checks above.
 See also the \href{https://www.erdosproblems.com/252}{original problem statement}.
 
-This edition covers all 92 named results and 38 definitions or abbreviations
+This edition covers all 89 named results and 38 definitions or abbreviations
 in the proof module, plus the six audit results and their one definition.
 The proof-module SHA-256 (UTF-8, LF line endings) is
 \begin{center}\footnotesize
-\texttt{ec0891d37e7f842f999a558d0ff79ba42c7caf8f2d36b248151bcc0b19d3b6b3}
+\texttt{784303a58ba3361669a236f5f7c5d38c68c352df8ccd3df9e46cc66149d42569}
 \end{center}
 
 \end{document}

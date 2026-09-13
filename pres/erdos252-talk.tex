@@ -70,10 +70,12 @@ We explain the positive degrees first; $k=0$ has a shorter ending.
 \toprule
 Exponent & Prior results \\
 \midrule
-$k=1,2$ & Erd\H{o}s--Kac; elementary tail arguments.\\[4pt]
+$k=0$ & Elementary factorial-tail argument.\\[2pt]
+$k=1,2$ & Classical cases; see Pratt's 1950s references [9,11].\\[2pt]
 $k=3$ & Schlage-Puchta (2006) and Friedlander--Luca--Stoiciu (2007),
-independently, using sieve methods.\\[4pt]
-$k=4$ & Pratt (2022), using sieve methods and exponential sums.\\
+independently.\\[2pt]
+$k=4$ & Pratt (2022).\\[2pt]
+$k\ge5$ & Listed as open: catalogue revision of January 2026.\\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -81,12 +83,15 @@ Earlier all-degree results assumed Schinzel's hypothesis H or a suitable
 prime-tuples conjecture.
 \takeaway{The argument here uses fixed coprime integers and exact cancellation.}
 Its only prime-selection step is to choose one sufficiently large prime.
-\source{https://arxiv.org/abs/2209.11124}{Pratt (2022), introduction}
+\source{https://arxiv.org/abs/2209.11124}{Pratt (2022), introduction and references}
 
 \note{[Sources] https://arxiv.org/pdf/2209.11124, introduction;
-https://math.colgate.edu/~integers/h31/h31.pdf, introduction.
+https://math.colgate.edu/~integers/h31/h31.pdf, introduction;
+https://www.erdosproblems.com/forum/thread/252?order=newest,
+catalogue revision dated 22 January 2026.
 [/Sources] This is a description of prior literature, not a claim that an external
-catalogue has accepted this formal artifact.}
+catalogue has accepted this formal artifact. Pratt's references [9,11] distinguish
+the 1952/1953 problem statements from the 1953/1954 published solutions.}
 \end{frame}
 
 % ----------------------------------------------------------------------
@@ -148,7 +153,7 @@ The first terms are
  T_n=\frac{\sigma_k(n+1)}{n+1}
  +\frac{\sigma_k(n+2)}{(n+1)(n+2)}+\cdots .
 \]
-The divisor $n+1$ alone gives the exact lower bound
+The divisor $n+1$ alone gives the lower bound
 \[
  T_n\ge(n+1)^{k-1}\qquad(k\ge1).
 \]
@@ -171,7 +176,7 @@ The divisor $n+1$ alone gives the exact lower bound
 \item \textbf{Align.} Read several tails at compatible dilated indices.
 \medskip
 \item \textbf{Cancel.} Finite differences remove all lower powers.
-The weighted integer becomes zero, forcing a remaining sum to tend to zero.
+The weighted integer is eventually zero, forcing the remaining sum to tend to zero.
 \medskip
 \item \textbf{Separate.} Two progression averages detect one surviving shift
 differently. They cannot both be zero.
@@ -274,7 +279,7 @@ $p(n_p+2)$ & $N+10$ & $N+12$ & $N+14$
 \end{tabular}
 \end{center}
 Choose $N\equiv0\ (25)$, $N\equiv2\ (49)$, $N\equiv4\ (81)$.
-The Chinese remainder theorem makes these conditions compatible.
+One explicit solution progression is $N=47875+99225u$, $u\in\N$.
 \takeaway{The first arguments coincide. The second arguments separate.}
 
 \note{[Sources] Local proof: Erdos252/Solution.lean and PROOF.tex. [/Sources]}
@@ -557,6 +562,7 @@ Counted values $Qn+a$ are distinct positive multiples of $d$, so for $X\ge1$,
 \]
 This bound is summable in $d$. Dominated convergence applies.
 \takeaway{This includes $k=1$: the majorant is a multiple of $d^{-2}$.}
+It bounds the averaged divisor contributions, not $\rho_1$ itself.
 
 \note{[Sources] Local proof: divTerm_cesaro, affine_count_le_quotient,
 divTerm_cesaro_bound, tendsto_progMean. [/Sources] Domination is on averaged counts,
@@ -675,16 +681,16 @@ divisor sum, summability, and the equivalent series starting at $n=1$.
 \item Statement and axiom audits; fresh replay using Lean's kernel.
 \item Exactly \lean{propext}, \lean{Classical.choice}, and \lean{Quot.sound}.
 \end{itemize}
-Proof module: \textbf{812 substantive lines; 1,090 total lines}.
+Proof module: \textbf{801 substantive lines; 1,074 total lines}.
 The one-line root import adds one to each count.
 \source{https://github.com/tokengr1nder/Erdos252}{Lean source and reproduction commands}
 
 \note{[Sources] Local proof: theorem erdos_252; audit/Statement.lean;
-publication verification receipts compression-next-final-0912 in the local build directory.
+publication verification receipts review-commit-final-0913 in the local build directory.
 [/Sources] These slides are explanatory prose, not kernel input. A fresh replay uses
 Lean's own kernel, not an independently implemented kernel. The theorem statement was
 compared byte-for-byte with the frozen original statement. Source SHA-256:
-ec0891d37e7f842f999a558d0ff79ba42c7caf8f2d36b248151bcc0b19d3b6b3.}
+784303a58ba3361669a236f5f7c5d38c68c352df8ccd3df9e46cc66149d42569.}
 \end{frame}
 
 % ----------------------------------------------------------------------
@@ -696,7 +702,7 @@ ec0891d37e7f842f999a558d0ff79ba42c7caf8f2d36b248151bcc0b19d3b6b3.}
 Every sufficiently late scaled tail would be an integer.
 \medskip
 \item \textbf{A fixed dilation grid creates exact cancellation.}
-The weighted integer tends to zero, leaving one identifiable survivor.
+The weighted integer is eventually zero, forcing the survivor sum to tend to zero.
 \medskip
 \item \textbf{Progression means detect that survivor.}
 A fresh prime separates two averages that rationality would force to agree.
@@ -719,7 +725,7 @@ Put
  P_{j,L}(x)=\sum_{i=0}^{L-1}\stir{i}{j}x^{-(i+1)},\quad
  F_{j,L}(x)=D_{j+1}(x)-P_{j,L}(x).
 \]
-The exact recurrence is
+For $x>j+1$, the exact recurrence is
 \[
  F_{j+1,L+1}(x)=\frac{F_{j,L}(x)+(j+1)F_{j+1,L}(x)}x.
 \]
@@ -805,8 +811,7 @@ $L,\ v_0,\ v_1$ & fresh prime and the two separating residues\\
  R(N)&=\sum_e\sum_{j=0}^k c_{e,j}\rho_k(N+r_e(j))
  &&\text{the raw survivor}.
 \end{align*}
-The normalized divisor sum is $\rho_k(m)=\sigma_k(m)/m^k$.
-The logical chain is
+For sufficiently large $N=A+Qu$, rationality gives the chain
 \[
  W=S+o(1/N),\quad W\in\Z,\quad W\to0
  \ \Longrightarrow\ W=0\text{ eventually}
@@ -827,7 +832,7 @@ The last implication uses $NS-R\to0$, not the false identity $NS=R$.
 \item \textbf{Formal proof and full mathematical exposition}\\
 Tokengrinder, \emph{Erd\H{o}s 252} (2026).
 \href{https://github.com/tokengr1nder/Erdos252}{github.com/tokengr1nder/Erdos252}\\
-\lean{PROOF.pdf} contains all 92 named proof results and their proofs,
+\lean{PROOF.pdf} contains all 89 named proof results and their proofs,
 38 definitions, and the six statement-audit results.
 \item \textbf{Historical context}\\
 K. Pratt, \emph{The irrationality of a divisor function series of
@@ -842,7 +847,7 @@ T. F. Bloom, \href{https://www.erdosproblems.com/252}{Erd\H{o}s Problem 252}.
 
 \note{[Sources] https://arxiv.org/pdf/2209.11124;
 https://math.colgate.edu/~integers/h31/h31.pdf; local PROOF.tex and Solution.lean.
-[/Sources] Source provenance reviewed 12 September 2026. The direct catalogue page
+[/Sources] Source provenance reviewed 13 September 2026. The direct catalogue page
 returned HTTP 403 during this review; its indexed catalogue entry was visible.
 No claim of catalogue acceptance is made.}
 \end{frame}

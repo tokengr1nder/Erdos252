@@ -21,7 +21,7 @@ noncomputable section
 
 Rationality forces late factorial multiples to be integers, the divisor-sum
 factorial series converges, an eventually integral null sequence is eventually
-zero, and divisor pairing bounds the divisor sum by a square root. On that
+zero, and divisor pairing bounds the divisor count by a square root. On that
 basis the reciprocal descending product gets a Stirling expansion of any
 order with a nonnegative error, which splits the scaled `alpha k` tail into a
 finite main term and an exact error that is `o(1/n)`.
@@ -45,11 +45,10 @@ private theorem card_divisors_le_sqrt (n : ℕ) (hn : 0 < n) : n.divisors.card �
   let S := Finset.Icc 1 (Nat.sqrt n)
   have hcover : n.divisors ⊆ S ∪ S.image (n / ·) := fun d hd => by
     have hdvd := Nat.dvd_of_mem_divisors hd
-    have hdpos := Nat.pos_of_dvd_of_pos hdvd hn
     rcases Nat.le_sqrt_of_eq_mul (Nat.mul_div_cancel' hdvd).symm with hsmall | hsmall
-    · exact Finset.mem_union_left _ (Finset.mem_Icc.mpr ⟨hdpos, hsmall⟩)
+    · exact Finset.mem_union_left _ (Finset.mem_Icc.mpr ⟨Nat.pos_of_mem_divisors hd, hsmall⟩)
     · exact Finset.mem_union_right _ (Finset.mem_image.mpr ⟨n / d,
-        Finset.mem_Icc.mpr ⟨Nat.div_pos (Nat.le_of_dvd hn hdvd) hdpos, hsmall⟩,
+        Finset.mem_Icc.mpr ⟨Nat.div_pos (Nat.divisor_le hd) (Nat.pos_of_mem_divisors hd), hsmall⟩,
         Nat.div_div_self hdvd hn.ne'⟩)
   refine (Finset.card_le_card hcover).trans ((Finset.card_union_le _ _).trans ?_)
   simpa [S, two_mul] using Finset.card_image_le (s := S) (f := (n / ·))
@@ -88,9 +87,8 @@ theorem descRecip_one (x : ℝ) : descRecip 1 x = 1 / x := by simp [descRecip]
 /-- The finite coefficient recurrence holds at every truncation order. -/
 theorem stirlingPoly_recurrence (j L : ℕ) (x : ℝ) : stirlingPoly (j + 1) (L + 1) x =
       (stirlingPoly j L x + ((j : ℝ) + 1) * stirlingPoly (j + 1) L x) / x := by
-  unfold stirlingPoly
-  rw [Finset.sum_range_succ', Finset.mul_sum, ← Finset.sum_add_distrib, Finset.sum_div]
-  simp only [Nat.stirlingSecond_zero_succ, Nat.cast_zero, zero_div, add_zero]
+  simp only [stirlingPoly, Finset.sum_range_succ', Nat.stirlingSecond_zero_succ, Nat.cast_zero,
+    zero_div, add_zero, Finset.mul_sum, ← Finset.sum_add_distrib, Finset.sum_div]
   refine Finset.sum_congr rfl fun i _ => ?_
   push_cast [Nat.stirlingSecond_succ_succ]
   ring
@@ -99,8 +97,7 @@ theorem stirlingPoly_recurrence (j L : ℕ) (x : ℝ) : stirlingPoly (j + 1) (L 
 theorem stirlingErr_recurrence (j L : ℕ) (x : ℝ) (hx : x ≠ 0) (hxj : x - ((j : ℝ) + 1) ≠ 0) :
     stirlingErr (j + 1) (L + 1) x =
       (stirlingErr j L x + ((j : ℝ) + 1) * stirlingErr (j + 1) L x) / x := by
-  simp only [stirlingErr, stirlingPoly_recurrence, descRecip_succ (j + 1)]
-  push_cast
+  simp only [stirlingErr, stirlingPoly_recurrence, descRecip_succ (j + 1), Nat.cast_succ]
   field_simp
   ring
 
@@ -146,9 +143,8 @@ theorem descRecip_centered (n h : ℕ) :
     descRecip h ((n + h : ℕ) : ℝ) = 1 / ((n + 1).ascFactorial h : ℝ) := by
   rw [descRecip, ← Nat.add_descFactorial_eq_ascFactorial,
     Nat.descFactorial_eq_prod_range, Nat.cast_prod]
-  congr 1
-  exact Finset.prod_congr rfl fun j hj =>
-    (Nat.cast_sub (by have := Finset.mem_range.mp hj; omega)).symm
+  exact congrArg (fun y : ℝ => 1 / y) (Finset.prod_congr rfl fun j hj =>
+    (Nat.cast_sub (by have := Finset.mem_range.mp hj; omega)).symm)
 
 /-- The factorial divisor-sum series.  Its `n = 0` term is zero. -/
 def alpha (k : ℕ) : ℝ := ∑' n : ℕ, (σ k n : ℝ) / (n ! : ℝ)
@@ -204,14 +200,11 @@ private theorem scaled_summand_eq_blockTerm (k n j : ℕ) (hn : 0 < n) :
     ← Nat.factorial_mul_ascFactorial' n (j + 1) hn, Nat.cast_mul, div_mul_eq_div_div,
     div_self (by positivity), mul_one_div]
 
-theorem scaledTail_tsum (k n : ℕ) (hn : 0 < n) : scaledTail k n = ∑' j : ℕ, blockTerm k n j := by
-  unfold scaledTail alpha seriesPrefix
-  rw [← (summable_sigma_factorial k).sum_add_tsum_nat_add n, add_sub_cancel_left, ← tsum_mul_left]
-  exact tsum_congr (fun j => scaled_summand_eq_blockTerm k n j hn)
-
-theorem summable_blockTerm (k n : ℕ) (hn : 0 < n) : Summable (blockTerm k n) :=
-  (((summable_nat_add_iff n).2 (summable_sigma_factorial k)).mul_left
-    ((n - 1).factorial : ℝ)).congr (fun j => scaled_summand_eq_blockTerm k n j hn)
+theorem hasSum_blockTerm (k n : ℕ) (hn : 0 < n) : HasSum (blockTerm k n) (scaledTail k n) := by
+  rw [scaledTail, alpha, seriesPrefix, ← (summable_sigma_factorial k).sum_add_tsum_nat_add n,
+    add_sub_cancel_left]
+  exact (((summable_nat_add_iff n).2 (summable_sigma_factorial k)).hasSum.mul_left _).congr_fun
+    fun j => (scaled_summand_eq_blockTerm k n j hn).symm
 
 theorem blockTerm_nonneg (k n j : ℕ) : 0 ≤ blockTerm k n j :=
   div_nonneg (Nat.cast_nonneg _) (Nat.cast_nonneg _)
@@ -223,8 +216,8 @@ theorem omittedTail_nonneg (k n H : ℕ) : 0 ≤ omittedTail k n H :=
 omitted infinite tail and the finite denominator remainders. -/
 theorem tailErr_eq (k n : ℕ) : tailErr k n = omittedTail k n (k + 1) + finiteErr k n := by
   unfold tailErr tailMain finiteErr omittedTail stirlingErr
-  rw [scaledTail_tsum k (n + 1) (by omega),
-    ← (summable_blockTerm k (n + 1) (by omega)).sum_add_tsum_nat_add (k + 1)]
+  rw [← (hasSum_blockTerm k (n + 1) (by omega)).tsum_eq,
+    ← (hasSum_blockTerm k (n + 1) (by omega)).summable.sum_add_tsum_nat_add (k + 1)]
   simp_rw [descRecip_centered, mul_sub, Finset.sum_sub_distrib]
   simp only [blockTerm, Nat.add_right_comm n 1, Nat.add_assoc, mul_one_div]
   ring
@@ -236,8 +229,8 @@ theorem scaledTail_expansion (k n : ℕ) : scaledTail k (n + 1) = tailMain k n +
 theorem tailMain_eq_range (k n : ℕ) : tailMain k n =
       ∑ j ∈ Finset.range (k + 1), ∑ i ∈ Finset.range (k + 1), (Nat.stirlingSecond i j : ℝ) *
           (σ k (n + (j + 1)) : ℝ) / ((n + (j + 1) : ℕ) : ℝ) ^ (i + 1) := by
-  simp only [tailMain, stirlingPoly, Finset.mul_sum]
-  simp only [div_eq_mul_inv, mul_comm, mul_assoc, mul_left_comm]
+  simp only [tailMain, stirlingPoly, Finset.mul_sum, div_eq_mul_inv, mul_comm, mul_assoc,
+    mul_left_comm]
 
 theorem poly_ascending_bound (d n r : ℕ) (hd : 0 < d) :
     (n + 1 + (r + d)) ^ d * (n + 1) ^ (r + 1) ≤ d ^ d * (n + 1).ascFactorial (r + d + 1) := by
@@ -285,7 +278,7 @@ theorem hasSum_geometric_recip (C : ℝ) (n : ℕ) (hn : 0 < n) :
 theorem omittedTail_le (k n : ℕ) (hn : 0 < n) : omittedTail k n (k + 1) ≤
       ((64 / √((n : ℝ) + 1)) * ((k + 1 : ℕ) : ℝ) ^ (k + 1)) / (n : ℝ) := by
   have hs : Summable (fun r : ℕ => blockTerm k (n + 1) (r + (k + 1))) :=
-    (summable_nat_add_iff (k + 1)).2 (summable_blockTerm k (n + 1) (by omega))
+    (summable_nat_add_iff (k + 1)).2 (hasSum_blockTerm k (n + 1) (by omega)).summable
   simpa only [omittedTail, (hasSum_geometric_recip _ n hn).tsum_eq] using
     hs.tsum_le_tsum (omittedTerm_le k n) (hasSum_geometric_recip _ n hn).summable
 
@@ -519,16 +512,12 @@ theorem gcd_eq_prime_or_one {ell : ℕ} (hp : ell.Prime) (d : ℕ) :
   · simp [h, Nat.gcd_eq_right h]
   · simpa [h] using (hp.coprime_iff_not_dvd.mpr h).symm.gcd_eq_one
 
-theorem meanTerm_mul (k : ℕ) {Q ell : ℕ} (hc : ell.Coprime Q) (A d : ℕ) :
-    meanTerm k Q A (ell * d) = meanTerm k Q A d / (ell : ℝ) ^ (k + 1) := by
-  simp [meanTerm, hc.gcd_mul_left_cancel, mul_pow, ite_div, div_div, mul_comm]
-
 theorem progMean_multiples (k : ℕ) {Q ell : ℕ} (hell : 0 < ell) (hc : ell.Coprime Q) (A : ℕ) :
     (∑' d : ℕ, if ell ∣ d then meanTerm k Q A d else 0) = progMean k Q A / (ell : ℝ) ^ (k + 1) := by
   have hs : Function.support (fun d : ℕ => if ell ∣ d then meanTerm k Q A d else 0) ⊆
       Set.range (ell * ·) := by simp [Set.mem_range, dvd_def, eq_comm]
-  simpa [meanTerm_mul k hc, progMean, tsum_div_const] using
-    ((mul_right_injective₀ hell.ne').tsum_eq hs).symm
+  simpa [meanTerm, hc.gcd_mul_left_cancel, mul_pow, ite_div, div_div, mul_comm, progMean,
+    ← tsum_div_const] using ((mul_right_injective₀ hell.ne').tsum_eq hs).symm
 
 theorem meanTerm_refine (k : ℕ) {Q ell : ℕ} (hp : ell.Prime) (hc : ell.Coprime Q) (B d : ℕ) :
     meanTerm k (Q * ell) B d = meanTerm k Q B d +
@@ -600,7 +589,7 @@ an isolated final shift at the zero vertex and compatible squared-modulus
 congruences. Signed binomial cube weights cancel every shifted core of degree
 at most `k`, leaving a weighted reciprocal-shift sum of the normalized divisor
 phase. Eventual integrality of the weighted tail then forces that survivor to
-vanish along one CRT progression.
+tend to zero along one CRT progression.
 -/
 
 /-- The signed binomial row for a forward difference of arbitrary order. -/
@@ -779,7 +768,6 @@ theorem grid_core_cancel {k j ell : ℕ} (hj : j < k) (hell : ell ≤ k) (g : �
         ((gridSpacing k : ℝ) * ((k : ℝ) + 2) ^ i.val))
       ⟨j, hj⟩ (by simp) (fun z => g ⌊z⌋₊) (gridBase k) (((j : ℝ) + 1) * gridBase k)
 
-
 def gridCoeff (k : ℕ) (e : GridVertex k) (j : ℕ) : ℝ :=
   (gridWeight k e : ℝ) * (gridMult k e : ℝ) ^ (k + 1) * (Nat.stirlingSecond k j : ℝ)
 
@@ -815,17 +803,11 @@ theorem grid_expansion_eq_surviving (k N : ℕ) :
         mul_assoc, mul_comm, mul_left_comm] using hc
     · simp [Nat.stirlingSecond_eq_zero_of_lt (by omega : i < j)]
 
-/-- The isolated final-order coefficient never vanishes. -/
-theorem gridCoeff_zero_ne_zero (k : ℕ) : gridCoeff k (gridZero k) k ≠ 0 := by
-  simp [gridCoeff, Nat.stirlingSecond_self, gridWeight, gridZero, cubeWeight, diffWeight,
-    (gridMult_pos k (gridZero k)).ne']
-
 /-- The raw divisor phase is sublinear even in degrees zero and one. -/
 theorem tendsto_phase_div_nat (k : ℕ) :
     Tendsto (fun n : ℕ => phase k n / (n : ℝ)) atTop (𝓝 0) := by
-  have hlim := tendsto_sqrt_div_nat.const_mul (64 : ℝ)
-  simp only [mul_zero] at hlim
-  refine squeeze_zero' (Eventually.of_forall fun n => by unfold phase; positivity) ?_ hlim
+  refine squeeze_zero' (Eventually.of_forall fun n => by unfold phase; positivity) ?_
+    (by simpa only [mul_zero] using tendsto_sqrt_div_nat.const_mul (64 : ℝ))
   filter_upwards [eventually_ge_atTop 1] with n hn
   have hs : (σ k n : ℝ) / (n : ℝ) ^ k ≤ 64 * √(n : ℝ) := (div_le_iff₀ (by positivity)).mpr
     (by simpa only [mul_assoc, mul_comm, mul_left_comm] using sigma_le_pow_sqrt k n (by omega))
@@ -981,7 +963,7 @@ theorem tendsto_weightedError_mul (k A : ℕ) (hA : GridCongruences k A) :
     tendsto_finsetSum Finset.univ fun e _ => (tendsto_grid_vertex_error_mul k A hA e).const_mul
       ((gridWeight k e : ℝ) * (σ k (gridMult k e) : ℝ))
 
-/-- Rationality forces the actual generic survivor to vanish on a CRT progression. -/
+/-- Rationality forces a zero limit for the actual survivor on a CRT progression. -/
 theorem tendsto_survivor_of_rational {k : ℕ} (hk : 0 < k)
     (hx : ¬ Irrational (alpha k)) (A : ℕ) (hA : GridCongruences k A) :
     Tendsto (fun t : ℕ => survivor k (A + gridModulus k * t)) atTop (𝓝 0) := by
@@ -1028,7 +1010,9 @@ theorem survivor_not_tendsto_zero {k : ℕ} (hk : 0 < k) (Q A : ℕ) (hQ : 0 < Q
   simpa only [Fintype.sum_prod_type, survivor, ← Fin.sum_univ_eq_sum_range] using
     isolated_shift_not_tendsto_zero hk
     (fun i : GridTerm k => gridShift k i.1 i.2) (fun i : GridTerm k => gridCoeff k i.1 i.2)
-    i₀ Q A hQ (fun i => gridShift_pos k i.1 i.2) hunique (gridCoeff_zero_ne_zero k)
+    i₀ Q A hQ (fun i => gridShift_pos k i.1 i.2) hunique (by
+      simp [i₀, gridCoeff, gridWeight, gridZero, cubeWeight, diffWeight,
+        Nat.stirlingSecond_self, (gridMult_pos k (gridZero k)).ne'])
 
 theorem irrational_alpha_pos {k : ℕ} (hk : 0 < k) : Irrational (alpha k) := by
   classical
@@ -1049,11 +1033,11 @@ factorial tail. No progression-mean assertion at degree zero is used.
 -/
 
 /-- Every positive-index actual scaled tail has a positive first term. -/
-theorem scaledTail_pos_of_pos (k n : ℕ) (hn : 0 < n) : 0 < scaledTail k n := by
-  rw [scaledTail_tsum k n hn]
-  refine lt_of_lt_of_le ?_ ((summable_blockTerm k n hn).le_tsum 0 fun j _ => blockTerm_nonneg k n j)
-  simp only [blockTerm, Nat.ascFactorial_zero, Nat.ascFactorial_succ, Nat.add_zero, Nat.mul_one]
-  exact div_pos (Nat.cast_pos.mpr (ArithmeticFunction.sigma_pos k n hn.ne')) (Nat.cast_pos.mpr hn)
+theorem scaledTail_pos_of_pos (k n : ℕ) (hn : 0 < n) : 0 < scaledTail k n :=
+  hasSum_lt (f := fun _ => 0) (blockTerm_nonneg k n) (i := 0) (by
+    simp only [blockTerm, Nat.ascFactorial_zero, Nat.ascFactorial_succ, Nat.add_zero, Nat.mul_one]
+    exact div_pos (Nat.cast_pos.mpr (ArithmeticFunction.sigma_pos k n hn.ne')) (by positivity))
+    hasSum_zero (hasSum_blockTerm k n hn)
 
 /-- The actual zero-degree scaled factorial tail tends to zero. -/
 theorem tendsto_scaledTail_zero : Tendsto (scaledTail 0) atTop (𝓝 0) := by
