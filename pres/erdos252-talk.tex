@@ -52,11 +52,11 @@ For example, the divisors of $6$ are $1,2,3,6$:
 \[
  \sigma_0(6)=4,\qquad \sigma_1(6)=12,\qquad \sigma_2(6)=50.
 \]
-The series converges: $\sigma_k(n)\le n^{k+1}$, and factorial growth wins.
+(The series converges: $\sigma_k(n)\le n^{k+1}$, and factorial growth wins.)
 \begin{block}{Main theorem}
 $\alpha_k$ is irrational for every natural number $k$.
 \end{block}
-We explain the positive degrees first; $k=0$ has a shorter ending.
+We explain the positive degrees first; $k=0$ is exercise.
 
 \note{[Sources] Local proof: Erdos252/Solution.lean and PROOF.tex. [/Sources]}
 \end{frame}
@@ -75,14 +75,13 @@ $k=1,2$ & Classical cases; see Pratt's 1950s references [9,11].\\[2pt]
 $k=3$ & Schlage-Puchta (2006) and Friedlander--Luca--Stoiciu (2007),
 independently.\\[2pt]
 $k=4$ & Pratt (2022).\\[2pt]
-$k\ge5$ & Listed as open: catalogue revision of January 2026.\\
+$k\ge5$ & now solved\\
 \bottomrule
 \end{tabular}
 \end{center}
 Earlier all-degree results assumed Schinzel's hypothesis H or a suitable
 prime-tuples conjecture.
 \takeaway{The argument here uses fixed coprime integers and exact cancellation.}
-Its only prime-selection step is to choose one sufficiently large prime.
 \source{https://arxiv.org/abs/2209.11124}{Pratt (2022), introduction and references}
 
 \note{[Sources] https://arxiv.org/pdf/2209.11124, introduction;
@@ -133,7 +132,7 @@ If $\alpha_k=a/b$ with $a\in\Z$ and $b\ge1$, then for $n\ge b$,
  -
  \underbrace{\sum_{m=1}^{n}\sigma_k(m)\frac{n!}{m!}}_{\text{integer}}.
 \]
-All later work begins with this consequence:
+All later work will rely on:
 \[
  \alert{\alpha_k\in\Q\quad\Longrightarrow\quad T_n\in\Z
  \text{ for all sufficiently large }n.}
@@ -155,7 +154,7 @@ The first terms are
 \]
 The divisor $n+1$ alone gives the lower bound
 \[
- T_n\ge(n+1)^{k-1}\qquad(k\ge1).
+ T_n\ge\frac{\sigma_k(n+1)}{n+1}\ge(n+1)^{k-1}\qquad(k\ge1).
 \]
 \begin{itemize}
 \item For $k=1$, the tail is at least $1$; it cannot tend to $0$.
@@ -181,7 +180,6 @@ The weighted integer is eventually zero, forcing the remaining sum to tend to ze
 \item \textbf{Separate.} Two progression averages detect one surviving shift
 differently. They cannot both be zero.
 \end{enumerate}
-\takeaway{Factorials provide integrality; algebra cancels; averages give the contradiction.}
 
 \note{[Sources] Local proof: Erdos252/Solution.lean and PROOF.tex. [/Sources]}
 \end{frame}
@@ -190,7 +188,7 @@ differently. They cannot both be zero.
 
 \begin{frame}{1. Reciprocal products have integer coefficients}
 
-Center each denominator at its largest factor $x$:
+For all suitably large $x$ we have:
 \[
 \begin{aligned}
  \frac1{x(x-1)}&=\frac1{x^2}+\frac1{x^3}+\frac1{x^4}+\cdots,\\
@@ -204,7 +202,7 @@ In general, for $x>j$,
 \]
 $\stir{i}{j}$ counts partitions of $i$ objects into $j$ nonempty blocks.
 In particular, $\stir{i}{j}=0$ for $i<j$, and $\stir{j}{j}=1$.
-\takeaway{We keep only the powers through $x^{-(k+1)}$.}
+\takeaway{We will only keep the powers through $x^{-(k+1)}$.}
 
 \note{[Sources] Local proof: stirlingPoly_recurrence, stirlingErr_recurrence,
 stirlingErr_bounds. [/Sources] The infinite generating function is an explanatory identity.
@@ -256,7 +254,6 @@ Consequently,
  \boxed{\ \sigma_k(p)\frac{\sigma_k(n+j+1)}{(n+j+1)^{i+1}}
        =p^{i+1}\frac{\sigma_k(N+r)}{(N+r)^{i+1}}\ }.
 \]
-\takeaway{The multiplier now appears as a polynomial factor $p^{i+1}$.}
 
 \note{[Sources] Local proof: Erdos252/Solution.lean and PROOF.tex. [/Sources]}
 \end{frame}
@@ -280,7 +277,6 @@ $p(n_p+2)$ & $N+10$ & $N+12$ & $N+14$
 \end{center}
 Choose $N\equiv0\ (25)$, $N\equiv2\ (49)$, $N\equiv4\ (81)$.
 One explicit solution progression is $N=47875+99225u$, $u\in\N$.
-\takeaway{The first arguments coincide. The second arguments separate.}
 
 \note{[Sources] Local proof: Erdos252/Solution.lean and PROOF.tex. [/Sources]}
 \end{frame}
@@ -298,12 +294,11 @@ For $k=1$, this is the second-difference identity:
 \[
  P(0)-2P(1)+P(2)=0.
 \]
-In our example $p=5+2a$, so
+In our example $P(a)=5+2a$, so
 \[
- \underbrace{5-2\cdot7+9}_{0}\,
+ \left(\underbrace{5-2\cdot7+9}_{0}\right)\,
        \frac{\sigma_1(N+5)}{N+5}=0.
 \]
-\takeaway{A shared arithmetic value can be arbitrary: its polynomial multiplier cancels exactly.}
 
 \note{[Sources] Local proof: Erdos252/Solution.lean and PROOF.tex. [/Sources]}
 \end{frame}
@@ -315,20 +310,19 @@ In our example $p=5+2a$, so
 Let $e=(e_0,\ldots,e_{k-1})\in\{0,\ldots,k+1\}^k$.
 Set
 \[
- G=(k+2)^k-1,\qquad D=G!,\qquad B=1+kDG,
+ G=(k+2)^k-1,\qquad B=1+k\,G!\,G,
 \]
 and define
 \[
- p_e=B+D\sum_{a<k}e_a(k+2)^a,\qquad
- t_e=D\sum_{a<k}(a+1)e_a(k+2)^a.
+ p_e=B+G!\sum_{a<k}e_a(k+2)^a,\qquad
+ t_e=G!\sum_{a<k}(a+1)e_a(k+2)^a.
 \]
-Their shift at position $j$ is
+Their \emph{shift} at position $j$ is
 \[
  r_e(j)=(j+1)p_e-t_e
-       =(j+1)B+D\sum_{a<k}(j-a)e_a(k+2)^a.
+       =(j+1)B+G!\sum_{a<k}(j-a)e_a(k+2)^a.
 \]
-\takeaway{For $j<k$, the shift ignores $e_j$: its coefficient is zero.}
-But $p_e$ is affine in $e_j$, so $p_e^{i+1}$ is a polynomial in that coordinate.
+\takeaway{For $j<k$, the shift's coefficient for $e_j$ is zero.}
 
 \note{[Sources] Local proof: Erdos252/Solution.lean and PROOF.tex. [/Sources]}
 \end{frame}
@@ -337,19 +331,18 @@ But $p_e$ is affine in $e_j$, so $p_e^{i+1}$ is a polynomial in that coordinate.
 
 \begin{frame}{3. The grid also guarantees the needed coprimality}
 
-Write $I_e=\sum_{a<k}e_a(k+2)^a$. Distinct vertices give distinct
-integers $I_e\in[0,G]$, and $p_e=B+DI_e\equiv1\pmod D$.
+Write $I_e=\sum_{a<k}e_a(k+2)^a$. Distinct vertices $e$ give distinct
+integers $I_e\in[0,G]$, and $p_e=B+G!\,I_e\equiv1\pmod{G!}$.
 \begin{itemize}
 \item \textbf{Pairwise coprime.}
 A common prime divisor $\ell$ of $p_e,p_f$ would divide
-$|I_e-I_f|\in[1,G]$, but not $D$.
-Then $\ell\le G$ forces $\ell\mid G!=D$, a contradiction.
+$|I_e-I_f|\in[1,G]$, but not $G!$.
+Then $\ell\le G$ forces $\ell\mid G!$, a contradiction.
 \item \textbf{Coprime to small shifts.}
-For $k\ge1$, $k+1\le G$; hence every $1,\ldots,k+1$ divides $D$.
+Since $k+1\le G$, we have $1,\ldots,k+1$ divides $G!$ and is coprime to $p_e$.
 \item \textbf{Positive arguments.}
-$t_e\le kDI_e\le kDG=B-1<p_e$, so every $r_e(j)>0$.
+$t_e\le k\,G!\,I_e\le k\,G!\,G=B-1<p_e$, so every $r_e(j)>0$.
 \end{itemize}
-\takeaway{No multiplier needs to be prime, and no prime-pattern conjecture is used.}
 
 \note{[Sources] Local proof: Erdos252/Solution.lean and PROOF.tex. [/Sources]}
 \end{frame}
@@ -381,11 +374,10 @@ If $\alpha_k$ is rational, every $T_{n_e}$ is eventually integral:
 
 \begin{frame}{3. Only the top denominator power remains}
 
-After expansion and dilation, a typical contribution is
+After expansion and using part 2 we have
 \[
- \stir{i}{j}\sum_e
- w_e p_e^{i+1}\frac{\sigma_k(N+r_e(j))}{(N+r_e(j))^{i+1}},
- \qquad 0\le i,j\le k.
+ W(N)=\sum_{j=0}^k\sum_{i=j}^k\stir{i}{j}\sum_e
+      w_e p_e^{i+1}\frac{\sigma_k(N+r_e(j))}{(N+r_e(j))^{i+1}}+E(N).
 \]
 For every $i<k$:
 \begin{itemize}
@@ -395,7 +387,6 @@ $i+1\le k$. Its weighted sum is zero.
 \item If $j=k$, the Stirling coefficient $\stir{i}{k}$ is zero.
 \end{itemize}
 \takeaway{All rows $i<k$ vanish identically. Only $i=k$ survives.}
-This is an exact finite-sum identity, not an estimate.
 
 \note{[Sources] Local proof: Erdos252/Solution.lean and PROOF.tex. [/Sources]}
 \end{frame}
@@ -416,11 +407,11 @@ Then cancellation gives
       c_{e,j}\frac{\rho_k(N+r_e(j))}{N+r_e(j)}.
 \]
 Here $E(N)=\sum_e w_e\sigma_k(p_e)E_{n_e}$ is a signed error.
-For each vertex, $N=p_e(n_e+1)-r_e(0)$, so
+For each fixed vertex $e$
 \[
- NE_{n_e}=p_e(n_e+1)E_{n_e}-r_e(0)E_{n_e}\longrightarrow0.
+ NE_{n_e}=(n_e p_e+t_e)E_{n_e}\longrightarrow0.
 \]
-The family is fixed and finite; therefore $\alert{NE(N)\to0}$.
+The family is fixed and finite; therefore $\alert{NE(N)\to0}$ as $u\to\infty$.
 
 \note{[Sources] Local proof: Erdos252/Solution.lean and PROOF.tex. [/Sources]}
 \end{frame}
@@ -473,15 +464,17 @@ $\alpha_k\in\Q$ would force $R(A+Qu)\longrightarrow0$.
 
 \begin{frame}{One shift has a coefficient that cannot cancel away}
 
-The shift
+Lemma:
+
+We have
 \[
- r_*=(k+1)B
+ r_e(j)=r_*:=(k+1)B
 \]
-occurs \emph{only} at the zero vertex $e=0$ and the last position $j=k$.
+\emph{if and only if} $e=0$ and $j=k$.
 \begin{itemize}
-\item For $j<k$, $r_e(j)\le k(B+DG)=(k+1)B-1$.
+\item For $j<k$, $r_e(j)\le k(B+G!\,G)=(k+1)B-1$.
 \item For $j=k$, $r_e(k)=(k+1)B+
-D\sum_{a<k}(k-a)e_a(k+2)^a$.
+G!\sum_{a<k}(k-a)e_a(k+2)^a$.
 All added coefficients are positive, so equality requires $e=0$.
 \end{itemize}
 Its coefficient is
@@ -489,7 +482,6 @@ Its coefficient is
  c_*=w_0B^{k+1}\stir{k}{k}=B^{k+1}>0,
  \qquad w_0=(-1)^{k(k+1)}=1.
 \]
-Other shifts may repeat; this one does not.
 
 \note{[Sources] Local proof: Erdos252/Solution.lean and PROOF.tex. [/Sources]}
 \end{frame}
@@ -503,13 +495,12 @@ The progression has modulus $Q=(5\cdot7\cdot9)^2=99225$.
 \[
  W(N)=6T_{N/5}-16T_{(N-2)/7}+13T_{(N-4)/9}.
 \]
-The common first shift cancels because $5-14+9=0$.
+The common first shift ($j=0$) cancels because $5-14+9=0$.
 The second shifts have coefficients $25,-98,81$, giving
 \[
  \boxed{\ R(N)=25\rho_1(N+10)-98\rho_1(N+12)+81\rho_1(N+14)\ }.
 \]
-Rationality would force this expression to tend to $0$ on the progression.
-\takeaway{The shift $10$ stands alone, with positive coefficient $25$.}
+Rationality would force this expression to tend to $0$ as $u\to\infty$.
 
 \note{[Sources] Local proof: Erdos252/Solution.lean and PROOF.tex. [/Sources]}
 \end{frame}
@@ -523,21 +514,20 @@ Pair complementary divisors to rewrite
  \rho_k(m)=\frac{\sigma_k(m)}{m^k}=\sum_{d\mid m}\frac1{d^k}
  \qquad(m>0).
 \]
-Along a progression $Qn+a$ with $Q,a>0$, how often does a divisor occur?
+Along a progression $Qu+a$ with $Q,a>0$, how often does a divisor occur?
 \begin{center}
 \renewcommand{\arraystretch}{1.3}
 \begin{tabular}{@{}c|cccc@{}}
-Example $Qn+a=6n+3$ & $d=2$ & $d=3$ & $d=5$ & $d=9$\\
+Example $Qu+a=6u+3$ & $d=2$ & $d=3$ & $d=5$ & $d=9$\\
 \hline
-Density of $d\mid6n+3$ & $0$ & $1$ & $1/5$ & $1/3$
+Density of $d\mid6u+3$ & $0$ & $1$ & $1/5$ & $1/3$
 \end{tabular}
 \end{center}
-In general, with $g=\gcd(d,Q)$,
+In general,
 \[
- \text{density of }d\mid Qn+a=
- \begin{cases}g/d,&g\mid a,\\0,&g\nmid a.\end{cases}
+ \text{density of }d\mid Qu+a=
+ \begin{cases}\gcd(d,Q)/d,&\gcd(d,Q)\mid a,\\0,&\gcd(d,Q)\nmid a.\end{cases}
 \]
-The compatible congruence has one solution class modulo $d/g$.
 
 \note{[Sources] Local proof: Erdos252/Solution.lean and PROOF.tex. [/Sources]}
 \end{frame}
@@ -548,21 +538,19 @@ The compatible congruence has one solution class modulo $d/g$.
 
 For fixed $k\ge1$ and $Q,a>0$,
 \[
- \frac1X\sum_{n=0}^{X-1}\rho_k(Qn+a)
+ \frac1X\sum_{u=0}^{X-1}\rho_k(Qu+a)
  \longrightarrow
  \mu_Q(a):=\sum_{\substack{d\ge1\\\gcd(d,Q)\mid a}}
        \frac{\gcd(d,Q)}{d^{k+1}}\ge1.
 \]
 Why may we sum the individual divisor densities?
-Counted values $Qn+a$ are distinct positive multiples of $d$, so for $X\ge1$,
+Counted values $Qu+a$ are distinct positive multiples of $d$, so for $X\ge1$,
 \[
- \frac1{d^k}\frac{\#\{n<X:d\mid Qn+a\}}X
+ \frac1{d^k}\frac{\#\{u<X:d\mid Qu+a\}}X
  \le\frac{QX+a}{X\,d^{k+1}}
  \le\frac{Q+a}{d^{k+1}}.
 \]
 This bound is summable in $d$. Dominated convergence applies.
-\takeaway{This includes $k=1$: the majorant is a multiple of $d^{-2}$.}
-It bounds the averaged divisor contributions, not $\rho_1$ itself.
 
 \note{[Sources] Local proof: divTerm_cesaro, affine_count_le_quotient,
 divTerm_cesaro_bound, tendsto_progMean. [/Sources] Domination is on averaged counts,
@@ -571,25 +559,86 @@ not a uniform bound on rho_1, which is unbounded. The term d=1 proves the mean i
 
 % ----------------------------------------------------------------------
 
-\begin{frame}{4. A fresh prime changes the mean by one factor}
+\begin{frame}{4. First split the old mean at $L$}
 
-Take a prime $L\nmid Q$ and refine the progression to
-$Q(Ln+v)+a$.
-Its starting point $a'=Qv+a$ is congruent to $a$ modulo $Q$.
+Take a prime $L\nmid Q$. In $Qu+a$, keep the indices $u=Lw+v$,
+where $0\le v<L$:
+\[
+ Q(Lw+v)+a=QLw+a',\qquad a'=Qv+a\equiv a\pmod Q.
+\]
+In the \emph{old} mean $\mu_Q(a)$, write the divisors containing $L$ as $d=Ld'$.
+Since $\gcd(Ld',Q)=\gcd(d',Q)$, their total contribution is
+\[
+ \sum_{\substack{d'\ge1\\\gcd(d',Q)\mid a}}
+       \frac{\gcd(d',Q)}{(Ld')^{k+1}}
+ =\frac{\mu_Q(a)}{L^{k+1}}.
+\]
+Subtracting from the full mean, the divisors with $L\nmid d$ contribute
+\[
+ \boxed{\ \mu_Q(a)\bigl(1-L^{-(k+1)}\bigr)\ }.
+\]
+
+\note{[Sources] Local proof: progMean_multiples and progMean_refine;
+PROOF.tex. [/Sources] The index d' ranges over all positive integers, including
+multiples of L. Since gcd(d,Q) divides Q, it divides a' exactly when it divides a.}
+\end{frame}
+
+% ----------------------------------------------------------------------
+
+\begin{frame}{4. Refinement gives the claimed factor}
+
+Let's compare $\mu_{QL}(a')$ to $\mu_{Q}(a)$.
+
+For divisors with $L\nmid d$, the gcd and compatibility condition stay the same.
+For $L\mid d$, the gcd gains one factor of $L$:
+\[
+ \gcd(d,QL)=L\gcd(d,Q).
+\]
+\begin{itemize}
+\item If $L\nmid a'$, no $QLw+a'$ is divisible by $L$:
+these divisor contributions disappear.
+\item If $L\mid a'$, each old compatible contribution is multiplied by $L$.
+Their total becomes $L\cdot\mu_Q(a)/L^{k+1}=\mu_Q(a)L^{-k}$.
+\end{itemize}
+Adding this to the unchanged part gives
 \[
  \boxed{\ \mu_{QL}(a')=
  \mu_Q(a)\left(1-L^{-(k+1)}+\ind{L\mid a'}L^{-k}\right)\ }.
 \]
-The indicator $\ind{L\mid a'}$ is $1$ if $L\mid a'$, and $0$ otherwise.
-\begin{itemize}
-\item The terms with $L\nmid d$ contribute
-$\mu_Q(a)(1-L^{-(k+1)})$.
-\item Write the other terms as $d=Ld'$.
-They contribute $\mu_Q(a)L^{-k}$ if $L\mid a'$, and zero otherwise.
-\end{itemize}
-\takeaway{There is a common contribution, plus an extra term when the prime divides the offset.}
 
-\note{[Sources] Local proof: Erdos252/Solution.lean and PROOF.tex. [/Sources]}
+\note{[Sources] Local proof: meanTerm_refine and progMean_refine;
+PROOF.tex. [/Sources] Write g=gcd(d,Q). The new condition gL divides a'
+is equivalent to g divides a and L divides a', because gcd(g,L)=1
+and a' is congruent to a modulo Q. Each mean is normalized within its own
+progression; there is no additional factor 1/L.}
+\end{frame}
+
+% ----------------------------------------------------------------------
+
+\begin{frame}{4. Example: one residue gets the extra term}
+
+Take $k=1$, $Q=6$, $a=3$, and $L=5$.
+Two subprogressions of $6u+3$ are
+\[
+ \begin{aligned}
+ u=5w:\quad&6u+3=30w+3,   &&5\nmid3,\\
+ u=5w+2:\quad&6u+3=30w+15,&&5\mid15.
+ \end{aligned}
+\]
+The refinement formula gives
+\[
+ \begin{aligned}
+ \mu_{30}(3)&=\mu_6(3)\left(1-\frac1{25}\right)
+             =\frac{24}{25}\mu_6(3),\\
+ \mu_{30}(15)&=\mu_6(3)\left(1-\frac1{25}+\frac15\right)
+              =\frac{29}{25}\mu_6(3).
+ \end{aligned}
+\]
+\takeaway{The second mean is larger by exactly $\mu_6(3)/5>0$.}
+
+\note{[Sources] Local proof: progMean_refine; PROOF.tex. [/Sources]
+Here v=0 gives a'=3 and v=2 gives a'=15. This numerical example illustrates
+the general refinement formula; it is not an additional assumption.}
 \end{frame}
 
 % ----------------------------------------------------------------------
@@ -598,7 +647,7 @@ They contribute $\mu_Q(a)L^{-k}$ if $L\mid a'$, and zero otherwise.
 
 Write $i=(e,j)$, $r_i=r_e(j)$ and $c_i=c_{e,j}$, so
 $R(N)=\sum_i c_i\rho_k(N+r_i)$.
-Choose a prime $L>\max(Q,\max_i r_i)$. Since $\gcd(Q,L)=1$, choose:
+Choose a prime $L>\max(Q,\max_i r_i)$ and choose two subprogressions of $N=A+Qu$:
 \begin{center}
 \renewcommand{\arraystretch}{1.6}
 \begin{tabular}{@{}p{5.7cm}p{6.2cm}@{}}
@@ -614,35 +663,75 @@ Never zero: $0<r_i<L$.
 \bottomrule
 \end{tabular}
 \end{center}
-These give two subprogressions of $N=A+Qu$.
-There is exactly one term at $r_*$, with coefficient $c_*>0$.
+These give $N=Q(Lw+v_0)+A$ and $N=Q(Lw+v_1)+A$, both in $N=Qu+A$.
 
 \note{[Sources] Local proof: Erdos252/Solution.lean and PROOF.tex. [/Sources]}
 \end{frame}
 
 % ----------------------------------------------------------------------
 
-\begin{frame}{4. The two averages cannot both vanish}
+\begin{frame}{4. Compute the first mean, $m_0$}
 
-If $R(A+Qu)\to0$, its mean on \emph{each} positive-step subprogression is zero.
-But the prime-refinement formula gives the two means
+For $b=0,1$, average along the chosen subprogression $Q(Lw+v_b)+A$:
 \[
  \begin{aligned}
- m_0&=(1-L^{-(k+1)})\sum_i c_i\mu_Q(A+r_i),\\
- m_1&=m_0+c_*\mu_Q(A+r_*)L^{-k}.
+ m_b&:=\lim_{X\to\infty}\frac1X\sum_{w=0}^{X-1}R\bigl(Q(Lw+v_b)+A\bigr)\\
+    &=\sum_i c_i\mu_{QL}(Qv_b+A+r_i).
  \end{aligned}
 \]
-Every offset $A+r_i$ is positive, so the mean theorem applies.
+Expand the finite sum $R(N)=\sum_i c_i\rho_k(N+r_i)$ and apply the mean
+theorem term by term; every offset is positive.
+
+The residue $v_0$ misses every shift: $L\nmid Qv_0+A+r_i$.
+So each indicator in the refinement formula is zero:
+\[
+ \begin{aligned}
+ \mu_{QL}(Qv_0+A+r_i)&=\mu_Q(A+r_i)\bigl(1-L^{-(k+1)}\bigr),\\
+ m_0&=(1-L^{-(k+1)})\sum_i c_i\mu_Q(A+r_i).
+ \end{aligned}
+\]
+
+\note{[Sources] Local proof: tendsto_progMean, progMean_refine, and
+isolated_shift_not_tendsto_zero; Erdos252/Solution.lean and PROOF.tex. [/Sources]
+For each i, Q(Lw+v_b)+A+r_i=QLw+(Qv_b+A+r_i). Thus the new modulus is QL
+and the new offset is Qv_b+A+r_i, congruent to A+r_i modulo Q.
+Use a=A+r_i and a'=Qv_b+A+r_i in the refinement formula.
+Finite linearity allows the coefficients and the sum over i outside the limit,
+even though some coefficients are negative. The average uses X terms of the
+chosen subprogression, so there is no additional factor 1/L.}
+\end{frame}
+
+% ----------------------------------------------------------------------
+
+\begin{frame}{4. Compute $m_1$: exactly one extra term remains}
+
+For $v_1$, $L\mid Qv_1+A+r_i$ holds exactly when $r_i=r_*$.
+Substitute these indicators into the same sum of means:
+\[
+ \begin{aligned}
+ m_1&=\sum_i c_i\mu_Q(A+r_i)
+       \bigl(1-L^{-(k+1)}+\ind{r_i=r_*}L^{-k}\bigr)\\
+    &=m_0+c_*\mu_Q(A+r_*)L^{-k}.
+ \end{aligned}
+\]
+The common part is $m_0$; the indicator selects the single term at $r_*$.
 Their difference satisfies
 \[
  \alert{m_1-m_0=c_*\mu_Q(A+r_*)L^{-k}>0},
 \]
 because $c_*>0$, $\mu_Q(A+r_*)\ge1$, and $L^{-k}>0$.
 \begin{block}{Contradiction}
-Both means would be zero. Hence $\alpha_k$ is irrational for every $k\ge1$.
+Rationality forces $R(A+Qu)\to0$, so each subprogression and its average
+tend to zero: $m_0=m_1=0$. This contradicts the positive difference.
+Hence $\alpha_k$ is irrational for every $k\ge1$.
 \end{block}
 
-\note{[Sources] Local proof: Erdos252/Solution.lean and PROOF.tex. [/Sources]}
+\note{[Sources] Local proof: isolated_shift_not_tendsto_zero and
+tendsto_survivor_of_rational; Erdos252/Solution.lean and PROOF.tex. [/Sources]
+The indicator equals one for exactly one index, since the shift r_* is isolated.
+All other terms, including their signs, have the same common factor as in m_0.
+The mean of a sequence tending to zero also tends to zero, which gives the
+incompatible equalities m_0=m_1=0 under the rationality assumption.}
 \end{frame}
 
 % ----------------------------------------------------------------------
@@ -666,64 +755,13 @@ That is impossible once $0<T_n<1$.
 
 % ----------------------------------------------------------------------
 
-\begin{frame}{The formal artifact proves the original series}
-
-\[
- \forall k\in\N,\qquad
- \operatorname{Irrational}\left(
- \sum_{n=0}^{\infty}
- \frac{\operatorname{ArithmeticFunction.sigma}(k,n)}{n!}\right).
-\]
-The $n=0$ term is zero. The statement audit also checks the expanded
-divisor sum, summability, and the equivalent series starting at $n=1$.
-\begin{itemize}
-\item Lean 4.33.1, pinned Mathlib; full build and a fresh trust-zero build.
-\item Statement and axiom audits; fresh replay using Lean's kernel.
-\item Exactly \lean{propext}, \lean{Classical.choice}, and \lean{Quot.sound}.
-\end{itemize}
-Proof module: \textbf{801 substantive lines; 1,074 total lines}.
-The one-line root import adds one to each count.
-\source{https://github.com/tokengr1nder/Erdos252}{Lean source and reproduction commands}
-
-\note{[Sources] Local proof: theorem erdos_252; audit/Statement.lean;
-publication verification receipts review-commit-final-0913 in the local build directory.
-[/Sources] These slides are explanatory prose, not kernel input. A fresh replay uses
-Lean's own kernel, not an independently implemented kernel. The theorem statement was
-compared byte-for-byte with the frozen original statement. Source SHA-256:
-784303a58ba3361669a236f5f7c5d38c68c352df8ccd3df9e46cc66149d42569.}
-\end{frame}
-
-% ----------------------------------------------------------------------
-
-\begin{frame}{Three ingredients resolve the contradiction}
-
-\begin{enumerate}
-\item \textbf{Factorials turn rationality into integrality.}
-Every sufficiently late scaled tail would be an integer.
-\medskip
-\item \textbf{A fixed dilation grid creates exact cancellation.}
-The weighted integer is eventually zero, forcing the survivor sum to tend to zero.
-\medskip
-\item \textbf{Progression means detect that survivor.}
-A fresh prime separates two averages that rationality would force to agree.
-\end{enumerate}
-\begin{block}{Conclusion}
-For every natural $k$, $\displaystyle\sum_{n\ge1}\sigma_k(n)/n!$ is irrational.
-\end{block}
-
-\note{[Sources] Local proof: Erdos252/Solution.lean and PROOF.tex. [/Sources]}
-\end{frame}
-
-% ----------------------------------------------------------------------
-
 \begin{frame}{Appendix: the finite Stirling bound used in Lean}
 
 \small
 Put
 \[
- D_{j+1}(x)=\frac1{x(x-1)\cdots(x-j)},\quad
- P_{j,L}(x)=\sum_{i=0}^{L-1}\stir{i}{j}x^{-(i+1)},\quad
- F_{j,L}(x)=D_{j+1}(x)-P_{j,L}(x).
+ P_{j,L}(x)=\sum_{i=0}^{L-1}\stir{i}{j}x^{-(i+1)},\qquad
+ F_{j,L}(x)=\frac1{x(x-1)\cdots(x-j)}-P_{j,L}(x).
 \]
 For $x>j+1$, the exact recurrence is
 \[
@@ -733,7 +771,7 @@ For $j+1\le H\le x$, induction on $L$ gives
 \[
  0\le F_{j,L}(x)\le H^L/x^{L+1}.
 \]
-At $L=0$, $0<D_{j+1}(x)\le1/x$. In the induction step, the weighted
+At $L=0$, $0<F_{j,0}(x)\le1/x$. In the induction step, the weighted
 sum of two errors bounded by $u$ is at most $(j+2)u\le Hu$.
 The $j=0$ error is zero after the first order.
 \takeaway{This proves the truncated expansion directly, with an explicit error.}
