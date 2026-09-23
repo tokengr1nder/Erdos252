@@ -36,6 +36,25 @@ theorem joint_series_summable {a b : ℕ → ℤ} {q : ℕ → ℕ} (hq : ∀ n,
 theorem factorial_minus_one_is_not_a_divisibility_chain :
     ¬ (Nat.factorial 3 - 1) ∣ (Nat.factorial 4 - 1) := by decide
 
+theorem polynomial_numerator_statement (k : ℕ) (hk : 0 < k)
+    (a : ℚ) (ha : a ≠ 0) (P : Polynomial ℚ) (c : ℤ) (hc : c ≠ 0) :
+    Irrational (∑' n : ℕ,
+      ((a : ℝ) * (ArithmeticFunction.sigma k n : ℝ) + ((P.eval (n : ℚ) : ℚ) : ℝ)) /
+        ((c : ℝ) ^ n * (n.factorial : ℝ))) :=
+  irrational_polynomial_sigma_geometric hk a ha P c hc
+
+theorem polynomial_series_summable (k : ℕ) (a : ℚ) (P : Polynomial ℚ)
+    (c : ℤ) (hc : c ≠ 0) :
+    Summable (fun n : ℕ =>
+      ((a : ℝ) * (ArithmeticFunction.sigma k n : ℝ) + ((P.eval (n : ℚ) : ℚ) : ℝ)) /
+        ((c : ℝ) ^ n * (n.factorial : ℝ))) :=
+  summable_polynomial_sigma_geometric k a P c hc
+
+theorem proper_divisors_statement (k : ℕ) (hk : 0 < k) (c : ℤ) (hc : c ≠ 0) :
+    Irrational (∑' n : ℕ, ((ArithmeticFunction.sigma k n : ℝ) - (n : ℝ) ^ k) /
+      ((c : ℝ) ^ n * (n.factorial : ℝ))) :=
+  irrational_proper_divisors_geometric hk c hc
+
 #print axioms Erdos252.erdos_252
 #print axioms irrational_cantor_iff
 #print axioms irrational_joint_product_series_iff
@@ -54,5 +73,19 @@ theorem factorial_minus_one_is_not_a_divisibility_chain :
 #print axioms arbitrary_denominator_statement
 #print axioms joint_series_summable
 #print axioms factorial_minus_one_is_not_a_divisibility_chain
+#print axioms isolated_shift_not_tendsto_const
+#print axioms weighted_tail_obstruction_of_limit
+#print axioms irrational_sigma_geometric_factorial
+#print axioms irrational_affine_sigma_geometric
+#print axioms irrational_sigma_add_rational_exp
+#print axioms irrational_polynomial_sigma_geometric
+#print axioms irrational_proper_divisors_geometric
+#print axioms irrational_proper_divisor_sum
+#print axioms irrational_proper_divisors_double_factorial
+#print axioms irrational_alternating_proper_double_factorial
+#print axioms irrational_sigma_plus_square_example
+#print axioms polynomial_numerator_statement
+#print axioms polynomial_series_summable
+#print axioms proper_divisors_statement
 
 end GeneralizationsAudit

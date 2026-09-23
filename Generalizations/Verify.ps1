@@ -61,7 +61,9 @@ $taskOptions = @('--trust=0', '-DautoImplicit=false', '-DrelaxedAutoImplicit=fal
   '-Dwarn.sorry=true', ('--root=' + $taskRoot))
 $taskModules = @('Erdos252.Solution', 'Erdos252', 'Generalizations.Cantor',
   'Generalizations.Examples', 'Generalizations.WeightedTail', 'Generalizations.Joint',
-  'Generalizations.Instances', 'Generalizations.Denominator', 'Generalizations',
+  'Generalizations.Instances', 'Generalizations.Denominator',
+  'Generalizations.RobustTail', 'Generalizations.FactorialWeights',
+  'Generalizations.AffineNumerator', 'Generalizations.PolynomialNumerator', 'Generalizations',
   'Generalizations.Audit')
 foreach ($taskModule in $taskModules) {
   $taskRelative = $taskModule.Replace('.', '/')
@@ -95,6 +97,14 @@ $taskRequired = @('Erdos252.erdos_252',
   'Erdos252.Generalizations.irrational_general_denominator',
   'Erdos252.Generalizations.irrational_corrected_sigma_factorial',
   'Erdos252.Generalizations.weighted_tail_obstruction',
+  'Erdos252.Generalizations.weighted_tail_obstruction_of_limit',
+  'Erdos252.Generalizations.irrational_polynomial_sigma_geometric',
+  'Erdos252.Generalizations.irrational_sigma_add_rational_exp',
+  'Erdos252.Generalizations.irrational_proper_divisors_geometric',
+  'Erdos252.Generalizations.irrational_alternating_proper_double_factorial',
+  'GeneralizationsAudit.polynomial_numerator_statement',
+  'GeneralizationsAudit.polynomial_series_summable',
+  'GeneralizationsAudit.proper_divisors_statement',
   'GeneralizationsAudit.joint_statement',
   'GeneralizationsAudit.arbitrary_denominator_statement')
 foreach ($taskDeclaration in $taskRequired) {

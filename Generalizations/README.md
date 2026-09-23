@@ -1,144 +1,117 @@
-# Generalizing both functions
+# Genuine extensions of the E252 argument
 
-This is a separate Lean development. It does not change `Erdos252.erdos_252`
-or the published proof. The main result below varies the numerator and the
-denominator simultaneously, not just one at a time.
+This development keeps the difficult divisor-sum cancellation from E252.
+It does not replace it with a classical small-coefficient criterion, and it
+does not change the original `Erdos252.erdos_252` theorem or its source.
 
-## Joint theorem
+## One theorem, both functions changed
 
-Choose arbitrary functions $a,b:\mathbb N\to\mathbb Z$ and
-$D:\mathbb N\to\mathbb N$ satisfying
-
-$$
-D_0>0,\qquad D_n\mid D_{n+1},\qquad D_{n+1}\ge 2D_n.
-$$
-
-Set $q_n=D_{n+1}/D_n$ and
-
-$$r_n=a_n-q_nb_n+b_{n+1}.$$
-
-Assume $\sum_n |b_n|/D_n<\infty$ and $r_n/q_n\to0$. Then
+For **every** positive integer $k$, nonzero rational number $a$, rational
+polynomial $P$, and nonzero integer $c$,
 
 $$
-\sum_{n\ge0}\frac{a_n}{D_{n+1}}
-\quad\hbox{is irrational if }r_n\ne0\hbox{ for infinitely many }n.
+\boxed{\displaystyle
+\sum_{n\ge0}\frac{a\,\sigma_k(n)+P(n)}{c^n n!}\text{ is irrational}.}
 $$
 
-This is `irrational_general_denominator` in [Denominator.lean](Denominator.lean).
-The numerator can be negative, oscillatory, or nonmultiplicative. The denominator
-need not be a factorial, a factorial power, or a polynomial product. Its precise
-restriction here is the displayed positive divisibility-chain condition.
-Taking $b=0$ gives the simpler small-coefficient criterion. Bounded $b$ always
-satisfies the summability condition; unbounded $b$ is allowed when it does too.
+Here $\sigma_k(n)=\sum_{d\mid n}d^k$ for $n>0$, with $\sigma_k(0)=0$.
+The degree and coefficients of $P$ are unrestricted. Negative $c$ gives
+alternating series. Absolute convergence is proved as well.
+There are no conjectural assumptions or unproved analytic hypotheses in this
+theorem: `irrational_polynomial_sigma_geometric` in
+[PolynomialNumerator.lean](PolynomialNumerator.lean).
 
-In product form, $D_0=1$ and $D_{n+1}=\prod_{j=0}^n q_j$, the stronger theorem
-`irrational_joint_product_series_iff` proves the **equivalence**:
-irrationality holds exactly when $r$ is not eventually zero. It also proves
-absolute convergence; no nonconvergent `tsum` is being used as a series value.
+The numerator need not be positive or multiplicative. The denominators here
+are specifically $c^n n!$, not arbitrary sequences. Omitting the $n=0$ term
+only subtracts the rational number $P(0)$.
 
-### Why it works
+## Examples that are easy to recognize
 
-The identity
+Every row below is an explicit Lean theorem, not a proposed application.
+
+| Example | What changed |
+| --- | --- |
+| $\displaystyle\sum_{n\ge0}\frac{\sigma_k(n)-n^k}{c^n n!}$, $k\ge1$, $c\ne0$ | Replace all divisors by **proper divisors**. |
+| $\displaystyle\sum_{n\ge0}\frac{\sigma_k(n)-n^k}{(2n)!!}$, $k\ge1$ | Proper divisors and the **even double factorial**. |
+| $\displaystyle\sum_{n\ge0}\frac{(-1)^n(\sigma_k(n)-n^k)}{(2n)!!}$, $k\ge1$ | The alternating version is irrational too. |
+| $\displaystyle\sum_{n\ge0}\frac{\sigma_5(n)+n^2+1}{3^n n!}$ | A nonmultiplicative numerator and a new denominator together. |
+
+For $n>0$, $\sigma_k(n)-n^k=\sum_{d\mid n,\ d<n}d^k$.
+For example, the numerator at $n=6$, $k=5$ is $1^5+2^5+3^5$.
+Also $(2n)!!=2\cdot4\cdots(2n)=2^n n!$; the $n=0$ empty product is $1$.
+
+These are consequences of a single theorem, not separate irrationality tricks.
+The proper-divisor numerator is usually not multiplicative, which illustrates
+why multiplicativity of the final numerator is not required.
+
+## Why the extension works
+
+1. Replacing $n!$ by $c^n n!$ weights the successive scaled-tail terms by
+   $c^{-1},c^{-2},\ldots$. Their absolute values are at most one, so the E252
+   remainder estimates survive, including negative $c$.
+2. Rationality would still make sufficiently late scaled tails integers.
+   The original dilation grid cancels the large terms as before.
+3. The fresh-prime argument is stronger than originally needed: its surviving
+   divisor expression cannot converge to **any constant**, not just zero.
+   Two refined progressions give different limiting means.
+4. Consequently a constant numerator perturbation is allowed. Its scaled tail
+   has a finite limit, which the strengthened contradiction handles.
+5. Every rational polynomial contributes a rational multiple of $e^{1/c}$.
+   Mathlib's falling-factorial polynomial basis and a series reindexing reduce
+   arbitrary $P$ to the constant-perturbation case.
+
+In particular the development proves, for every rational $q$,
 
 $$
-\frac{a_n}{D_{n+1}}=
-\frac{b_n}{D_n}-\frac{b_{n+1}}{D_{n+1}}+\frac{r_n}{D_{n+1}}
+\sum_{n\ge0}\frac{\sigma_k(n)}{c^n n!}+q e^{1/c}
+\quad\text{is irrational}\qquad(k\ge1,\ c\in\mathbb Z\setminus\{0\}).
 $$
 
-removes a telescoping correction, whose sum is the rational number $b_0/D_0$.
-For the remaining series, the scaled tail
-$T_n=D_n\sum_{j\ge n}r_j/D_{j+1}$ tends to zero. If the sum were rational with
-denominator $v$, then $vT_n$ would be an integer for every $n$, hence eventually
-zero. The recurrence $q_nT_n=r_n+T_{n+1}$ would force $r_n$ eventually to vanish.
+This is stronger than just adding a rational number to E252: the perturbation
+$q e^{1/c}$ is generally irrational itself.
 
-The restrictions cannot simply be dropped. For every integer $q_n\ge2$,
+## What would be a genuinely broader arithmetic theorem?
 
-$$
-\sum_{n\ge0}\frac{q_n-1}{\prod_{j=0}^n q_j}=1.
-$$
+A natural next target is
 
-This is the proved `telescoping_counterexample`, not just a numerical warning.
+$$F_P(n)=\sum_{d\mid n}P(d),$$
 
-## Examples proved in Lean
+for a nonzero rational polynomial $P$ with $P(0)=0$. For example,
+$P(X)=X^5+X^2$ gives $F_P(n)=\sigma_5(n)+\sigma_2(n)$.
+This is **not** the polynomial perturbation already proved above: $P(n)$ and
+$\sum_{d\mid n}P(d)$ are different functions.
 
-Here $\sigma_k(m)=\sum_{d\mid m}d^k$ and $\varphi$ is Euler's totient function.
-Every series in this list is proved irrational.
+Proving irrationality for all such $F_P(n)/n!$ would be equivalent to proving
+that $1,\alpha_1,\ldots,\alpha_r$ are rationally linearly independent for every
+$r$, where $\alpha_j=\sum\sigma_j(n)/n!$. That remains a research target here,
+not a theorem in this directory. Deajim and Siksek's
+[2011 paper](https://www.sciencedirect.com/science/article/pii/S0022314X11000102)
+gives a criterion conditional on Schinzel's hypothesis, checked through $r=50$;
+[Pratt's introduction](https://arxiv.org/html/2209.11124) records that distinction.
 
-1. For every natural $k$:
-   $$\sum_{m\ge0}\frac{\sigma_k(m)}{(m!)^{k+1}}.$$
-2. A different arithmetic numerator and denominator:
-   $$\sum_{n\ge0}\frac{\varphi(n+2)}{((n+2)!)^2}.$$
-3. Alternating divisor sums, for every natural $k$:
-   $$\sum_{n\ge0}\frac{(-1)^n\sigma_k(n+2)}{((n+2)!)^{k+1}}.$$
-4. Both functions changed, with an oscillatory numerator:
-   $$\sum_{n\ge0}
-   \frac{\sigma_1(n+2)+(-1)^n((n+2)^2+2)}
-        {\prod_{j=0}^n((j+2)^2+1)}.$$
-   Here $q_n=(n+2)^2+1$ and $b_n=(-1)^n$, so the residual is exactly
-   $\sigma_1(n+2)$. The numerator/base ratio itself does **not** tend to zero.
-5. More generally, for arbitrary integer bases $q_n\ge(n+2)^{k+1}$ and any
-   bounded integer sequence $b$:
-   $$\sum_{n\ge0}
-   \frac{\sigma_k(n+2)+q_nb_n-b_{n+1}}{\prod_{j=0}^n q_j}.$$
-   No monotonicity or multiplicativity of $q$ or $b$ is required.
+Other natural next directions are Jordan totients
+$J_k(n)=n^k\prod_{p\mid n}(1-p^{-k})$, and product denominators
+$\prod_{j=1}^n(aj+b)$ such as odd double factorials. These would require new
+verified progression-mean identities or denominator expansions. They are
+**candidates, not proved instances**, and are not asserted to be open problems
+merely because this directory does not prove them.
 
-There is also a numerator-only extension preserving the original difficult
-factorial denominator: for every natural $k$ and bounded integer $b$,
+Literature was checked on 22 September 2026. No new named open-problem solution
+is claimed by this extension, and no priority claim is made for every individual
+example. The all-degree joint theorem is a genuine extension of the verified
+E252 argument. Classical fast-denominator results are retained separately in
+[CLASSICAL.md](CLASSICAL.md), not presented as the main research result.
 
-$$\sum_{n\ge0}
-\frac{\sigma_k(n+2)+(n+2)b_n-b_{n+1}}{(n+2)!}
-$$
+## Lean source and verification
 
-is irrational. This uses the existing all-degree Erdős 252 theorem, rather than
-pretending that the small-coefficient criterion covers that theorem for $k\ge1$.
-
-`irrational_of_sigma_bound` further permits **any** integer numerator $a$ with
-$|a_n|\le C\sigma_k(n+2)$, provided it is not eventually zero and the product
-bases are at least $(n+2)^{k+1}$. The examples are instances, not the whole scope.
-
-## What is classical, and what remains open?
-
-The small-coefficient criterion is classical Oppenheim theory. See Theorem 2.1
-of Hančl and Tijdeman, [On the irrationality of polynomial Cantor series](https://pub.math.leidenuniv.nl/~tijdemanr/hancti17.pdf).
-The telescoping extension is an elementary consequence formalized here.
-We make **no claim of a new irrationality criterion or a newly solved open
-problem** for these examples.
-
-Two nearby problems are not solved by this development:
-
-- [Erdős 68](https://github.com/google-deepmind/formal-conjectures/blob/main/FormalConjectures/ErdosProblems/68.lean)
-  asks about $\sum_{n\ge2}1/(n!-1)$. These denominators are not a divisibility
-  chain: $3!-1=5$ does not divide $4!-1=23$ (also checked in `Audit.lean`).
-- [Erdős 249](https://github.com/google-deepmind/formal-conjectures/blob/main/FormalConjectures/ErdosProblems/249.lean)
-  asks about $\sum\varphi(n)/2^n$. The totient example above has a different
-  denominator. In fact, bounded bases cannot give an irrationality instance of
-  the small-residual criterion: an integer residual with $r_n/q_n\to0$ must then
-  eventually vanish. No correction can evade that restriction when $q_n=2$.
-
-Both catalogue entries are marked open at the time of review, 22 September 2026.
-[Erdős 258](https://github.com/google-deepmind/formal-conjectures/blob/main/FormalConjectures/ErdosProblems/258.lean),
-about the divisor-count function with general product bases tending to infinity,
-is already marked solved in that catalogue. We neither claim it as a new solution
-nor import a proof of it. These links document status, not dependencies of our Lean proof.
-
-For harder extensions near the original factorial denominator,
-[WeightedTail.lean](WeightedTail.lean) generalizes the cancellation argument to
-arbitrary fixed shift weights, with a nonzero final weight. Its theorem explicitly
-requires a suitable expansion with error $o(1/n)$ and rules out eventual integral
-tails. Establishing such an expansion for a new numerator/denominator pair is
-still a separate obligation. It is not an unconditional theorem for arbitrary
-multiplicative functions or arbitrary deformations of $n!$.
-
-## Source map and verification
-
-- `Cantor.lean`: signed integer coefficients, convergence, exact rationality criterion.
-- `Joint.lean`: telescoping normalization, joint classification, corrected families.
-- `Denominator.lean`: direct formulation for arbitrary denominator functions.
-- `Examples.lean`, `Instances.lean`: explicit arithmetic and oscillating examples.
-- `WeightedTail.lean`: weighted version of the original cancellation obstruction.
+- `WeightedTail.lean`: original weighted cancellation framework.
+- `RobustTail.lean`: exclusion of every constant limit.
+- `FactorialWeights.lean`: signed geometric tails, convergence, and integrality.
+- `AffineNumerator.lean`: integer affine changes of the numerator.
+- `PolynomialNumerator.lean`: the joint theorem, convergence, and explicit examples.
 - `Audit.lean`: independently expanded statements and axiom reports.
 
-Run all commands from the **repository root**, using its pinned Lean toolchain:
+From the repository root:
 
 ```sh
 lake --wfail build Erdos252 Generalizations
@@ -147,9 +120,9 @@ lake env lean --trust=0 Generalizations/Audit.lean
 lake env leanchecker --fresh --verbose Generalizations
 ```
 
-On the configured Windows workstation, `Generalizations/Verify.ps1` additionally
-recompiles every project proof module into a new directory at trust zero, audits
-against those fresh files, and replays their kernels. It runs at idle CPU priority,
-rejects diagnostics and nonstandard axioms, and checks that source hashes remain
-unchanged during verification. Logs and a receipt go under `.lake/build/`.
-It does not modify the original publication manifest or commit/push anything.
+On the configured Windows workstation, `Generalizations/Verify.ps1` also
+recompiles every project proof module into a fresh directory at trust zero,
+checks statements and axioms against those files, and runs a fresh kernel replay.
+The headline theorems use exactly `propext`, `Classical.choice`, and `Quot.sound`.
+Source hashes must remain unchanged during verification; receipts and logs go
+under `.lake/build/`. The script does not commit or push anything.
