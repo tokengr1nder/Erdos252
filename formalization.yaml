@@ -17,7 +17,7 @@ project:
     - Tokengrinder
   responsible_maintainers:
     - Tokengrinder
-  license: GPL-3.0-only
+  license: GPL-3.0
 
 sources:
   - title: "Irrationality of the factorial divisor-sum series for every natural exponent"
@@ -35,7 +35,7 @@ sources:
       the conjecture and its previously known special cases are not original
       to this work. No exhaustive historical-priority claim is made.
       Material AI involvement is recorded under automation and in PALOMAR.md.
-    license: GPL-3.0-only
+    license: GPL-3.0
     author_endorsement: participated
   - title: "Erdős Problems, problem 252"
     id: "https://www.erdosproblems.com/252"

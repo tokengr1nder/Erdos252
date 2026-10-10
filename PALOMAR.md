@@ -2,7 +2,7 @@
 
 Responsible author and maintainer: **Tokengrinder**
 ([GitHub: tokengr1nder](https://github.com/tokengr1nder)).
-The repository license is [GPL-3.0-only](LICENSE).
+The repository license is [GNU GPL version 3](LICENSE).
 
 ## The result being submitted
 
