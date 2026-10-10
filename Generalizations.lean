@@ -1,7 +1,0 @@
-import Generalizations.Cantor
-import Generalizations.Examples
-import Generalizations.WeightedTail
-import Generalizations.Joint
-import Generalizations.Instances
-import Generalizations.Denominator
-import Generalizations.PolynomialNumerator

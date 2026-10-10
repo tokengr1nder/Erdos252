@@ -1,13 +1,18 @@
-import Mathlib.Algebra.BigOperators.Field
-import Mathlib.Algebra.Group.ForwardDiff
-import Mathlib.Algebra.Order.Floor.Semifield
-import Mathlib.Analysis.Normed.Group.Tannery
-import Mathlib.Analysis.PSeries
-import Mathlib.Combinatorics.Enumerative.Stirling
-import Mathlib.Data.Int.CardIntervalMod
-import Mathlib.Data.Nat.ChineseRemainder
-import Mathlib.NumberTheory.ArithmeticFunction.Misc
-import Mathlib.NumberTheory.Real.Irrational
+module
+
+public import Mathlib.Algebra.BigOperators.Field
+public import Mathlib.Algebra.Group.ForwardDiff
+public import Mathlib.Algebra.Order.Floor.Semifield
+public import Mathlib.Analysis.Asymptotics.SpecificAsymptotics
+public import Mathlib.Analysis.Normed.Group.Tannery
+public import Mathlib.Analysis.PSeries
+public import Mathlib.Combinatorics.Enumerative.Stirling
+public import Mathlib.Data.Int.CardIntervalMod
+public import Mathlib.Data.Nat.ChineseRemainder
+public import Mathlib.NumberTheory.ArithmeticFunction.Misc
+public import Mathlib.NumberTheory.Real.Irrational
+
+public section
 
 namespace Erdos252
 
@@ -374,12 +379,12 @@ theorem hasSum_divTerm (k : ℕ) {n : ℕ} (hn : 0 < n) :
   have hsum : phase k n = ∑ d ∈ n.divisors, divTerm k d n := by
     rw [phase, ArithmeticFunction.sigma_eq_sum_div, Nat.cast_sum, Finset.sum_div]
     refine Finset.sum_congr rfl fun d hd => ?_
-    rw [divTerm, if_pos (Nat.dvd_of_mem_divisors hd), Nat.cast_pow,
+    rw [divTerm, ite_eq_left (Nat.dvd_of_mem_divisors hd), Nat.cast_pow,
       Nat.cast_div_charZero (Nat.dvd_of_mem_divisors hd), div_pow, div_right_comm,
       div_self (by positivity : (n : ℝ) ^ k ≠ 0)]
   rw [hsum]
   exact hasSum_sum_of_ne_finset_zero fun d hd =>
-    if_neg fun h => hd (Nat.mem_divisors.mpr ⟨h, hn.ne'⟩)
+    ite_eq_right fun h => hd (Nat.mem_divisors.mpr ⟨h, hn.ne'⟩)
 
 /-- Partial sums along the progression just count the affine solutions. -/
 theorem divTerm_sum_eq_count (k Q A d N : ℕ) :
@@ -420,7 +425,7 @@ theorem divTerm_cesaro {k : ℕ} (hk : 0 < k) (Q A d : ℕ) :
     have hv' (j : ℕ) : d ∣ Q * j + A ↔ j ≡ v [MOD d / Nat.gcd d Q] := by
       rw [← affine_iff_modEq hcop hv j, Nat.div_dvd_iff_dvd_mul hgd hg, Nat.mul_add,
         ← Nat.mul_assoc, Nat.mul_div_cancel' (Nat.gcd_dvd_right d Q), Nat.mul_div_cancel' hcompat]
-    simp_rw [hv', ← Nat.count_eq_card_filter_range, if_pos hcompat]
+    simp_rw [hv', ← Nat.count_eq_card_filter_range, ite_eq_left hcompat]
     convert (tendsto_count_modEq_div hr v).div_const ((d : ℝ) ^ k) using 2
     rw [Nat.cast_div hgd (Nat.cast_ne_zero.mpr hg.ne'), one_div_div, div_div, pow_succ,
       mul_comm ((d : ℝ) ^ k)]

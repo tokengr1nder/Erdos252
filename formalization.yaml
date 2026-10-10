@@ -1,0 +1,161 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/mathlib-initiative/formalization.yaml/main/schema/formalization.schema.json
+version: v0.4
+
+project:
+  name: "Erdős 252: irrationality of the factorial divisor-sum series"
+  description: >-
+    For every natural number k, the series whose nth term is the sum of the
+    kth powers of the positive divisors of n, divided by n factorial, is
+    irrational. This gives the positive-exponent statement of Erdős problem
+    252 and also includes exponent zero. The proof combines factorial-tail
+    integrality, a finite coprime dilation grid with exact finite-difference
+    cancellation, and incompatible progression means obtained by a fresh-prime
+    refinement. It has no prime-pattern conjecture or unproved number-theoretic
+    hypothesis. The Lean development also proves convergence and the equivalence
+    of its natural-index series with the series starting at one.
+  authors:
+    - Tokengrinder
+  responsible_maintainers:
+    - Tokengrinder
+  license: GPL-3.0-only
+
+sources:
+  - title: "Irrationality of the factorial divisor-sum series for every natural exponent"
+    authors:
+      - Tokengrinder
+    id: "https://github.com/tokengr1nder/Erdos252"
+    type: original-proof
+    location: "Erdos252/Solution.lean, Erdos252.erdos_252; PROOF.tex"
+    relationship: other
+    note: >-
+      This repository contains the substantive proof development and its
+      mathematical exposition. The all-exponent proof is presented here,
+      rather than imported from a proof in a cited paper. The all-exponent
+      theorem is presented as an original result of this formalization;
+      the conjecture and its previously known special cases are not original
+      to this work. No exhaustive historical-priority claim is made.
+      Material AI involvement is recorded under automation and in PALOMAR.md.
+    license: GPL-3.0-only
+    author_endorsement: participated
+  - title: "Erdős Problems, problem 252"
+    id: "https://www.erdosproblems.com/252"
+    type: other
+    location: "Problem statement and historical remarks"
+    relationship: background
+    note: >-
+      Source of the problem identifier and the positive-exponent conjecture.
+      This is a problem statement, not a source of the all-exponent proof.
+      The submission does not claim endorsement by the catalogue or its editor.
+  - title: "The irrationality of a divisor function series of Erdős and Kac"
+    authors:
+      - Kyle Pratt
+    id: "https://arxiv.org/abs/2209.11124"
+    type: paper
+    location: "Abstract and introduction; Acta Arithmetica 211 (2023), 193-228"
+    relationship: background
+    note: >-
+      Earlier irrationality result for exponent four and context for the
+      all-positive-exponent question. Its sieve argument is not imported or
+      formalized by this development. No endorsement is claimed.
+
+related_formalizations:
+  - id: "https://github.com/google-deepmind/formal-conjectures/blob/main/FormalConjectures/ErdosProblems/252.lean"
+    relationship: independent
+    note: >-
+      Related formal statements of the problem and its variants, not an
+      imported proof dependency. The inspected file contains proof placeholders;
+      this submission supplies its own completed proof and a separate Challenge.
+
+classification:
+  arxiv:
+    - math.NT
+  msc2020:
+    - 11J72
+
+status:
+  scope: >-
+    The single compared result is Erdos252.erdos_252, for every k in the natural
+    numbers. No arbitrary arithmetic functions, denominator generalizations,
+    transcendence, or linear-independence results are claimed.
+  sorry_count: 0
+  sorry_in_definitions: 0
+  axioms:
+    - propext
+    - Classical.choice
+    - Quot.sound
+  main_results:
+    - declaration: Erdos252.erdos_252
+      file: Erdos252/Solution.lean
+      sorry_count: 0
+      axioms:
+        - propext
+        - Classical.choice
+        - Quot.sound
+      comparator_config: comparator.json
+      literature_dependencies: []
+  notes: >-
+    Proof-hole counts exclude the deliberate Comparator statement placeholder
+    in Challenge.lean. That file is not imported by the proof. Standard Mathlib
+    theorems are checked library dependencies, not additional literature axioms.
+
+automation:
+  methods:
+    - method: agent
+      framework: OpenAI Codex
+      tool_setup: >-
+        User-directed AI agents developed, revised, compressed, audited, and
+        documented Lean proofs using Lean and Mathlib, with separate agent
+        review passes. Exact model versions were not consistently recorded.
+      prompting_notes: >-
+        The user required the full original theorem, no new axioms or proof
+        holes, statement and axiom audits, fresh kernel replay, and a readable
+        proof. Mathematical scope and publication choices remained user-directed.
+    - method: agent
+      framework: "Claude / Opus"
+      tool_setup: >-
+        A separate Claude/Opus agent contributed proof refactoring and
+        compression, with subsequent integration and review. Exact model
+        versions and a complete per-agent contribution log were not preserved.
+    - method: manual
+      tool_setup: >-
+        Tokengrinder directed the project, selected the target and invariants,
+        reviewed explanations, and authorized publication. This is not a claim
+        of independent human expert review of every proof step.
+  notes: >-
+    AI contributions were substantive, not limited to text completion or
+    typesetting. Costs, complete prompt logs, and model-by-model elapsed times
+    were not tracked reliably and are not reconstructed. See PALOMAR.md.
+
+fidelity:
+  divergences: >-
+    The catalogue asks for natural exponents k at least one; the theorem also
+    proves k equals zero. Lean indexes the series from zero, where Mathlib's
+    divisor sum is zero. audit/Statement.lean proves summability, the expanded
+    divisor-sum identity, and the equivalent positive-index formulation.
+    There are no additional mathematical assumptions. No result about negative
+    or nonintegral exponents is claimed.
+
+review:
+  status: agent-reviewed
+  notes: >-
+    AI agents performed separate reviews and statement/axiom checks under
+    user direction. This is not independent human peer review. Mechanical
+    verification checks are documented in VERIFICATION.md; Palomar verification
+    and editorial review, if completed, have their own external reports.
+
+alignment:
+  namespace: Erdos252
+  statements:
+    - source: "Erdős Problems 252, positive-exponent irrationality question"
+      lean: Erdos252.erdos_252
+      module: Erdos252.Solution
+      status: proved
+      note: >-
+        Unconditional proof for every natural exponent, including zero.
+        Challenge.lean repeats the original main declaration's type using
+        Mathlib's standard sigma, factorial, real sum, and Irrational.
+
+acknowledgements: >-
+  The Lean and Mathlib developers provide the proof assistant and the checked
+  mathematical library. Their software retains its own licenses. Responsible
+  author and maintainer: Tokengrinder, GitHub tokengr1nder.

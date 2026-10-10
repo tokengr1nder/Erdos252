@@ -1,1 +1,3 @@
-import Erdos252.Solution
+module
+
+public import Erdos252.Solution

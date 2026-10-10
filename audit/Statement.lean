@@ -1,4 +1,8 @@
-import Erdos252.Solution
+module
+
+public import Erdos252.Solution
+
+public section
 
 open scoped Nat ArithmeticFunction.sigma
 
